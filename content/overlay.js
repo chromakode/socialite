@@ -52,10 +52,47 @@ REDDIT_LIKE_ACTIVE_IMAGE = "chrome://socialite/content/reddit_aupmod.png"
 REDDIT_DISLIKE_INACTIVE_IMAGE = "chrome://socialite/content/reddit_adowngray.png"
 REDDIT_DISLIKE_ACTIVE_IMAGE = "chrome://socialite/content/reddit_adownmod.png"
 
+// ---
+
+const STATE_START = Components.interfaces.nsIWebProgressListener.STATE_START;
+const STATE_STOP = Components.interfaces.nsIWebProgressListener.STATE_STOP;
+const STATE_TRANSFERRING = Components.interfaces.nsIWebProgressListener.STATE_TRANSFERRING;
+var SocialiteProgressListener =
+{
+  QueryInterface: function(aIID) {
+   if (aIID.equals(Components.interfaces.nsIWebProgressListener) ||
+       aIID.equals(Components.interfaces.nsISupportsWeakReference) ||
+       aIID.equals(Components.interfaces.nsISupports))
+     return this;
+   throw Components.results.NS_NOINTERFACE;
+  },
+
+  onStateChange: function(aWebProgress, aRequest, aFlag, aStatus) {
+    if(aFlag & STATE_STOP) {
+      Socialite.linkFinishLoad(aWebProgress.DOMWindow);
+    }
+    
+    return 0;
+  },
+
+  onLocationChange: function(aProgress, aRequest, aURI) {
+    Socialite.linkStartLoad(aProgress.DOMWindow);
+  },
+  
+  onProgressChange: function() {return 0;},
+  onStatusChange: function() {return 0;},
+  onSecurityChange: function() {return 0;},
+  onLinkIconAvailable: function() {return 0;}
+}
+
+// ---
+
 var Socialite = new Object();
 
 Socialite.init = function() {
+  this.initialized = false;
   window.addEventListener("load", GM_hitch(this, "onLoad"), false);
+  window.addEventListener("unload", GM_hitch(this, "onUnload"), false);
 };
 
 Socialite.onLoad = function() {
@@ -69,8 +106,14 @@ Socialite.onLoad = function() {
   this.linksWatched = {};
   
   gBrowser.addEventListener("load", GM_hitch(this, "contentLoad"), true);
-};
+  this.tabBrowser.addProgressListener(SocialiteProgressListener, Components.interfaces.nsIWebProgress.NOTIFY_STATE_DOCUMENT);
   
+};
+
+Socialite.onUnload = function() {
+  this.tabBrowser.removeProgressListener(SocialiteProgressListener);
+};
+
 Socialite.contentLoad = function(e) {
   var doc = e.originalTarget;
   
@@ -87,11 +130,6 @@ Socialite.contentLoad = function(e) {
         redditLink.addEventListener("mouseup", GM_hitch(this, "linkClicked"), false);
         redditLink = iterator.iterateNext();
       }	
-    }
-    
-    if (href in this.linksWatched) {
-      this.linkLoad(doc, this.linksWatched[href]);
-      delete this.linksWatched[href];
     }
   }
 };
@@ -110,29 +148,57 @@ Socialite.linkClicked = function(e) {
     linkID:         link.id.slice(6),
   };
   
+  // Get some information from the page while we can.
+  var linkLike       = doc.getElementById("up_"+linkInfo.linkID).wrappedJSObject;
+  linkInfo.linkLikeActive = /upmod/.test(linkLike.className);
+  
+  var linkDislike    = doc.getElementById("down_"+linkInfo.linkID).wrappedJSObject;
+  linkInfo.linkDislikeActive = /downmod/.test(linkDislike.className);
+
+  var linkComments   = doc.getElementById("comment_"+linkInfo.linkID);
+  linkInfo.commentCount = parseInt(/(\d+) comments/.exec(linkComments.textContent)[1]);
+  
   this.linksWatched[link.href] = linkInfo;
 };
 
-Socialite.linkLoad = function(doc, linkInfo) {
-  var browser = this.tabBrowser.getBrowserForDocument(doc);
-  
-  // Show the banner, without allowing actions yet
-  linkInfo.modActive = false;
-  this.showBanner(browser, linkInfo);
-  
-  // Sneaky IFrame goodness
-  linkInfo.modFrame       = doc.createElement("IFrame")
-  linkInfo.modFrame.id    = "socialite-frame"
-  linkInfo.modFrame.setAttribute("style", "display:none");
+Socialite.linkStartLoad = function(win, href) {
+  var href = win.location.href;
 
-  // Add it.
-  doc.body.appendChild(linkInfo.modFrame);
-
-  // Watch it.
-  makeOneShot(linkInfo.modFrame, "load", GM_hitch(this, "modFrameLoad", linkInfo), false);
+  if (href in this.linksWatched) {  
+    var linkInfo = this.linksWatched[href];
+    var browser = this.tabBrowser.getBrowserForDocument(win.document);
   
-  // Load it.
-  linkInfo.modFrame.src   = "http://www.reddit.com/toolbar?id=" + linkInfo.linkID
+    // Show the banner, without allowing actions yet
+    linkInfo.modActive = false;
+    this.showBanner(browser, linkInfo);
+  }
+}
+
+Socialite.linkFinishLoad = function(win) {
+  var href = win.location.href;
+  
+  if (href in this.linksWatched) {
+    var doc = win.document;
+    var browser = this.tabBrowser.getBrowserForDocument(doc);
+    var linkInfo = this.linksWatched[href];
+  
+    // Sneaky IFrame goodness
+    linkInfo.modFrame       = doc.createElement("IFrame")
+    linkInfo.modFrame.id    = "socialite-frame"
+    linkInfo.modFrame.setAttribute("style", "display:none");
+
+    // Add it.
+    doc.body.appendChild(linkInfo.modFrame);
+
+    // Watch it.
+    makeOneShot(linkInfo.modFrame, "load", GM_hitch(this, "modFrameLoad", linkInfo), false);
+    
+    // Load it.
+    linkInfo.modFrame.src   = "http://www.reddit.com/toolbar?id=" + linkInfo.linkID
+    
+    // Stop watching this href.
+    delete this.linksWatched[href];
+  }
 };
 
 Socialite.modFrameLoad = function(e, linkInfo) {
@@ -146,11 +212,13 @@ Socialite.modFrameLoad = function(e, linkInfo) {
   linkInfo.linkLike       = modFrameDoc.getElementById("up_"+linkInfo.linkID).wrappedJSObject;
   linkInfo.linkLikeActive = /upmod/.test(linkInfo.linkLike.className);
   
-  linkInfo.linkDislike     = modFrameDoc.getElementById("down_"+linkInfo.linkID).wrappedJSObject;
-  linkInfo.linkDislikeActive   = /downmod/.test(linkInfo.linkDislike.className);
+  linkInfo.linkDislike    = modFrameDoc.getElementById("down_"+linkInfo.linkID).wrappedJSObject;
+  linkInfo.linkDislikeActive = /downmod/.test(linkInfo.linkDislike.className);
 
   linkInfo.linkComments   = modFrameDoc.getElementById("comment_"+linkInfo.linkID);
-  linkInfo.commentCount   = parseInt(/(\d+) comments/.exec(linkInfo.linkComments.textContent)[1]);
+  
+  // We got this earlier at linkClicked
+  //linkInfo.commentCount   = parseInt(/(\d+) comments/.exec(linkInfo.linkComments.textContent)[1]);
   
   linkInfo.modActive = true;
   this.updateButtons(linkInfo);
@@ -178,6 +246,7 @@ Socialite.showBanner = function(browser, linkInfo) {
     buttonLike.setAttribute("type", "checkbox");
     buttonLike.setAttribute("label", this.strings.getString("likeit"));
     buttonLike.setAttribute("accesskey", this.strings.getString("likeit.accesskey"));
+    buttonLike.setAttribute("image", REDDIT_LIKE_INACTIVE_IMAGE);
     buttonLike.setAttribute("autoCheck", "false");
     buttonLike.addEventListener("click", GM_hitch(this, "buttonLikeClicked", linkInfo), false);
     notification.appendChild(buttonLike);
@@ -188,6 +257,7 @@ Socialite.showBanner = function(browser, linkInfo) {
     buttonDislike.setAttribute("type", "checkbox");
     buttonDislike.setAttribute("label", this.strings.getString("dislikeit"));
     buttonDislike.setAttribute("accesskey", this.strings.getString("dislikeit.accesskey"));
+    buttonDislike.setAttribute("image", REDDIT_DISLIKE_INACTIVE_IMAGE);
     buttonDislike.setAttribute("autoCheck", "false");
     notification.appendChild(buttonDislike);
     buttonDislike.addEventListener("click", GM_hitch(this, "buttonDislikeClicked", linkInfo), false);
@@ -195,7 +265,7 @@ Socialite.showBanner = function(browser, linkInfo) {
     
     var buttonComments = document.createElement("button");
     buttonComments.setAttribute("id", "socialite_comments");
-    buttonComments.setAttribute("label", this.strings.getFormattedString("comments", ["Loading"]));
+    buttonComments.setAttribute("label", this.strings.getFormattedString("comments", [linkInfo.commentCount.toString()]));
     buttonComments.setAttribute("accesskey", this.strings.getString("comments.accesskey"));
     buttonComments.addEventListener("click", GM_hitch(this, "buttonCommentsClicked", linkInfo), false);
     notification.appendChild(buttonComments);
@@ -230,15 +300,18 @@ Socialite.updateButtonDislike = function(buttonDislike, isActive) {
 Socialite.updateButtons = function(linkInfo) {
   if (linkInfo.modActive) {
     linkInfo.buttonLike.setAttribute("disabled", false);
-    this.updateButtonLike(linkInfo.buttonLike, linkInfo.linkLikeActive);
-    
     linkInfo.buttonDislike.setAttribute("disabled", false);
-    this.updateButtonDislike(linkInfo.buttonDislike, linkInfo.linkDislikeActive);
-
-    linkInfo.buttonComments.setAttribute("label", this.strings.getFormattedString("comments", [linkInfo.commentCount.toString()]));
   } else {
     linkInfo.buttonLike.setAttribute("disabled", true);
     linkInfo.buttonDislike.setAttribute("disabled", true);
+  }
+  
+  if (linkInfo.linkLikeActive != null) {
+    this.updateButtonLike(linkInfo.buttonLike, linkInfo.linkLikeActive);
+  }
+  
+  if (linkInfo.linkDislikeActive != null) {
+    this.updateButtonDislike(linkInfo.buttonDislike, linkInfo.linkDislikeActive);
   }
 }
 
