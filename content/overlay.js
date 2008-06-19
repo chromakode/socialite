@@ -39,12 +39,14 @@
  // - Download list of current top links and auto-apply to pages
  // - Save button
  // - Button preferences
+ // - Login detection/button
+ // - Display score
  
  // Outstanding issues:
- // - Raw images seem to not be handled by DOMContentLoaded
- // - Toolbar opening lag
- // - Open comments in new tab
- // - Popup blocker bar
+ // + Raw images seem to not be handled by DOMContentLoaded
+ // + Toolbar opening lag
+ // + Open comments in new tab
+ // + Popup blocker bar
  // - Reopen bar
 
 REDDIT_LIKE_INACTIVE_IMAGE = "chrome://socialite/content/reddit_aupgray.png"
@@ -156,6 +158,7 @@ Socialite.linkClicked = function(e) {
   linkInfo.linkDislikeActive = /downmod/.test(linkDislike.className);
 
   var linkComments   = doc.getElementById("comment_"+linkInfo.linkID);
+  linkInfo.commentURL = linkComments.href;
   linkInfo.commentCount = parseInt(/(\d+) comments/.exec(linkComments.textContent)[1]);
   
   this.linksWatched[link.href] = linkInfo;
@@ -352,7 +355,13 @@ Socialite.buttonDislikeClicked = function(e, linkInfo) {
 Socialite.buttonCommentsClicked = function(e, linkInfo) {
   var link = e.target;
   var doc = link.ownerDocument;
-  this.tabBrowser.loadURI(linkInfo.linkComments);
+  
+  if (e.button == 1) {
+    // Middle mouse button
+    this.tabBrowser.loadOneTab(linkInfo.commentURL)
+  } else {
+    this.tabBrowser.loadURI(linkInfo.commentURL);
+  }
 };
 
 Socialite.init();
