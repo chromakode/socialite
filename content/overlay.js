@@ -34,6 +34,10 @@
  * 
  * ***** END LICENSE BLOCK ***** */
  
+ // Todo:
+ // - Modularize
+ // - Download list of current top links and auto-apply to pages
+ 
  // Outstanding issues:
  // - Raw images seem to not be handled by DOMContentLoaded
 
@@ -82,7 +86,6 @@ Socialite.linkClicked = function(e) {
   var browser = this.tabBrowser.getBrowserForDocument(doc);
   
   var linkInfo = {
-    sourceDocument: doc,
     linkTitle:      link.textContent,
     
     // Remove title_ from title_XX_XXXXX
