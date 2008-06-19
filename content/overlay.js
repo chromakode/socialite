@@ -60,6 +60,8 @@ Socialite.onLoad = function() {
   this.tabBrowser = document.getElementById("content");
   this.appContent = document.getElementById("appcontent");
   
+  this.linksWatched = {};
+  
   this.appContent.addEventListener("DOMContentLoaded", GM_hitch(this, "contentLoad"), false);
 };
   
@@ -74,10 +76,15 @@ Socialite.contentLoad = function(e) {
     
     var redditLink = iterator.iterateNext();
     while (redditLink) {
-      redditLink.addEventListener("click", GM_hitch(this, "linkClicked"), false);
+      redditLink.addEventListener("mousedown", GM_hitch(this, "linkClicked"), false);
       redditLink = iterator.iterateNext();
     }	
   }
+  
+  if (href in this.linksWatched) {
+    this.linkLoad(doc, this.linksWatched[href]);
+    delete this.linksWatched[href];
+  }  
 };
 
 Socialite.linkClicked = function(e) {
@@ -92,11 +99,10 @@ Socialite.linkClicked = function(e) {
     linkID:         link.id.slice(6),
   };
   
-  makeOneShot(browser, "DOMContentLoaded", GM_hitch(this, "linkLoad", linkInfo), false);
+  this.linksWatched[link.href] = linkInfo;
 };
 
-Socialite.linkLoad = function(e, linkInfo) {
-  var doc = e.target;
+Socialite.linkLoad = function(doc, linkInfo) {
   var browser = this.tabBrowser.getBrowserForDocument(doc);
   
   // Sneaky IFrame goodness
