@@ -47,8 +47,8 @@
  // + Toolbar opening lag
  // + Open comments in new tab
  // + Popup blocker bar
- // - Preserve after back-forward
- // - Reopen bar
+ // + Preserve after back-forward
+ // + Reopen bar
 
 REDDIT_LIKE_INACTIVE_IMAGE = "chrome://socialite/content/reddit_aupgray.png"
 REDDIT_LIKE_ACTIVE_IMAGE = "chrome://socialite/content/reddit_aupmod.png"
@@ -59,7 +59,6 @@ REDDIT_DISLIKE_ACTIVE_IMAGE = "chrome://socialite/content/reddit_adownmod.png"
 
 const STATE_START = Components.interfaces.nsIWebProgressListener.STATE_START;
 const STATE_STOP = Components.interfaces.nsIWebProgressListener.STATE_STOP;
-const STATE_TRANSFERRING = Components.interfaces.nsIWebProgressListener.STATE_TRANSFERRING;
 var SocialiteProgressListener =
 {
   QueryInterface: function(aIID) {
@@ -79,7 +78,10 @@ var SocialiteProgressListener =
   },
 
   onLocationChange: function(aProgress, aRequest, aURI) {
-    Socialite.linkStartLoad(aProgress.DOMWindow);
+    if(aProgress.isLoadingDocument) {
+      // Tab switches will also trigger this, with isLoadingDocument false
+      Socialite.linkStartLoad(aProgress.DOMWindow);
+    }
   },
   
   onProgressChange: function() {return 0;},
@@ -113,7 +115,7 @@ Socialite.onLoad = function() {
   this.linksWatchedLimit = 100;
   
   gBrowser.addEventListener("load", GM_hitch(this, "contentLoad"), true);
-  this.tabBrowser.addProgressListener(SocialiteProgressListener, Components.interfaces.nsIWebProgress.NOTIFY_STATE_DOCUMENT);
+  this.tabBrowser.addProgressListener(SocialiteProgressListener, Components.interfaces.nsIWebProgress.NOTIFY_STATE_WINDOW);
   
 };
 
@@ -241,11 +243,11 @@ Socialite.modFrameLoad = function(e, linkInfo) {
   
 Socialite.showBanner = function(browser, linkInfo) {
     var notificationBox = this.tabBrowser.getNotificationBox(browser);
-    var notificationName = "socialite-header";
+    var notificationName = "socialite-header"+"-"+linkInfo.linkID;
     
     var oldNotification = notificationBox.getNotificationWithValue(notificationName);
     if (oldNotification) {
-      oldNotification.close();
+      return;
     }
     
     var notification = notificationBox.appendNotification(
