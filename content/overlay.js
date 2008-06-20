@@ -37,8 +37,8 @@
  // Todo:
  // - Modularize
  // - Download list of current top links and auto-apply to pages
- // - Save button
- // - Button preferences
+ // + Save button
+ // + Button preferences
  // - Login detection/button
  // - Display score
  
@@ -163,15 +163,28 @@ Socialite.linkClicked = function(e) {
   };
   
   // Get some information from the page while we can.
-  var linkLike       = doc.getElementById("up_"+linkInfo.linkID).wrappedJSObject;
+  var linkLike           = doc.getElementById("up_"+linkInfo.linkID).wrappedJSObject;
   linkInfo.linkLikeActive = /upmod/.test(linkLike.className);
   
-  var linkDislike    = doc.getElementById("down_"+linkInfo.linkID).wrappedJSObject;
+  var linkDislike       = doc.getElementById("down_"+linkInfo.linkID).wrappedJSObject;
   linkInfo.linkDislikeActive = /downmod/.test(linkDislike.className);
 
-  var linkComments   = doc.getElementById("comment_"+linkInfo.linkID);
-  linkInfo.commentURL = linkComments.href;
+  var linkComments      = doc.getElementById("comment_"+linkInfo.linkID);
+  linkInfo.commentURL   = linkComments.href;
   linkInfo.commentCount = parseInt(/(\d+) comments/.exec(linkComments.textContent)[1]);
+  
+  var linkSave          = doc.getElementById("save_"+linkInfo.linkID+"_a");
+  var linkUnsave        = doc.getElementById("unsave_"+linkInfo.linkID+"_a");
+  
+  if (linkSave != null) {
+    // If there's a save link
+    // Whether it's clicked
+    linkInfo.linkIsSaved = (linkSave.style.display == "none");
+  } else {
+    // If there's an unsave link (assumption)
+    // Whether it's not clicked
+    linkInfo.linkIsSaved = (linkUnsave.style.display != "none");
+  }
   
   this.watchLink(link.href, linkInfo);
 };
@@ -228,8 +241,7 @@ Socialite.modFrameLoad = function(e, linkInfo) {
   var doc = e.target.ownerDocument;  
   var browser = this.tabBrowser.getBrowserForDocument(doc);
   
-  // Note: linkLike and linkDislike use wrappedJSObject to retrieve unprotected
-  // chrome-internal javascript object.
+  // Note: Uses wrappedJSObject to retrieve unprotected chrome-internal javascript objects.
   
   linkInfo.linkLike       = modFrameDoc.getElementById("up_"+linkInfo.linkID).wrappedJSObject;
   linkInfo.linkLikeActive = /upmod/.test(linkInfo.linkLike.className);
@@ -238,6 +250,16 @@ Socialite.modFrameLoad = function(e, linkInfo) {
   linkInfo.linkDislikeActive = /downmod/.test(linkInfo.linkDislike.className);
 
   linkInfo.linkComments   = modFrameDoc.getElementById("comment_"+linkInfo.linkID);
+  
+  linkInfo.linkSave       = modFrameDoc.getElementById("save_"+linkInfo.linkID+"_a");
+  if (linkInfo.linkSave) {
+    linkInfo.linkSave = linkInfo.linkSave.wrappedJSObject;
+  }
+  
+  linkInfo.linkUnsave     = modFrameDoc.getElementById("unsave_"+linkInfo.linkID+"_a");
+  if (linkInfo.linkUnsave) {
+    linkInfo.linkUnsave = linkInfo.linkUnsave.wrappedJSObject;
+  }
   
   // We got this earlier at linkClicked
   //linkInfo.commentCount   = parseInt(/(\d+) comments/.exec(linkInfo.linkComments.textContent)[1]);
@@ -316,6 +338,22 @@ Socialite.showBanner = function(browser, linkInfo) {
     notification.appendChild(buttonComments);
     linkInfo.buttonComments = buttonComments;
     
+    var buttonSave = document.createElement("button");
+    buttonSave.setAttribute("id", "socialite_save");
+    buttonDislike.setAttribute("type", "checkbox");
+    buttonDislike.setAttribute("autoCheck", "false");
+    if (linkInfo.linkIsSaved) {
+      buttonSave.setAttribute("label", this.strings.getString("unsave"));
+      buttonSave.setAttribute("accesskey", this.strings.getString("unsave.accesskey"));
+    } else {
+      buttonSave.setAttribute("label", this.strings.getString("save"));
+      buttonSave.setAttribute("accesskey", this.strings.getString("save.accesskey"));
+    }
+    buttonSave.setAttribute("hidden", !this.prefs.getBoolPref("showsave"));
+    buttonSave.addEventListener("click", GM_hitch(this, "buttonSaveClicked", linkInfo), false);
+    notification.appendChild(buttonSave);
+    linkInfo.buttonSave = buttonSave;
+    
     this.updateButtons(linkInfo);
     
     // Modify to prevent notifications from autoclosing
@@ -346,9 +384,11 @@ Socialite.updateButtons = function(linkInfo) {
   if (linkInfo.modActive) {
     linkInfo.buttonLike.setAttribute("disabled", false);
     linkInfo.buttonDislike.setAttribute("disabled", false);
+    linkInfo.buttonSave.setAttribute("disabled", false);
   } else {
     linkInfo.buttonLike.setAttribute("disabled", true);
     linkInfo.buttonDislike.setAttribute("disabled", true);
+    linkInfo.buttonSave.setAttribute("disabled", true);
   }
   
   if (linkInfo.linkLikeActive != null) {
@@ -397,6 +437,19 @@ Socialite.buttonDislikeClicked = function(e, linkInfo) {
 Socialite.buttonCommentsClicked = function(e, linkInfo) {
   this.handleLinkClicked(e, linkInfo.commentURL);
 };
+
+Socialite.buttonSaveClicked = function(e, linkInfo) {
+  if (linkInfo.linkIsSaved) {
+    linkInfo.linkUnsave.onclick();
+    linkInfo.buttonSave.setAttribute("label", this.strings.getString("unsaved"));
+  } else {
+    linkInfo.linkSave.onclick()
+    linkInfo.buttonSave.setAttribute("label", this.strings.getString("saved"));
+  }
+  
+  linkInfo.buttonSave.setAttribute("disabled", true);
+};
+
 
 Socialite.siteLinkClicked = function(e) {
   this.handleLinkClicked(e, "http://www.reddit.com");
