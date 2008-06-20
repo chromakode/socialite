@@ -13,6 +13,7 @@
  // + Popup blocker bar
  // + Preserve after back-forward
  // + Reopen bar
+ // - Some links still not working
 
 REDDIT_LIKE_INACTIVE_IMAGE = "chrome://socialite/content/reddit_aupgray.png"
 REDDIT_LIKE_ACTIVE_IMAGE = "chrome://socialite/content/reddit_aupmod.png"
