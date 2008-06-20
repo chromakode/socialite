@@ -114,7 +114,7 @@ Socialite.onLoad = function() {
   this.linksWatchedQueue = [];
   this.linksWatchedLimit = 100;
   
-  gBrowser.addEventListener("load", GM_hitch(this, "contentLoad"), true);
+  gBrowser.addEventListener("DOMContentLoaded", GM_hitch(this, "contentLoad"), true);
   this.tabBrowser.addProgressListener(SocialiteProgressListener, Components.interfaces.nsIWebProgress.NOTIFY_STATE_WINDOW);
   
 };
@@ -134,10 +134,10 @@ Socialite.contentLoad = function(e) {
       // Iterate over each article link and register event listener
       var iterator = doc.evaluate('//a[@class="title loggedin"]', doc.documentElement, null, XPathResult.UNORDERED_NODE_ITERATOR_TYPE, null );
       
-      var redditLink = iterator.iterateNext();
-      while (redditLink) {
-        redditLink.addEventListener("mouseup", GM_hitch(this, "linkClicked"), false);
-        redditLink = iterator.iterateNext();
+      var siteLink = iterator.iterateNext();
+      while (siteLink) {
+        siteLink.addEventListener("mouseup", GM_hitch(this, "linkClicked"), false);
+        siteLink = iterator.iterateNext();
       }	
     }
   }
@@ -251,12 +251,33 @@ Socialite.showBanner = function(browser, linkInfo) {
     }
     
     var notification = notificationBox.appendNotification(
-      "reddit: " + linkInfo.linkTitle,
+      linkInfo.linkTitle,
       notificationName,
       "chrome://socialite/content/reddit_favicon.ico",
       notificationBox.PRIORITY_INFO_MEDIUM,
       []
     );
+    
+    // Ahoy! Commence the XUL hackage!
+    // Let's make this notification a bit cooler.
+    
+    // XXX is this an okay approach? (compatibility, is there a better way, etc)
+    
+    var roothbox = notification.boxObject.firstChild;
+    var details = roothbox.getElementsByAttribute("anonid", "details")[0];
+    var messageImage = roothbox.getElementsByAttribute("anonid", "messageImage")[0];
+    var messageText = roothbox.getElementsByAttribute("anonid", "messageText")[0];
+    
+    // Muahahahahaha
+    var siteLink = document.createElement("label");
+    siteLink.setAttribute("id", "socialite_reddit_link");
+    siteLink.setAttribute("value", "reddit");
+    siteLink.setAttribute("class", "text-link");
+    siteLink.addEventListener("click", GM_hitch(this, "siteLinkClicked"), false);
+    messageImage.addEventListener("click", GM_hitch(this, "siteLinkClicked"), false);
+    details.insertBefore(siteLink, messageText);
+    
+    // XUL hackage done.    
     
     var buttonLike = document.createElement("button");
     buttonLike.setAttribute("id", "socialite_mod_up");
@@ -367,14 +388,19 @@ Socialite.buttonDislikeClicked = function(e, linkInfo) {
 };
 
 Socialite.buttonCommentsClicked = function(e, linkInfo) {
-  var link = e.target;
-  var doc = link.ownerDocument;
-  
+  this.handleLinkClicked(e, linkInfo.commentURL);
+};
+
+Socialite.siteLinkClicked = function(e) {
+  this.handleLinkClicked(e, "http://www.reddit.com");
+};
+
+Socialite.handleLinkClicked = function(e, url) {
   if (e.button == 1) {
     // Middle mouse button
-    this.tabBrowser.loadOneTab(linkInfo.commentURL)
+    this.tabBrowser.loadOneTab(url)
   } else {
-    this.tabBrowser.loadURI(linkInfo.commentURL);
+    this.tabBrowser.loadURI(url);
   }
 };
 
