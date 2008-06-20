@@ -1,8 +1,9 @@
 <!ENTITY prefwindow.title "Socialite preferences">
-<!ENTITY showpane.title "Info bar fields">
+<!ENTITY showgroup.caption "Info bar fields">
 <!ENTITY showlink.label "Show reddit link">
 <!ENTITY showlink.accesskey "r">
 <!ENTITY showcomments.label "Show comments button">
 <!ENTITY showcomments.accesskey "c">
-<!ENTITY showsave.label "Show save button">
+<!ENTITY showsave.label "Show save/unsave button">
 <!ENTITY showsave.accesskey "s">
+
