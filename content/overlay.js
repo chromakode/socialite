@@ -47,6 +47,7 @@
  // + Toolbar opening lag
  // + Open comments in new tab
  // + Popup blocker bar
+ // - Preserve after back-forward
  // - Reopen bar
 
 REDDIT_LIKE_INACTIVE_IMAGE = "chrome://socialite/content/reddit_aupgray.png"
@@ -107,6 +108,10 @@ Socialite.onLoad = function() {
   
   this.linksWatched = {};
   
+  // FIFO queue for removing old watched links
+  this.linksWatchedQueue = [];
+  this.linksWatchedLimit = 100;
+  
   gBrowser.addEventListener("load", GM_hitch(this, "contentLoad"), true);
   this.tabBrowser.addProgressListener(SocialiteProgressListener, Components.interfaces.nsIWebProgress.NOTIFY_STATE_DOCUMENT);
   
@@ -161,8 +166,18 @@ Socialite.linkClicked = function(e) {
   linkInfo.commentURL = linkComments.href;
   linkInfo.commentCount = parseInt(/(\d+) comments/.exec(linkComments.textContent)[1]);
   
-  this.linksWatched[link.href] = linkInfo;
+  this.watchLink(link.href, linkInfo);
 };
+
+Socialite.watchLink = function(href, linkInfo) {
+  if (this.linksWatchedQueue.length == this.linksWatchedLimit) {
+    // Stop watching the oldest link
+    delete this.linksWatched[this.linksWatchedQueue.shift()];
+  }
+
+  this.linksWatched[href] = linkInfo;
+  this.linksWatchedQueue.push(href);
+}
 
 Socialite.linkStartLoad = function(win, href) {
   var href = win.location.href;
@@ -198,9 +213,6 @@ Socialite.linkFinishLoad = function(win) {
     
     // Load it.
     linkInfo.modFrame.src   = "http://www.reddit.com/toolbar?id=" + linkInfo.linkID
-    
-    // Stop watching this href.
-    delete this.linksWatched[href];
   }
 };
 
