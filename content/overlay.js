@@ -102,8 +102,12 @@ Socialite.init = function() {
 
 Socialite.onLoad = function() {
   // initialization code
-  this.initialized = true;
   this.strings = document.getElementById("socialite-strings");
+  
+  this.prefs = Components.classes["@mozilla.org/preferences-service;1"]
+      .getService(Components.interfaces.nsIPrefService)
+      .getBranch("extensions.socialite.");
+  this.prefs.QueryInterface(Components.interfaces.nsIPrefBranch2);
   
   this.tabBrowser = document.getElementById("content");
   this.appContent = document.getElementById("appcontent");
@@ -117,6 +121,7 @@ Socialite.onLoad = function() {
   gBrowser.addEventListener("DOMContentLoaded", GM_hitch(this, "contentLoad"), true);
   this.tabBrowser.addProgressListener(SocialiteProgressListener, Components.interfaces.nsIWebProgress.NOTIFY_STATE_WINDOW);
   
+  this.initialized = true;
 };
 
 Socialite.onUnload = function() {
@@ -273,6 +278,7 @@ Socialite.showBanner = function(browser, linkInfo) {
     siteLink.setAttribute("id", "socialite_reddit_link");
     siteLink.setAttribute("value", "reddit");
     siteLink.setAttribute("class", "text-link");
+    siteLink.setAttribute("hidden", !this.prefs.getBoolPref("showlink"));
     siteLink.addEventListener("click", GM_hitch(this, "siteLinkClicked"), false);
     messageImage.addEventListener("click", GM_hitch(this, "siteLinkClicked"), false);
     details.insertBefore(siteLink, messageText);
@@ -305,6 +311,7 @@ Socialite.showBanner = function(browser, linkInfo) {
     buttonComments.setAttribute("id", "socialite_comments");
     buttonComments.setAttribute("label", this.strings.getFormattedString("comments", [linkInfo.commentCount.toString()]));
     buttonComments.setAttribute("accesskey", this.strings.getString("comments.accesskey"));
+    buttonComments.setAttribute("hidden", !this.prefs.getBoolPref("showcomments"));
     buttonComments.addEventListener("click", GM_hitch(this, "buttonCommentsClicked", linkInfo), false);
     notification.appendChild(buttonComments);
     linkInfo.buttonComments = buttonComments;
