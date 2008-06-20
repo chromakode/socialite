@@ -33,13 +33,7 @@ var SocialiteProgressListener =
    throw Components.results.NS_NOINTERFACE;
   },
 
-  onStateChange: function(aWebProgress, aRequest, aFlag, aStatus) {
-    if(aFlag & STATE_STOP) {
-      Socialite.linkFinishLoad(aWebProgress.DOMWindow);
-    }
-    
-    return 0;
-  },
+  onStateChange: function(aWebProgress, aRequest, aFlag, aStatus) {return 0;},
 
   onLocationChange: function(aProgress, aRequest, aURI) {
     if(aProgress.isLoadingDocument) {
@@ -82,7 +76,7 @@ Socialite.onLoad = function() {
   this.linksWatchedQueue = [];
   this.linksWatchedLimit = 100;
   
-  gBrowser.addEventListener("DOMContentLoaded", GM_hitch(this, "contentLoad"), true);
+  this.tabBrowser.addEventListener("DOMContentLoaded", GM_hitch(this, "contentLoad"), true);
   this.tabBrowser.addProgressListener(SocialiteProgressListener, Components.interfaces.nsIWebProgress.NOTIFY_STATE_WINDOW);
   
   this.initialized = true;
@@ -173,31 +167,27 @@ Socialite.linkStartLoad = function(win, href) {
     // Show the banner, without allowing actions yet
     linkInfo.modActive = false;
     this.showBanner(browser, linkInfo);
+    
+    browser.addEventListener("DOMContentLoaded", GM_hitch(this, "linkFinishLoad", linkInfo), true);
   }
 }
 
-Socialite.linkFinishLoad = function(win) {
-  var href = win.location.href;
-  
-  if (href in this.linksWatched) {
-    var doc = win.document;
-    var browser = this.tabBrowser.getBrowserForDocument(doc);
-    var linkInfo = this.linksWatched[href];
-  
-    // Sneaky IFrame goodness
-    linkInfo.modFrame       = doc.createElement("IFrame")
-    linkInfo.modFrame.id    = "socialite-frame"
-    linkInfo.modFrame.setAttribute("style", "display:none");
+Socialite.linkFinishLoad = function(e, linkInfo) {
+  var doc = e.originalTarget;
 
-    // Add it.
-    doc.body.appendChild(linkInfo.modFrame);
+  // Sneaky IFrame goodness
+  linkInfo.modFrame       = doc.createElement("IFrame")
+  linkInfo.modFrame.id    = "socialite-frame"
+  linkInfo.modFrame.setAttribute("style", "display:none");
 
-    // Watch it.
-    makeOneShot(linkInfo.modFrame, "load", GM_hitch(this, "modFrameLoad", linkInfo), false);
-    
-    // Load it.
-    linkInfo.modFrame.src   = "http://www.reddit.com/toolbar?id=" + linkInfo.linkID
-  }
+  // Add it.
+  doc.body.appendChild(linkInfo.modFrame);
+
+  // Watch it.
+  makeOneShot(linkInfo.modFrame, "load", GM_hitch(this, "modFrameLoad", linkInfo), false);
+  
+  // Load it.
+  linkInfo.modFrame.src   = "http://www.reddit.com/toolbar?id=" + linkInfo.linkID
 };
 
 Socialite.modFrameLoad = function(e, linkInfo) {
