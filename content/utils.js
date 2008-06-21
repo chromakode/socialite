@@ -35,6 +35,6 @@ function makeOneShot(instance, type, listener, useCapture) {
   instance.addEventListener(type, oneShotListener, useCapture);
 }
 
-function debug_log(msg) {
-  dump("[Socialite] " + msg + "\n");
+function debug_log(section, msg) {
+  dump("[Socialite] " + section + " -- " + msg + "\n");
 }

@@ -51,7 +51,7 @@ var SocialiteProgressListener =
       var window = aWebProgress.DOMWindow;
       
       if (window == window.top) {
-        debug_log("-- ProgressListener -- onStateChange (stop): " + window.location.href);
+        debug_log("SocialiteProgressListener", "onStateChange (stop): " + window.location.href);
         Socialite.linkFinishLoad(aWebProgress.DOMWindow);
       }
     }
@@ -65,10 +65,10 @@ var SocialiteProgressListener =
     if(aProgress.isLoadingDocument) {
       var window = aProgress.DOMWindow;
       
-      if (window == window.top) {
-        debug_log("-- ProgressListener -- onLocationChange (loading): " + aProgress.DOMWindow.location.href);
+      //if (window == window.top) {
+        debug_log("SocialiteProgressListener", "onLocationChange (loading): " + aProgress.DOMWindow.location.href);
         Socialite.linkStartLoad(aProgress.DOMWindow);
-      }
+      //}
     }
   },
   
@@ -121,13 +121,13 @@ Socialite.onLoad = function() {
 };
 
 Socialite.setupProgressListener = function(browser) {
-  debug_log("Progress listener added.");
+  debug_log("main", "Progress listener added.");
     
   browser.addProgressListener(SocialiteProgressListener);
 };
 
 Socialite.removeProgressListener = function(browser) {
-  debug_log("Progress listener removed.");
+  debug_log("main", "Progress listener removed.");
     
   browser.removeProgressListener(SocialiteProgressListener);
 };
@@ -144,7 +144,7 @@ Socialite.onUnload = function() {
 Socialite.tabOpened = function(e) {
   var browser = e.originalTarget.linkedBrowser;
   
-  debug_log("Tab opened: " + browser.contentWindow.location.href);
+  debug_log("main", "Tab opened: " + browser.contentWindow.location.href);
   
   this.setupProgressListener(browser);
 }
@@ -152,7 +152,7 @@ Socialite.tabOpened = function(e) {
 Socialite.tabClosed = function(e) {
   var browser = e.originalTarget.linkedBrowser;
   
-  debug_log("Tab closed: " + browser.contentWindow.location.href);
+  debug_log("main", "Tab closed: " + browser.contentWindow.location.href);
   
   this.removeProgressListener(browser);
 }
@@ -223,8 +223,9 @@ Socialite.linkClicked = function(e) {
   }
   
   linkInfo.modFrame = null;
+  linkInfo.modActive = false;
   
-  debug_log("Clicked: " + linkInfo.linkID);
+  debug_log(linkInfo.linkID, "Clicked");
   this.watchLink(link.href, linkInfo);
 };
 
@@ -237,23 +238,20 @@ Socialite.watchLink = function(href, linkInfo) {
   this.linksWatched[href] = linkInfo;
   this.linksWatchedQueue.push(href);
   
-  debug_log("Watching: " + href);
+  debug_log("main", "Watching: " + href);
 }
 
 Socialite.linkStartLoad = function(win, href) {
   var href = win.location.href;
 
-  debug_log("Loading: " + href);
-
-  if (href in this.linksWatched) {  
+  if (href in this.linksWatched) {
     var linkInfo = this.linksWatched[href];
     var browser = this.tabBrowser.getBrowserForDocument(win.document);
+    
+    debug_log(linkInfo.linkID, "Started loading");
   
     // Show the banner, without allowing actions yet
-    linkInfo.modActive = false;
-    this.showBanner(browser, linkInfo);
-    
-    debug_log("Displayed banner: " + linkInfo.linkID);
+    this.showNotificationBox(browser, linkInfo);
   }
 }
 
@@ -262,7 +260,6 @@ Socialite.linkFinishLoad = function(win) {
   
   if (href in this.linksWatched) {
     var doc = win.document;
-    var browser = this.tabBrowser.getBrowserForDocument(doc);
     var linkInfo = this.linksWatched[href];
   
     // Sneaky IFrame goodness
@@ -281,9 +278,9 @@ Socialite.linkFinishLoad = function(win) {
       // Load it.
       linkInfo.modFrame.src   = "http://www.reddit.com/toolbar?id=" + linkInfo.linkID
       
-      debug_log("Finished loading, started frame: " + linkInfo.linkID);
+      debug_log(linkInfo.linkID, "Finished loading, started frame");
     } else {
-      debug_log("Finished loading, frame already exists for: " + linkInfo.linkID);
+      debug_log(linkInfo.linkID, "Finished loading, frame already exists");
     }
   }
 };
@@ -319,15 +316,16 @@ Socialite.modFrameLoad = function(e, linkInfo) {
   linkInfo.modActive = true;
   this.updateButtons(linkInfo);
   
-  debug_log("Frame loaded: " + linkInfo.linkID);
+  debug_log(linkInfo.linkID, "Frame loaded");
 };
   
-Socialite.showBanner = function(browser, linkInfo) {
+Socialite.showNotificationBox = function(browser, linkInfo) {
     var notificationBox = this.tabBrowser.getNotificationBox(browser);
     var notificationName = "socialite-header"+"-"+linkInfo.linkID;
     
     var oldNotification = notificationBox.getNotificationWithValue(notificationName);
     if (oldNotification) {
+      debug_log(linkInfo.linkID, "Notification box already exists");
       return;
     }
     
@@ -409,6 +407,8 @@ Socialite.showBanner = function(browser, linkInfo) {
     linkInfo.buttonSave = buttonSave;
     
     this.updateButtons(linkInfo);
+    
+    debug_log(linkInfo.linkID, "Notification box created");
     
     // Modify to prevent notifications from autoclosing
     //notification.persistence = 0;
