@@ -22,8 +22,13 @@ REDDIT_DISLIKE_ACTIVE_IMAGE = "chrome://socialite/content/reddit_adownmod.png"
 
 // ---
 
+// Augggghhh
+
 const STATE_START = Components.interfaces.nsIWebProgressListener.STATE_START;
 const STATE_STOP = Components.interfaces.nsIWebProgressListener.STATE_STOP;
+const STATE_IS_DOCUMENT = Components.interfaces.nsIWebProgressListener.STATE_IS_DOCUMENT;
+const STATE_IS_WINDOW = Components.interfaces.nsIWebProgressListener.STATE_IS_WINDOW;
+const LOAD_INITIAL_DOCUMENT_URI = Components.interfaces.nsIChannel.LOAD_INITIAL_DOCUMENT_URI;
 var SocialiteProgressListener =
 {
   QueryInterface: function(aIID) {
@@ -35,24 +40,41 @@ var SocialiteProgressListener =
   },
 
   onStateChange: function(aWebProgress, aRequest, aFlag, aStatus) {
-    if(aFlag & STATE_STOP) {
-      Socialite.linkFinishLoad(aWebProgress.DOMWindow);
+    if((aFlag & STATE_STOP)
+        && (aRequest.loadFlags & LOAD_INITIAL_DOCUMENT_URI)
+        && (aFlag & STATE_IS_DOCUMENT)) {
+      
+      // This checks to see if we've finished loading a document.
+      // LOAD_INITIAL_DOCUMENT_URI is required to prevent multiple firings.
+      // see http://www.nabble.com/Re%3A-Inhibitting-multiple-pageLoad-events-on-pageLoad-p13720524.html
+      
+      var window = aWebProgress.DOMWindow;
+      
+      if (window == window.top) {
+        debug_log("-- ProgressListener -- onStateChange (stop): " + window.location.href);
+        Socialite.linkFinishLoad(aWebProgress.DOMWindow);
+      }
     }
     
     return 0;
   },
 
   onLocationChange: function(aProgress, aRequest, aURI) {
+    // Triggered at the beginning of a page's loading process, after the href has switched.
+    // Tab switches will also trigger this, with isLoadingDocument false
     if(aProgress.isLoadingDocument) {
-      // Tab switches will also trigger this, with isLoadingDocument false
-      Socialite.linkStartLoad(aProgress.DOMWindow);
+      var window = aProgress.DOMWindow;
+      
+      if (window == window.top) {
+        debug_log("-- ProgressListener -- onLocationChange (loading): " + aProgress.DOMWindow.location.href);
+        Socialite.linkStartLoad(aProgress.DOMWindow);
+      }
     }
   },
   
   onProgressChange: function() {return 0;},
   onStatusChange: function() {return 0;},
   onSecurityChange: function() {return 0;},
-  onLinkIconAvailable: function() {return 0;}
 }
 
 // ---
@@ -83,15 +105,57 @@ Socialite.onLoad = function() {
   this.linksWatchedQueue = [];
   this.linksWatchedLimit = 100;
   
-  gBrowser.addEventListener("DOMContentLoaded", GM_hitch(this, "contentLoad"), true);
-  this.tabBrowser.addProgressListener(SocialiteProgressListener, Components.interfaces.nsIWebProgress.NOTIFY_STATE_WINDOW);
+  this.tabBrowser.addEventListener("DOMContentLoaded", GM_hitch(this, "contentLoad"), false);
+  
+  // Watch for new tabs to add progress listener to them
+  this.tabBrowser.addEventListener("TabOpen", GM_hitch(this, "tabOpened"), false);
+  this.tabBrowser.addEventListener("TabClose", GM_hitch(this, "tabClosed"), false);
+  
+  // Add progress listener to all current tabs
+  for (var i = 0; i < this.tabBrowser.browsers.length; i++) {
+    var browser = this.tabBrowser.getBrowserAtIndex(i);
+    this.setupProgressListener(browser);
+  }
   
   this.initialized = true;
 };
 
-Socialite.onUnload = function() {
-  this.tabBrowser.removeProgressListener(SocialiteProgressListener);
+Socialite.setupProgressListener = function(browser) {
+  debug_log("Progress listener added.");
+    
+  browser.addProgressListener(SocialiteProgressListener);
 };
+
+Socialite.removeProgressListener = function(browser) {
+  debug_log("Progress listener removed.");
+    
+  browser.removeProgressListener(SocialiteProgressListener);
+};
+
+Socialite.onUnload = function() {
+  // Remove remaining progress listeners.
+  
+  for (var i = 0; i < this.tabBrowser.browsers.length; i++) {
+    var browser = this.tabBrowser.getBrowserAtIndex(i);
+    this.removeProgressListener(browser);
+  }
+};
+
+Socialite.tabOpened = function(e) {
+  var browser = e.originalTarget.linkedBrowser;
+  
+  debug_log("Tab opened: " + browser.contentWindow.location.href);
+  
+  this.setupProgressListener(browser);
+}
+
+Socialite.tabClosed = function(e) {
+  var browser = e.originalTarget.linkedBrowser;
+  
+  debug_log("Tab closed: " + browser.contentWindow.location.href);
+  
+  this.removeProgressListener(browser);
+}
 
 Socialite.contentLoad = function(e) {
   var doc = e.originalTarget;
@@ -102,12 +166,12 @@ Socialite.contentLoad = function(e) {
     
     if (href.match(/^http:\/\/www\.reddit\.com/) && win == win.top) {
       // Iterate over each article link and register event listener
-      var iterator = doc.evaluate('//a[@class="title loggedin"]', doc.documentElement, null, XPathResult.UNORDERED_NODE_ITERATOR_TYPE, null );
+      var res = doc.evaluate('//a[@class="title loggedin"]', doc.documentElement, null, XPathResult.UNORDERED_NODE_SNAPSHOT_TYPE, null );
       
-      var siteLink = iterator.iterateNext();
-      while (siteLink) {
+      for (var i=0; i < res.snapshotLength; i++) {
+        var siteLink = res.snapshotItem(i);
         siteLink.addEventListener("mouseup", GM_hitch(this, "linkClicked"), false);
-        siteLink = iterator.iterateNext();
+        //siteLink.style.color = "red";
       }	
     }
   }
@@ -117,8 +181,6 @@ Socialite.linkClicked = function(e) {
   var link = e.target;
   var doc = link.ownerDocument;
   var browser = this.tabBrowser.getBrowserForDocument(doc);
-  
-  //alert("clicked: " + link.textContent);
   
   var linkInfo = {
     linkTitle:      link.textContent,
@@ -136,7 +198,13 @@ Socialite.linkClicked = function(e) {
 
   var linkComments      = doc.getElementById("comment_"+linkInfo.linkID);
   linkInfo.commentURL   = linkComments.href;
-  linkInfo.commentCount = parseInt(/(\d+) comments/.exec(linkComments.textContent)[1]);
+  
+  var commentNum        = /((\d+)\s)?comment[s]?/.exec(linkComments.textContent)[2];
+  if (commentNum) {
+    linkInfo.commentCount = parseInt(commentNum);
+  } else {
+    linkInfo.commentCount = 0;
+  }
   
   var linkSave          = doc.getElementById("save_"+linkInfo.linkID+"_a");
   var linkUnsave        = doc.getElementById("unsave_"+linkInfo.linkID+"_a");
@@ -145,12 +213,18 @@ Socialite.linkClicked = function(e) {
     // If there's a save link
     // Whether it's clicked
     linkInfo.linkIsSaved = (linkSave.style.display == "none");
-  } else {
+  } else if (linkUnsave != null) {
     // If there's an unsave link (assumption)
     // Whether it's not clicked
     linkInfo.linkIsSaved = (linkUnsave.style.display != "none");
+  } else {
+    // No save or unsave link present -- this shouldn't happen, as far as I know.
+    throw "Unexpected save link absence.";
   }
   
+  linkInfo.modFrame = null;
+  
+  debug_log("Clicked: " + linkInfo.linkID);
   this.watchLink(link.href, linkInfo);
 };
 
@@ -162,10 +236,14 @@ Socialite.watchLink = function(href, linkInfo) {
 
   this.linksWatched[href] = linkInfo;
   this.linksWatchedQueue.push(href);
+  
+  debug_log("Watching: " + href);
 }
 
 Socialite.linkStartLoad = function(win, href) {
   var href = win.location.href;
+
+  debug_log("Loading: " + href);
 
   if (href in this.linksWatched) {  
     var linkInfo = this.linksWatched[href];
@@ -174,6 +252,8 @@ Socialite.linkStartLoad = function(win, href) {
     // Show the banner, without allowing actions yet
     linkInfo.modActive = false;
     this.showBanner(browser, linkInfo);
+    
+    debug_log("Displayed banner: " + linkInfo.linkID);
   }
 }
 
@@ -186,18 +266,25 @@ Socialite.linkFinishLoad = function(win) {
     var linkInfo = this.linksWatched[href];
   
     // Sneaky IFrame goodness
-    linkInfo.modFrame       = doc.createElement("IFrame")
-    linkInfo.modFrame.id    = "socialite-frame"
-    linkInfo.modFrame.setAttribute("style", "display:none");
-
-    // Add it.
-    doc.body.appendChild(linkInfo.modFrame);
-
-    // Watch it.
-    makeOneShot(linkInfo.modFrame, "load", GM_hitch(this, "modFrameLoad", linkInfo), false);
     
-    // Load it.
-    linkInfo.modFrame.src   = "http://www.reddit.com/toolbar?id=" + linkInfo.linkID
+    if (linkInfo.modFrame == null) {
+      linkInfo.modFrame       = doc.createElement("IFrame")
+      linkInfo.modFrame.id    = "socialite-frame"
+      linkInfo.modFrame.setAttribute("style", "display:none");
+
+      // Add it.
+      doc.body.appendChild(linkInfo.modFrame);
+
+      // Watch it.
+      makeOneShot(linkInfo.modFrame, "load", GM_hitch(this, "modFrameLoad", linkInfo), false);
+      
+      // Load it.
+      linkInfo.modFrame.src   = "http://www.reddit.com/toolbar?id=" + linkInfo.linkID
+      
+      debug_log("Finished loading, started frame: " + linkInfo.linkID);
+    } else {
+      debug_log("Finished loading, frame already exists for: " + linkInfo.linkID);
+    }
   }
 };
 
@@ -231,6 +318,8 @@ Socialite.modFrameLoad = function(e, linkInfo) {
   
   linkInfo.modActive = true;
   this.updateButtons(linkInfo);
+  
+  debug_log("Frame loaded: " + linkInfo.linkID);
 };
   
 Socialite.showBanner = function(browser, linkInfo) {
@@ -400,7 +489,7 @@ Socialite.buttonDislikeClicked = function(e, linkInfo) {
 };
 
 Socialite.buttonCommentsClicked = function(e, linkInfo) {
-  this.handleLinkClicked(e, linkInfo.commentURL);
+  openUILink(linkInfo.commentURL, e);
 };
 
 Socialite.buttonSaveClicked = function(e, linkInfo) {
@@ -417,16 +506,7 @@ Socialite.buttonSaveClicked = function(e, linkInfo) {
 
 
 Socialite.siteLinkClicked = function(e) {
-  this.handleLinkClicked(e, "http://www.reddit.com");
-};
-
-Socialite.handleLinkClicked = function(e, url) {
-  if (e.button == 1) {
-    // Middle mouse button
-    this.tabBrowser.loadOneTab(url)
-  } else {
-    this.tabBrowser.loadURI(url);
-  }
+  openUILink("http://www.reddit.com", e);
 };
 
 Socialite.init();
