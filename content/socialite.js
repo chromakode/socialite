@@ -22,13 +22,8 @@ REDDIT_DISLIKE_ACTIVE_IMAGE = "chrome://socialite/content/reddit_adownmod.png"
 
 // ---
 
-// Augggghhh
-
 const STATE_START = Components.interfaces.nsIWebProgressListener.STATE_START;
 const STATE_STOP = Components.interfaces.nsIWebProgressListener.STATE_STOP;
-const STATE_IS_DOCUMENT = Components.interfaces.nsIWebProgressListener.STATE_IS_DOCUMENT;
-const STATE_IS_WINDOW = Components.interfaces.nsIWebProgressListener.STATE_IS_WINDOW;
-const LOAD_INITIAL_DOCUMENT_URI = Components.interfaces.nsIChannel.LOAD_INITIAL_DOCUMENT_URI;
 var SocialiteProgressListener =
 {
   QueryInterface: function(aIID) {
@@ -39,36 +34,14 @@ var SocialiteProgressListener =
    throw Components.results.NS_NOINTERFACE;
   },
 
-  onStateChange: function(aWebProgress, aRequest, aFlag, aStatus) {
-    if((aFlag & STATE_STOP)
-        && (aRequest.loadFlags & LOAD_INITIAL_DOCUMENT_URI)
-        && (aFlag & STATE_IS_DOCUMENT)) {
-      
-      // This checks to see if we've finished loading a document.
-      // LOAD_INITIAL_DOCUMENT_URI is required to prevent multiple firings.
-      // see http://www.nabble.com/Re%3A-Inhibitting-multiple-pageLoad-events-on-pageLoad-p13720524.html
-      
-      var window = aWebProgress.DOMWindow;
-      
-      if (window == window.top) {
-        debug_log("SocialiteProgressListener", "onStateChange (stop): " + window.location.href);
-        Socialite.linkFinishLoad(window);
-      }
-    }
-    
-    return 0;
-  },
+  onStateChange: function(aWebProgress, aRequest, aFlag, aStatus) {return 0;},
 
   onLocationChange: function(aProgress, aRequest, aURI) {
-    // Triggered at the beginning of a page's loading process, after the href has switched.
-    // Tab switches will also trigger this, with isLoadingDocument false
-    if(aProgress.isLoadingDocument) {
-      var window = aProgress.DOMWindow;
-      
-      if (window == window.top) {
-        debug_log("SocialiteProgressListener", "onLocationChange (loading): " + aProgress.DOMWindow.location.href);
-        Socialite.linkStartLoad(window);
-      }
+    var window = aProgress.DOMWindow;
+    
+    if (window == window.top) {
+      debug_log("SocialiteProgressListener", "onLocationChange (loading): " + aProgress.DOMWindow.location.href);
+      Socialite.linkStartLoad(window);
     }
   },
   
@@ -111,11 +84,8 @@ Socialite.onLoad = function() {
   this.tabBrowser.addEventListener("TabOpen", GM_hitch(this, "tabOpened"), false);
   this.tabBrowser.addEventListener("TabClose", GM_hitch(this, "tabClosed"), false);
   
-  // Add progress listener to all current tabs
-  for (var i = 0; i < this.tabBrowser.browsers.length; i++) {
-    var browser = this.tabBrowser.getBrowserAtIndex(i);
-    this.setupProgressListener(browser);
-  }
+  // Add progress listener to tabbrowser. This fires progress events for the current tab.
+  this.setupProgressListener(this.tabBrowser);
   
   this.initialized = true;
 };
@@ -135,26 +105,22 @@ Socialite.unsetProgressListener = function(browser) {
 Socialite.onUnload = function() {
   // Remove remaining progress listeners.
   
-  for (var i = 0; i < this.tabBrowser.browsers.length; i++) {
-    var browser = this.tabBrowser.getBrowserAtIndex(i);
-    this.unsetProgressListener(browser);
-  }
+  this.unsetProgressListener(this.tabBrowser);
 };
 
 Socialite.tabOpened = function(e) {
   var browser = e.originalTarget.linkedBrowser;
+  var win = browser.contentWindow;
   
-  debug_log("main", "Tab opened: " + browser.contentWindow.location.href);
+  debug_log("main", "Tab opened: " + win.location.href);
   
-  this.setupProgressListener(browser);
+  this.linkStartLoad(win);
 }
 
 Socialite.tabClosed = function(e) {
   var browser = e.originalTarget.linkedBrowser;
   
   debug_log("main", "Tab closed: " + browser.contentWindow.location.href);
-  
-  this.unsetProgressListener(browser);
 }
 
 Socialite.contentLoad = function(e) {
@@ -241,7 +207,7 @@ Socialite.watchLink = function(href, linkInfo) {
   debug_log("main", "Watching: " + href);
 }
 
-Socialite.linkStartLoad = function(win, href) {
+Socialite.linkStartLoad = function(win) {
   var href = win.location.href;
 
   if (href in this.linksWatched) {
@@ -252,6 +218,12 @@ Socialite.linkStartLoad = function(win, href) {
   
     // Show the banner, without allowing actions yet
     this.showNotificationBox(browser, linkInfo);
+    
+    if (browser.webProgress.isLoadingDocument) {
+      makeOneShot(win, "load", GM_hitch(this, "linkFinishLoad", win), false);
+    } else {
+      this.linkFinishLoad(win);
+    }
   }
 }
   
@@ -347,43 +319,43 @@ Socialite.showNotificationBox = function(browser, linkInfo) {
     debug_log(linkInfo.linkID, "Notification box created");
     
     linkInfo.notification = notification;
-    
-    // Modify to prevent notifications from autoclosing on location switch
-    // This is due to problems in the order of events from nsIProgressListeners
-    // see https://bugzilla.mozilla.org/show_bug.cgi?id=441088
-    notification.persistence = 999;
 };
 
 Socialite.linkFinishLoad = function(win) {
+  var doc = win.document;
   var href = win.location.href;
   
   if (href in this.linksWatched) {
-    var doc = win.document;
     var linkInfo = this.linksWatched[href];
- 
-    // Reset the notification persistence   
-    linkInfo.notification.persistence = 0;
   
     // Sneaky IFrame goodness
     
-    if (linkInfo.modFrame == null) {
-      linkInfo.modFrame       = doc.createElement("IFrame")
-      linkInfo.modFrame.id    = "socialite-frame"
-      linkInfo.modFrame.setAttribute("style", "display:none");
+    var frameName = "socialite-frame-" + linkInfo.linkID;
+    var modFrame = doc.getElementById(frameName);
+
+    if (modFrame == null) {
+      modFrame = doc.createElement("IFrame")
+      modFrame.id = frameName;
+      modFrame.setAttribute("style", "display:none");
 
       // Add it.
-      doc.body.appendChild(linkInfo.modFrame);
-
+      doc.body.appendChild(modFrame);
+      
       // Watch it.
-      makeOneShot(linkInfo.modFrame, "load", GM_hitch(this, "modFrameLoad", linkInfo), false);
+      makeOneShot(modFrame, "load", GM_hitch(this, "modFrameLoad", linkInfo), false);
       
       // Load it.
-      linkInfo.modFrame.src   = "http://www.reddit.com/toolbar?id=" + linkInfo.linkID
+      modFrame.src   = "http://www.reddit.com/toolbar?id=" + linkInfo.linkID
       
       debug_log(linkInfo.linkID, "Finished loading, started frame");
     } else {
-      debug_log(linkInfo.linkID, "Finished loading, frame already exists");
+      debug_log(linkInfo.linkID, "Finished loading, frame already exists: reloading.");
+      
+      makeOneShot(modFrame, "load", GM_hitch(this, "modFrameLoad", linkInfo), false);
+      modFrame.contentWindow.location.reload();
     }
+        
+    linkInfo.modFrame = modFrame;
     
   }
 };
