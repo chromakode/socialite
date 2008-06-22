@@ -77,107 +77,6 @@ var SocialiteProgressListener =
   onSecurityChange: function() {return 0;},
 }
 
-var BrowserProgressListener =
-{
-  QueryInterface: function(aIID) {
-   if (aIID.equals(Components.interfaces.nsIWebProgressListener) ||
-       aIID.equals(Components.interfaces.nsISupportsWeakReference) ||
-       aIID.equals(Components.interfaces.nsISupports))
-     return this;
-   throw Components.results.NS_NOINTERFACE;
-  },
-
-  onStateChange: function(aWebProgress, aRequest, aFlag, aStatus) {
-    var window = aWebProgress.DOMWindow;
-    debug_log("BrowserProgressListener", "onStateChange (stop): " + window.location.href);
-  },
-
-  onLocationChange: function(aProgress, aRequest, aURI) {
-    var window = aProgress.DOMWindow;
-    debug_log("BrowserProgressListener", "onLocationChange (loading):" + window.location.href);
-  },
-  
-  onProgressChange: function() {return 0;},
-  onStatusChange: function() {return 0;},
-  onSecurityChange: function() {return 0;},
-}
-
-var BrowserProgressListener2 =
-{
-  QueryInterface: function(aIID) {
-   if (aIID.equals(Components.interfaces.nsIWebProgressListener) ||
-       aIID.equals(Components.interfaces.nsISupportsWeakReference) ||
-       aIID.equals(Components.interfaces.nsISupports))
-     return this;
-   throw Components.results.NS_NOINTERFACE;
-  },
-
-  onStateChange: function(aWebProgress, aRequest, aFlag, aStatus) {
-    var window = aWebProgress.DOMWindow;
-    debug_log("BrowserProgressListener2", "onStateChange (stop): " + window.location.href);
-  },
-
-  onLocationChange: function(aProgress, aRequest, aURI) {
-    var window = aProgress.DOMWindow;
-    debug_log("BrowserProgressListener2", "onLocationChange (loading):" + window.location.href);
-  },
-  
-  onProgressChange: function() {return 0;},
-  onStatusChange: function() {return 0;},
-  onSecurityChange: function() {return 0;},
-}
-
-var TabbedBrowserProgressListener =
-{
-  QueryInterface: function(aIID) {
-   if (aIID.equals(Components.interfaces.nsIWebProgressListener) ||
-       aIID.equals(Components.interfaces.nsISupportsWeakReference) ||
-       aIID.equals(Components.interfaces.nsISupports))
-     return this;
-   throw Components.results.NS_NOINTERFACE;
-  },
-
-  onStateChange: function(aWebProgress, aRequest, aFlag, aStatus) {
-    var window = aWebProgress.DOMWindow;
-    debug_log("TabbedBrowserProgressListener", "onStateChange (stop): " + window.location.href);
-  },
-
-  onLocationChange: function(aProgress, aRequest, aURI) {
-    var window = aProgress.DOMWindow;
-    debug_log("TabbedBrowserProgressListener", "onLocationChange (loading):" + window.location.href);
-  },
-  
-  onProgressChange: function() {return 0;},
-  onStatusChange: function() {return 0;},
-  onSecurityChange: function() {return 0;},
-}
-
-var TabbedBrowserProgressListener2 =
-{
-  QueryInterface: function(aIID) {
-   if (aIID.equals(Components.interfaces.nsIWebProgressListener) ||
-       aIID.equals(Components.interfaces.nsISupportsWeakReference) ||
-       aIID.equals(Components.interfaces.nsISupports))
-     return this;
-   throw Components.results.NS_NOINTERFACE;
-  },
-
-  onStateChange: function(aWebProgress, aRequest, aFlag, aStatus) {
-    var window = aWebProgress.DOMWindow;
-    debug_log("TabbedBrowserProgressListener2", "onStateChange (stop): " + window.location.href);
-  },
-
-  onLocationChange: function(aProgress, aRequest, aURI) {
-    var window = aProgress.DOMWindow;
-    debug_log("TabbedBrowserProgressListener2", "onLocationChange (loading):" + window.location.href);
-  },
-  
-  onProgressChange: function() {return 0;},
-  onStatusChange: function() {return 0;},
-  onSecurityChange: function() {return 0;},
-}
-
-
 // ---
 
 var Socialite = new Object();
@@ -212,9 +111,6 @@ Socialite.onLoad = function() {
   this.tabBrowser.addEventListener("TabOpen", GM_hitch(this, "tabOpened"), false);
   this.tabBrowser.addEventListener("TabClose", GM_hitch(this, "tabClosed"), false);
   
-  this.tabBrowser.addProgressListener(TabbedBrowserProgressListener2,  Components.interfaces.nsIWebProgress.NOTIFY_ALL);
-  this.tabBrowser.addProgressListener(TabbedBrowserProgressListener,  Components.interfaces.nsIWebProgress.NOTIFY_ALL);
-  
   // Add progress listener to all current tabs
   for (var i = 0; i < this.tabBrowser.browsers.length; i++) {
     var browser = this.tabBrowser.getBrowserAtIndex(i);
@@ -227,8 +123,7 @@ Socialite.onLoad = function() {
 Socialite.setupProgressListener = function(browser) {
   debug_log("main", "Progress listener added.");
   
-  browser.addProgressListener(BrowserProgressListener2,  Components.interfaces.nsIWebProgress.NOTIFY_ALL);
-  browser.addProgressListener(BrowserProgressListener,  Components.interfaces.nsIWebProgress.NOTIFY_ALL);
+  browser.addProgressListener(SocialiteProgressListener,  Components.interfaces.nsIWebProgress.NOTIFY_ALL);
 };
 
 Socialite.unsetProgressListener = function(browser) {
