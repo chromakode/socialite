@@ -77,6 +77,107 @@ var SocialiteProgressListener =
   onSecurityChange: function() {return 0;},
 }
 
+var BrowserProgressListener =
+{
+  QueryInterface: function(aIID) {
+   if (aIID.equals(Components.interfaces.nsIWebProgressListener) ||
+       aIID.equals(Components.interfaces.nsISupportsWeakReference) ||
+       aIID.equals(Components.interfaces.nsISupports))
+     return this;
+   throw Components.results.NS_NOINTERFACE;
+  },
+
+  onStateChange: function(aWebProgress, aRequest, aFlag, aStatus) {
+    var window = aWebProgress.DOMWindow;
+    debug_log("BrowserProgressListener", "onStateChange (stop): " + window.location.href);
+  },
+
+  onLocationChange: function(aProgress, aRequest, aURI) {
+    var window = aProgress.DOMWindow;
+    debug_log("BrowserProgressListener", "onLocationChange (loading):" + window.location.href);
+  },
+  
+  onProgressChange: function() {return 0;},
+  onStatusChange: function() {return 0;},
+  onSecurityChange: function() {return 0;},
+}
+
+var BrowserProgressListener2 =
+{
+  QueryInterface: function(aIID) {
+   if (aIID.equals(Components.interfaces.nsIWebProgressListener) ||
+       aIID.equals(Components.interfaces.nsISupportsWeakReference) ||
+       aIID.equals(Components.interfaces.nsISupports))
+     return this;
+   throw Components.results.NS_NOINTERFACE;
+  },
+
+  onStateChange: function(aWebProgress, aRequest, aFlag, aStatus) {
+    var window = aWebProgress.DOMWindow;
+    debug_log("BrowserProgressListener2", "onStateChange (stop): " + window.location.href);
+  },
+
+  onLocationChange: function(aProgress, aRequest, aURI) {
+    var window = aProgress.DOMWindow;
+    debug_log("BrowserProgressListener2", "onLocationChange (loading):" + window.location.href);
+  },
+  
+  onProgressChange: function() {return 0;},
+  onStatusChange: function() {return 0;},
+  onSecurityChange: function() {return 0;},
+}
+
+var TabbedBrowserProgressListener =
+{
+  QueryInterface: function(aIID) {
+   if (aIID.equals(Components.interfaces.nsIWebProgressListener) ||
+       aIID.equals(Components.interfaces.nsISupportsWeakReference) ||
+       aIID.equals(Components.interfaces.nsISupports))
+     return this;
+   throw Components.results.NS_NOINTERFACE;
+  },
+
+  onStateChange: function(aWebProgress, aRequest, aFlag, aStatus) {
+    var window = aWebProgress.DOMWindow;
+    debug_log("TabbedBrowserProgressListener", "onStateChange (stop): " + window.location.href);
+  },
+
+  onLocationChange: function(aProgress, aRequest, aURI) {
+    var window = aProgress.DOMWindow;
+    debug_log("TabbedBrowserProgressListener", "onLocationChange (loading):" + window.location.href);
+  },
+  
+  onProgressChange: function() {return 0;},
+  onStatusChange: function() {return 0;},
+  onSecurityChange: function() {return 0;},
+}
+
+var TabbedBrowserProgressListener2 =
+{
+  QueryInterface: function(aIID) {
+   if (aIID.equals(Components.interfaces.nsIWebProgressListener) ||
+       aIID.equals(Components.interfaces.nsISupportsWeakReference) ||
+       aIID.equals(Components.interfaces.nsISupports))
+     return this;
+   throw Components.results.NS_NOINTERFACE;
+  },
+
+  onStateChange: function(aWebProgress, aRequest, aFlag, aStatus) {
+    var window = aWebProgress.DOMWindow;
+    debug_log("TabbedBrowserProgressListener2", "onStateChange (stop): " + window.location.href);
+  },
+
+  onLocationChange: function(aProgress, aRequest, aURI) {
+    var window = aProgress.DOMWindow;
+    debug_log("TabbedBrowserProgressListener2", "onLocationChange (loading):" + window.location.href);
+  },
+  
+  onProgressChange: function() {return 0;},
+  onStatusChange: function() {return 0;},
+  onSecurityChange: function() {return 0;},
+}
+
+
 // ---
 
 var Socialite = new Object();
@@ -111,6 +212,9 @@ Socialite.onLoad = function() {
   this.tabBrowser.addEventListener("TabOpen", GM_hitch(this, "tabOpened"), false);
   this.tabBrowser.addEventListener("TabClose", GM_hitch(this, "tabClosed"), false);
   
+  this.tabBrowser.addProgressListener(TabbedBrowserProgressListener2,  Components.interfaces.nsIWebProgress.NOTIFY_ALL);
+  this.tabBrowser.addProgressListener(TabbedBrowserProgressListener,  Components.interfaces.nsIWebProgress.NOTIFY_ALL);
+  
   // Add progress listener to all current tabs
   for (var i = 0; i < this.tabBrowser.browsers.length; i++) {
     var browser = this.tabBrowser.getBrowserAtIndex(i);
@@ -123,8 +227,8 @@ Socialite.onLoad = function() {
 Socialite.setupProgressListener = function(browser) {
   debug_log("main", "Progress listener added.");
   
-  browser.addProgressListener(SocialiteProgressListener,  Components.interfaces.nsIWebProgress.NOTIFY_ALL);
-  //browser.webProgress.addProgressListener(SocialiteProgressListener,  Components.interfaces.nsIWebProgress.NOTIFY_ALL);
+  browser.addProgressListener(BrowserProgressListener2,  Components.interfaces.nsIWebProgress.NOTIFY_ALL);
+  browser.addProgressListener(BrowserProgressListener,  Components.interfaces.nsIWebProgress.NOTIFY_ALL);
 };
 
 Socialite.unsetProgressListener = function(browser) {
@@ -255,70 +359,6 @@ Socialite.linkStartLoad = function(win, href) {
     this.showNotificationBox(browser, linkInfo);
   }
 }
-
-Socialite.linkFinishLoad = function(win) {
-  var href = win.location.href;
-  
-  if (href in this.linksWatched) {
-    var doc = win.document;
-    var linkInfo = this.linksWatched[href];
-  
-    // Sneaky IFrame goodness
-    
-    if (linkInfo.modFrame == null) {
-      linkInfo.modFrame       = doc.createElement("IFrame")
-      linkInfo.modFrame.id    = "socialite-frame"
-      linkInfo.modFrame.setAttribute("style", "display:none");
-
-      // Add it.
-      doc.body.appendChild(linkInfo.modFrame);
-
-      // Watch it.
-      makeOneShot(linkInfo.modFrame, "load", GM_hitch(this, "modFrameLoad", linkInfo), false);
-      
-      // Load it.
-      linkInfo.modFrame.src   = "http://www.reddit.com/toolbar?id=" + linkInfo.linkID
-      
-      debug_log(linkInfo.linkID, "Finished loading, started frame");
-    } else {
-      debug_log(linkInfo.linkID, "Finished loading, frame already exists");
-    }
-  }
-};
-
-Socialite.modFrameLoad = function(linkInfo, e) {
-  var modFrameDoc = e.target.contentDocument;
-  var doc = e.target.ownerDocument;  
-  var browser = this.tabBrowser.getBrowserForDocument(doc);
-  
-  // Note: Uses wrappedJSObject to retrieve unprotected chrome-internal javascript objects.
-  
-  linkInfo.linkLike       = modFrameDoc.getElementById("up_"+linkInfo.linkID).wrappedJSObject;
-  linkInfo.linkLikeActive = /upmod/.test(linkInfo.linkLike.className);
-  
-  linkInfo.linkDislike    = modFrameDoc.getElementById("down_"+linkInfo.linkID).wrappedJSObject;
-  linkInfo.linkDislikeActive = /downmod/.test(linkInfo.linkDislike.className);
-
-  linkInfo.linkComments   = modFrameDoc.getElementById("comment_"+linkInfo.linkID);
-  
-  linkInfo.linkSave       = modFrameDoc.getElementById("save_"+linkInfo.linkID+"_a");
-  if (linkInfo.linkSave) {
-    linkInfo.linkSave = linkInfo.linkSave.wrappedJSObject;
-  }
-  
-  linkInfo.linkUnsave     = modFrameDoc.getElementById("unsave_"+linkInfo.linkID+"_a");
-  if (linkInfo.linkUnsave) {
-    linkInfo.linkUnsave = linkInfo.linkUnsave.wrappedJSObject;
-  }
-  
-  // We got this earlier at linkClicked
-  //linkInfo.commentCount   = parseInt(/(\d+) comments/.exec(linkInfo.linkComments.textContent)[1]);
-  
-  linkInfo.modActive = true;
-  this.updateButtons(linkInfo);
-  
-  debug_log(linkInfo.linkID, "Frame loaded");
-};
   
 Socialite.showNotificationBox = function(browser, linkInfo) {
     var notificationBox = this.tabBrowser.getNotificationBox(browser);
@@ -411,8 +451,80 @@ Socialite.showNotificationBox = function(browser, linkInfo) {
     
     debug_log(linkInfo.linkID, "Notification box created");
     
-    // Modify to prevent notifications from autoclosing
-    //notification.persistence = 0;
+    linkInfo.notification = notification;
+    
+    // Modify to prevent notifications from autoclosing on location switch
+    // This is due to problems in the order of events from nsIProgressListeners
+    // see https://bugzilla.mozilla.org/show_bug.cgi?id=441088
+    notification.persistence = 999;
+};
+
+Socialite.linkFinishLoad = function(win) {
+  var href = win.location.href;
+  
+  if (href in this.linksWatched) {
+    var doc = win.document;
+    var linkInfo = this.linksWatched[href];
+ 
+    // Reset the notification persistence   
+    linkInfo.notification.persistence = 0;
+  
+    // Sneaky IFrame goodness
+    
+    if (linkInfo.modFrame == null) {
+      linkInfo.modFrame       = doc.createElement("IFrame")
+      linkInfo.modFrame.id    = "socialite-frame"
+      linkInfo.modFrame.setAttribute("style", "display:none");
+
+      // Add it.
+      doc.body.appendChild(linkInfo.modFrame);
+
+      // Watch it.
+      makeOneShot(linkInfo.modFrame, "load", GM_hitch(this, "modFrameLoad", linkInfo), false);
+      
+      // Load it.
+      linkInfo.modFrame.src   = "http://www.reddit.com/toolbar?id=" + linkInfo.linkID
+      
+      debug_log(linkInfo.linkID, "Finished loading, started frame");
+    } else {
+      debug_log(linkInfo.linkID, "Finished loading, frame already exists");
+    }
+    
+  }
+};
+
+Socialite.modFrameLoad = function(linkInfo, e) {
+  var modFrameDoc = e.target.contentDocument;
+  var doc = e.target.ownerDocument;  
+  var browser = this.tabBrowser.getBrowserForDocument(doc);
+  
+  // Note: Uses wrappedJSObject to retrieve unprotected chrome-internal javascript objects.
+  
+  linkInfo.linkLike       = modFrameDoc.getElementById("up_"+linkInfo.linkID).wrappedJSObject;
+  linkInfo.linkLikeActive = /upmod/.test(linkInfo.linkLike.className);
+  
+  linkInfo.linkDislike    = modFrameDoc.getElementById("down_"+linkInfo.linkID).wrappedJSObject;
+  linkInfo.linkDislikeActive = /downmod/.test(linkInfo.linkDislike.className);
+
+  linkInfo.linkComments   = modFrameDoc.getElementById("comment_"+linkInfo.linkID);
+  
+  linkInfo.linkSave       = modFrameDoc.getElementById("save_"+linkInfo.linkID+"_a");
+  if (linkInfo.linkSave) {
+    linkInfo.linkSave = linkInfo.linkSave.wrappedJSObject;
+  }
+  
+  linkInfo.linkUnsave     = modFrameDoc.getElementById("unsave_"+linkInfo.linkID+"_a");
+  if (linkInfo.linkUnsave) {
+    linkInfo.linkUnsave = linkInfo.linkUnsave.wrappedJSObject;
+  }
+  
+  // We got this earlier at linkClicked
+  //linkInfo.commentCount   = parseInt(/(\d+) comments/.exec(linkInfo.linkComments.textContent)[1]);
+  
+  linkInfo.modActive = true;
+  this.updateButtons(linkInfo);
+  
+  debug_log(linkInfo.linkID, "Frame loaded");
 };
 
 Socialite.updateButtonLike = function(buttonLike, isActive) {
