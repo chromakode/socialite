@@ -21,6 +21,11 @@ REDDIT_LIKE_ACTIVE_IMAGE = "chrome://socialite/content/reddit_aupmod.png"
 REDDIT_DISLIKE_INACTIVE_IMAGE = "chrome://socialite/content/reddit_adowngray.png"
 REDDIT_DISLIKE_ACTIVE_IMAGE = "chrome://socialite/content/reddit_adownmod.png"
 
+var nativeJSON = Components.classes["@mozilla.org/dom/json;1"]
+                 .createInstance(Components.interfaces.nsIJSON);
+
+Components.utils.import("resource://socialite/reddit.jsm");
+
 // ---
 
 const STATE_START = Components.interfaces.nsIWebProgressListener.STATE_START;
@@ -153,28 +158,37 @@ Socialite.linkClicked = function(e) {
     linkTitle:      link.textContent,
     
     // Remove title_ from title_XX_XXXXX
+    linkHref:       link.href,
     linkID:         link.id.slice(6),
   };
   
   // Get some information from the page while we can.
-  var linkLike           = doc.getElementById("up_"+linkInfo.linkID);
-  linkInfo.linkLikeActive = /upmod/.test(linkLike.className);
+  var linkLike            = doc.getElementById("up_"+linkInfo.linkID);
+  var linkLikeActive      = /upmod/.test(linkLike.className);
   
-  var linkDislike       = doc.getElementById("down_"+linkInfo.linkID);
-  linkInfo.linkDislikeActive = /downmod/.test(linkDislike.className);
+  var linkDislike         = doc.getElementById("down_"+linkInfo.linkID);
+  var linkDislikeActive   = /downmod/.test(linkDislike.className);
 
-  var linkComments      = doc.getElementById("comment_"+linkInfo.linkID);
-  linkInfo.commentURL   = linkComments.href;
+  if (linkLikeActive) {
+    linkInfo.linkIsLiked  = true;
+  } else if (linkDislikeActive) {
+    linkInfo.linkIsLiked  = false;
+  } else {
+    linkInfo.linkIsLiked  = null;
+  }
+
+  var linkComments        = doc.getElementById("comment_"+linkInfo.linkID);
+  linkInfo.commentURL     = linkComments.href;
   
-  var commentNum        = /((\d+)\s)?comment[s]?/.exec(linkComments.textContent)[2];
+  var commentNum          = /((\d+)\s)?comment[s]?/.exec(linkComments.textContent)[2];
   if (commentNum) {
     linkInfo.commentCount = parseInt(commentNum);
   } else {
     linkInfo.commentCount = 0;
   }
   
-  var linkSave          = doc.getElementById("save_"+linkInfo.linkID+"_a");
-  var linkUnsave        = doc.getElementById("unsave_"+linkInfo.linkID+"_a");
+  var linkSave            = doc.getElementById("save_"+linkInfo.linkID+"_a");
+  var linkUnsave          = doc.getElementById("unsave_"+linkInfo.linkID+"_a");
   
   if (linkSave != null) {
     // If there's a save link
@@ -189,8 +203,7 @@ Socialite.linkClicked = function(e) {
     throw "Unexpected save link absence.";
   }
   
-  linkInfo.modFrame = null;
-  linkInfo.modActive = false;
+  linkInfo.modActive = true;
   
   debug_log(linkInfo.linkID, "Clicked");
   this.watchLink(link.href, linkInfo);
@@ -217,9 +230,39 @@ Socialite.linkStartLoad = function(win) {
     
     debug_log(linkInfo.linkID, "Started loading");
   
+    this.updateLinkInfo(linkInfo);
+  
     // Show the banner, without allowing actions yet
     this.showNotificationBox(browser, linkInfo);
   }
+}
+  
+Socialite.updateLinkInfo = function(linkInfo) {
+  debug_log(linkInfo.linkID, "Making ajax info call");
+  
+  var params   = {
+    url:    linkInfo.linkHref;
+    sr:     "";
+    count:  1; 
+  };
+    
+  redditRequest("info.json", params, GM_hitch(this, "updateLinkInfoResp", linkInfo), "get");
+}
+
+Socialite.updateLinkInfoResp = function(linkInfo, r) {
+  var d = nativeJSON.decode(r.responseText);
+  var linkData = d.data.children[0].data;
+  
+  linkInfo.linkIsLiked  = linkData.likes;
+  linkInfo.commentCount = linkData.num_comments;
+  linkInfo.linkIsSaved  = linkData.saved;
+  
+  debug_log(linkInfo.linkID, "Received ajax info call response: "        +
+                             "liked: "    + linkInfo.isLiked + ", "      +
+                             "comments: " + linkInfo.commentCount + ", " +
+                             "saved: "    + linkInfo.linkIsSaved);
+  
+  this.updateButtons(linkInfo);
 }
   
 Socialite.showNotificationBox = function(browser, linkInfo) {
@@ -301,13 +344,6 @@ Socialite.showNotificationBox = function(browser, linkInfo) {
     notification.appendChild(buttonSave);
     linkInfo.buttonSave = buttonSave;
     
-    var modFrame = document.createElement("iframe");
-    modFrame.setAttribute("id", "socialite_frame_"+linkInfo.linkID);
-    //modFrame.setAttribute("hidden", true);
-    this.appContent.appendChild(modFrame);
-    this.setupModFrame(linkInfo, modFrame);
-    linkInfo.modFrame = modFrame;
-    
     this.updateButtons(linkInfo);
     
     debug_log(linkInfo.linkID, "Notification box created");
@@ -315,70 +351,8 @@ Socialite.showNotificationBox = function(browser, linkInfo) {
     linkInfo.notification = notification;
 };
 
-Socialite.setupModFrame = function(linkInfo, modFrame) {
-  var LOAD_FLAGS_BYPASS_CACHE = Components.interfaces.nsIWebNavigation.LOAD_FLAGS_BYPASS_CACHE;
-  var toolbarURI = "http://www.reddit.com/toolbar?id="+linkInfo.linkID;
-  
-  // Watch for the frame to load.
-  makeOneShot(modFrame.contentWindow, "DOMContentLoaded", GM_hitch(this, "modFrameLoad", linkInfo), false);
-  
-  // Load the frame
-  modFrame.webNavigation.loadURI(toolbarURI, LOAD_FLAGS_BYPASS_CACHE, null, null, null);
-    
-  debug_log(linkInfo.linkID, "Started frame");
-};
-
-Socialite.modFrameLoad = function(linkInfo, e) {
-  this.readModFrameData(linkInfo);
-  
-  linkInfo.modActive = true;
-  this.updateButtons(linkInfo);
-  
-  debug_log(linkInfo.linkID, "Frame loaded");
-};
-
-Socialite.readModFrameData = function(linkInfo) {
-  var modFrame = linkInfo.modFrame;
-  var modFrameDoc = modFrame.contentDocument;
-  
-  //debug_log(linkInfo.linkID, modFrameDoc.body.innerHTML);
-  
-  // Note: Uses wrappedJSObject to retrieve unprotected chrome-internal javascript objects.
-  
-  linkInfo.linkLike       = modFrameDoc.getElementById("up_"+linkInfo.linkID);
-  linkInfo.linkLikeActive = /upmod/.test(linkInfo.linkLike.className);
-  
-  linkInfo.linkDislike    = modFrameDoc.getElementById("down_"+linkInfo.linkID);
-  linkInfo.linkDislikeActive = /downmod/.test(linkInfo.linkDislike.className);
-
-  linkInfo.linkComments   = modFrameDoc.getElementById("comment_"+linkInfo.linkID);
-  
-  var commentNum        = /((\d+)\s)?comment[s]?/.exec(linkInfo.linkComments.textContent)[2];
-  if (commentNum) {
-    linkInfo.commentCount = parseInt(commentNum);
-  } else {
-    linkInfo.commentCount = 0;
-  }
-
-  linkInfo.linkSave       = modFrameDoc.getElementById("save_"+linkInfo.linkID+"_a");
-  linkInfo.linkUnsave     = modFrameDoc.getElementById("unsave_"+linkInfo.linkID+"_a");
-  
-  if (linkInfo.linkSave != null) {
-    // If there's a save link
-    // Whether it's clicked
-    linkInfo.linkIsSaved = (linkInfo.linkSave.style.display == "none");
-  } else if (linkInfo.linkUnsave != null) {
-    // If there's an unsave link (assumption)
-    // Whether it's not clicked
-    linkInfo.linkIsSaved = (linkInfo.linkUnsave.style.display != "none");
-  } else {
-    // No save or unsave link present -- this shouldn't happen, as far as I know.
-    throw "Unexpected save link absence.";
-  }
-}
-
-Socialite.updateButtonLike = function(buttonLike, isActive) {
-  if (isActive) {
+Socialite.updateButtonLike = function(buttonLike, isLiked) {
+  if (isLiked == true) {
     buttonLike.setAttribute("image", REDDIT_LIKE_ACTIVE_IMAGE);
     buttonLike.setAttribute("checked", true);
   } else {
@@ -387,8 +361,8 @@ Socialite.updateButtonLike = function(buttonLike, isActive) {
   }
 };
 
-Socialite.updateButtonDislike = function(buttonDislike, isActive) {
-  if (isActive) {
+Socialite.updateButtonDislike = function(buttonDislike, isLiked) {
+  if (isLiked == false) {
     buttonDislike.setAttribute("image", REDDIT_DISLIKE_ACTIVE_IMAGE);
     buttonDislike.setAttribute("checked", true);
   } else {
@@ -416,13 +390,10 @@ Socialite.updateButtons = function(linkInfo) {
     linkInfo.buttonSave.setAttribute("accesskey", this.strings.getString("save.accesskey"));
   }
   
-  if (linkInfo.linkLikeActive != null) {
-    this.updateButtonLike(linkInfo.buttonLike, linkInfo.linkLikeActive);
-  }
+  this.updateButtonLike(linkInfo.buttonLike, linkInfo.linkIsLiked);
+  this.updateButtonDislike(linkInfo.buttonDislike, linkInfo.linkIsLiked);
   
-  if (linkInfo.linkDislikeActive != null) {
-    this.updateButtonDislike(linkInfo.buttonDislike, linkInfo.linkDislikeActive);
-  }
+  debug_log(linkInfo.linkID, "Updated buttons");
 }
 
 Socialite.buttonLikeClicked = function(linkInfo, e) {
