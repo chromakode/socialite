@@ -52,7 +52,7 @@ var SocialiteProgressListener =
       
       if (window == window.top) {
         debug_log("SocialiteProgressListener", "onStateChange (stop): " + window.location.href);
-        Socialite.linkFinishLoad(aWebProgress.DOMWindow);
+        Socialite.linkFinishLoad(window);
       }
     }
     
@@ -65,10 +65,10 @@ var SocialiteProgressListener =
     if(aProgress.isLoadingDocument) {
       var window = aProgress.DOMWindow;
       
-      //if (window == window.top) {
+      if (window == window.top) {
         debug_log("SocialiteProgressListener", "onLocationChange (loading): " + aProgress.DOMWindow.location.href);
-        Socialite.linkStartLoad(aProgress.DOMWindow);
-      //}
+        Socialite.linkStartLoad(window);
+      }
     }
   },
   
@@ -122,11 +122,12 @@ Socialite.onLoad = function() {
 
 Socialite.setupProgressListener = function(browser) {
   debug_log("main", "Progress listener added.");
-    
-  browser.addProgressListener(SocialiteProgressListener);
+  
+  browser.addProgressListener(SocialiteProgressListener,  Components.interfaces.nsIWebProgress.NOTIFY_ALL);
+  //browser.webProgress.addProgressListener(SocialiteProgressListener,  Components.interfaces.nsIWebProgress.NOTIFY_ALL);
 };
 
-Socialite.removeProgressListener = function(browser) {
+Socialite.unsetProgressListener = function(browser) {
   debug_log("main", "Progress listener removed.");
     
   browser.removeProgressListener(SocialiteProgressListener);
@@ -137,7 +138,7 @@ Socialite.onUnload = function() {
   
   for (var i = 0; i < this.tabBrowser.browsers.length; i++) {
     var browser = this.tabBrowser.getBrowserAtIndex(i);
-    this.removeProgressListener(browser);
+    this.unsetProgressListener(browser);
   }
 };
 
@@ -154,7 +155,7 @@ Socialite.tabClosed = function(e) {
   
   debug_log("main", "Tab closed: " + browser.contentWindow.location.href);
   
-  this.removeProgressListener(browser);
+  this.unsetProgressListener(browser);
 }
 
 Socialite.contentLoad = function(e) {
@@ -285,7 +286,7 @@ Socialite.linkFinishLoad = function(win) {
   }
 };
 
-Socialite.modFrameLoad = function(e, linkInfo) {
+Socialite.modFrameLoad = function(linkInfo, e) {
   var modFrameDoc = e.target.contentDocument;
   var doc = e.target.ownerDocument;  
   var browser = this.tabBrowser.getBrowserForDocument(doc);
@@ -454,7 +455,7 @@ Socialite.updateButtons = function(linkInfo) {
   }
 }
 
-Socialite.buttonLikeClicked = function(e, linkInfo) {
+Socialite.buttonLikeClicked = function(linkInfo, e) {
   linkInfo.linkLike.onclick();
   
   // Deactivate other button, if applicable.
@@ -471,7 +472,7 @@ Socialite.buttonLikeClicked = function(e, linkInfo) {
   this.updateButtons(linkInfo);
 };
 
-Socialite.buttonDislikeClicked = function(e, linkInfo) {
+Socialite.buttonDislikeClicked = function(linkInfo, e) {
   linkInfo.linkDislike.onclick();
   
   // Deactivate other button, if applicable.
@@ -488,11 +489,11 @@ Socialite.buttonDislikeClicked = function(e, linkInfo) {
   this.updateButtons(linkInfo);
 };
 
-Socialite.buttonCommentsClicked = function(e, linkInfo) {
+Socialite.buttonCommentsClicked = function(linkInfo, e) {
   openUILink(linkInfo.commentURL, e);
 };
 
-Socialite.buttonSaveClicked = function(e, linkInfo) {
+Socialite.buttonSaveClicked = function(linkInfo, e) {
   if (linkInfo.linkIsSaved) {
     linkInfo.linkUnsave.onclick();
     linkInfo.buttonSave.setAttribute("label", this.strings.getString("unsaved"));

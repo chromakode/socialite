@@ -12,10 +12,8 @@ function GM_hitch(obj, meth) {
     var args = staticArgs.concat();
 
     // add all the new arguments
-    // Modification by Chromakode: put non-static arguments first
-    // Iterate backwards, adding each argument to the front of the list.
-    for (var i = arguments.length-1; i >= 0; i--) {
-      args.unshift(arguments[i]);
+    for (var i = 0; i < arguments.length; i++) {
+      args.push(arguments[i]);
     }
 
     // invoke the original function with the correct this obj and the combined
