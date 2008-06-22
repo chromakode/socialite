@@ -260,6 +260,7 @@ Socialite.showNotificationBox = function(browser, linkInfo) {
     siteLink.setAttribute("id", "socialite_reddit_link");
     siteLink.setAttribute("value", "reddit");
     siteLink.setAttribute("class", "text-link");
+    siteLink.setAttribute("flex", true);
     siteLink.setAttribute("hidden", !this.prefs.getBoolPref("showlink"));
     siteLink.addEventListener("click", GM_hitch(this, "siteLinkClicked"), false);
     messageImage.addEventListener("click", GM_hitch(this, "siteLinkClicked"), false);
