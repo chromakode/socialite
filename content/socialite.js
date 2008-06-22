@@ -219,8 +219,6 @@ Socialite.linkStartLoad = function(win) {
   
     // Show the banner, without allowing actions yet
     this.showNotificationBox(browser, linkInfo);
-    
-    makeOneShot(win, "pageshow", GM_hitch(this, "linkFinishLoad"), false);
   }
 }
   
@@ -254,7 +252,7 @@ Socialite.showNotificationBox = function(browser, linkInfo) {
     
     // Muahahahahaha
     var siteLink = document.createElement("label");
-    siteLink.setAttribute("id", "socialite_reddit_link");
+    siteLink.setAttribute("id", "socialite_site_link_"+linkInfo.linkID);
     siteLink.setAttribute("value", "reddit");
     siteLink.setAttribute("class", "text-link");
     siteLink.setAttribute("flex", true);
@@ -266,7 +264,7 @@ Socialite.showNotificationBox = function(browser, linkInfo) {
     // XUL hackage done.    
     
     var buttonLike = document.createElement("button");
-    buttonLike.setAttribute("id", "socialite_mod_up");
+    buttonLike.setAttribute("id", "socialite_mod_up_"+linkInfo.linkID);
     buttonLike.setAttribute("type", "checkbox");
     buttonLike.setAttribute("label", this.strings.getString("likeit"));
     buttonLike.setAttribute("accesskey", this.strings.getString("likeit.accesskey"));
@@ -277,7 +275,7 @@ Socialite.showNotificationBox = function(browser, linkInfo) {
     linkInfo.buttonLike = buttonLike;
     
     var buttonDislike = document.createElement("button");
-    buttonDislike.setAttribute("id", "socialite_mod_down");
+    buttonDislike.setAttribute("id", "socialite_mod_down_"+linkInfo.linkID);
     buttonDislike.setAttribute("type", "checkbox");
     buttonDislike.setAttribute("label", this.strings.getString("dislikeit"));
     buttonDislike.setAttribute("accesskey", this.strings.getString("dislikeit.accesskey"));
@@ -288,7 +286,7 @@ Socialite.showNotificationBox = function(browser, linkInfo) {
     linkInfo.buttonDislike = buttonDislike;
     
     var buttonComments = document.createElement("button");
-    buttonComments.setAttribute("id", "socialite_comments");
+    buttonComments.setAttribute("id", "socialite_comments_"+linkInfo.linkID);
     buttonComments.setAttribute("label", this.strings.getFormattedString("comments", [linkInfo.commentCount.toString()]));
     buttonComments.setAttribute("accesskey", this.strings.getString("comments.accesskey"));
     buttonComments.setAttribute("hidden", !this.prefs.getBoolPref("showcomments"));
@@ -297,13 +295,18 @@ Socialite.showNotificationBox = function(browser, linkInfo) {
     linkInfo.buttonComments = buttonComments;
     
     var buttonSave = document.createElement("button");
-    buttonSave.setAttribute("id", "socialite_save");
-    buttonDislike.setAttribute("type", "checkbox");
-    buttonDislike.setAttribute("autoCheck", "false");
+    buttonSave.setAttribute("id", "socialite_save_"+linkInfo.linkID);
     buttonSave.setAttribute("hidden", !this.prefs.getBoolPref("showsave"));
     buttonSave.addEventListener("click", GM_hitch(this, "buttonSaveClicked", linkInfo), false);
     notification.appendChild(buttonSave);
     linkInfo.buttonSave = buttonSave;
+    
+    var modFrame = document.createElement("iframe");
+    modFrame.setAttribute("id", "socialite_frame_"+linkInfo.linkID);
+    //modFrame.setAttribute("hidden", true);
+    this.appContent.appendChild(modFrame);
+    this.setupModFrame(linkInfo, modFrame);
+    linkInfo.modFrame = modFrame;
     
     this.updateButtons(linkInfo);
     
@@ -312,49 +315,17 @@ Socialite.showNotificationBox = function(browser, linkInfo) {
     linkInfo.notification = notification;
 };
 
-Socialite.linkFinishLoad = function(e) {
-  var doc = e.target;
-  var win = doc.defaultView
-  var href = win.location.href;
+Socialite.setupModFrame = function(linkInfo, modFrame) {
+  var LOAD_FLAGS_BYPASS_CACHE = Components.interfaces.nsIWebNavigation.LOAD_FLAGS_BYPASS_CACHE;
+  var toolbarURI = "http://www.reddit.com/toolbar?id="+linkInfo.linkID;
   
-  if (href in this.linksWatched) {
-    var linkInfo = this.linksWatched[href];
+  // Watch for the frame to load.
+  makeOneShot(modFrame.contentWindow, "DOMContentLoaded", GM_hitch(this, "modFrameLoad", linkInfo), false);
   
-    // Sneaky IFrame goodness
+  // Load the frame
+  modFrame.webNavigation.loadURI(toolbarURI, LOAD_FLAGS_BYPASS_CACHE, null, null, null);
     
-    var frameName = "socialite-frame-" + linkInfo.linkID;
-    var modFrame = doc.getElementById(frameName);
-
-    if (modFrame == null) {
-      modFrame = doc.createElement("IFrame")
-      modFrame.id = frameName;
-      modFrame.setAttribute("style", "display:none");
-
-      // Add it.
-      doc.body.appendChild(modFrame);
-      
-      // Watch for the frame to load.
-      makeOneShot(modFrame, "load", GM_hitch(this, "modFrameLoad", linkInfo), false);
-      
-      // Load it.
-      modFrame.src = "http://www.reddit.com/toolbar?id=" + linkInfo.linkID;
-      
-      debug_log(linkInfo.linkID, "Finished loading, started frame");
-    } else {
-      debug_log(linkInfo.linkID, "Finished loading, frame already exists: reloading.");
-      
-      // Deactivate the buttons while we refresh.
-      linkInfo.modActive = false;
-      
-      // Watch for the frame to load.
-      makeOneShot(modFrame, "load", GM_hitch(this, "modFrameLoad", linkInfo), false);
-      
-      // The boolean argument forces it to not use the cache.
-      modFrame.contentWindow.location.reload(true);
-    }
-        
-    linkInfo.modFrame = modFrame;
-  }
+  debug_log(linkInfo.linkID, "Started frame");
 };
 
 Socialite.modFrameLoad = function(linkInfo, e) {
@@ -370,12 +341,14 @@ Socialite.readModFrameData = function(linkInfo) {
   var modFrame = linkInfo.modFrame;
   var modFrameDoc = modFrame.contentDocument;
   
+  //debug_log(linkInfo.linkID, modFrameDoc.body.innerHTML);
+  
   // Note: Uses wrappedJSObject to retrieve unprotected chrome-internal javascript objects.
   
-  linkInfo.linkLike       = modFrameDoc.getElementById("up_"+linkInfo.linkID).wrappedJSObject;
+  linkInfo.linkLike       = modFrameDoc.getElementById("up_"+linkInfo.linkID);
   linkInfo.linkLikeActive = /upmod/.test(linkInfo.linkLike.className);
   
-  linkInfo.linkDislike    = modFrameDoc.getElementById("down_"+linkInfo.linkID).wrappedJSObject;
+  linkInfo.linkDislike    = modFrameDoc.getElementById("down_"+linkInfo.linkID);
   linkInfo.linkDislikeActive = /downmod/.test(linkInfo.linkDislike.className);
 
   linkInfo.linkComments   = modFrameDoc.getElementById("comment_"+linkInfo.linkID);
@@ -388,14 +361,7 @@ Socialite.readModFrameData = function(linkInfo) {
   }
 
   linkInfo.linkSave       = modFrameDoc.getElementById("save_"+linkInfo.linkID+"_a");
-  if (linkInfo.linkSave) {
-    linkInfo.linkSave = linkInfo.linkSave.wrappedJSObject;
-  }
-  
   linkInfo.linkUnsave     = modFrameDoc.getElementById("unsave_"+linkInfo.linkID+"_a");
-  if (linkInfo.linkUnsave) {
-    linkInfo.linkUnsave = linkInfo.linkUnsave.wrappedJSObject;
-  }  
   
   if (linkInfo.linkSave != null) {
     // If there's a save link

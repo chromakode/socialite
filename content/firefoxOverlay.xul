@@ -41,6 +41,7 @@
          xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul">
   <script src="utils.js"/>
   <script src="socialite.js"/>
+  <script src="reddit.js"/>
   <stringbundleset id="stringbundleset">
     <stringbundle id="socialite-strings" src="chrome://socialite/locale/socialite.properties"/>
   </stringbundleset>

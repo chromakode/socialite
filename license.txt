@@ -1,4 +1,5 @@
-The following license applies to all files except images beginning with "reddit_":
+The following license applies to all files unless noted within the file,
+and excepting images beginning with "reddit_":
 
 /* ***** BEGIN LICENSE BLOCK *****
  * Version: MPL 1.1/GPL 2.0/LGPL 2.1
