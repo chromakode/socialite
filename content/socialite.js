@@ -6,6 +6,7 @@
  // - Login detection/button
  // - Display score
  // + Persistence Options
+ // - Better error handling/retry
  
  // Outstanding issues:
  // + Raw images seem to not be handled by DOMContentLoaded
@@ -139,9 +140,8 @@ Socialite.contentLoad = function(e) {
   
   if (doc instanceof HTMLDocument) {
     var win = doc.defaultView;
-    var href = win.location.href;
     
-    if (href.match(/^http:\/\/www\.reddit\.com/) && win == win.top) {
+    if (win.location.hostname.match(/reddit\.com$/) && win == win.top) {
       // Iterate over each article link and register event listener
       var res = doc.evaluate('//a[@class="title loggedin"]', doc.documentElement, null, XPathResult.UNORDERED_NODE_SNAPSHOT_TYPE, null );
       
@@ -149,7 +149,9 @@ Socialite.contentLoad = function(e) {
         var siteLink = res.snapshotItem(i);
         siteLink.addEventListener("mouseup", hitchHandler(this, "linkClicked"), false);
         //siteLink.style.color = "red";
-      }	
+      }
+      
+      debug_log("main", "Added click handlers to " + res.snapshotLength + " links on " + win.location.href);
       
       // Snarf the authentication hash using wrappedJSObject
       this.redditModHash = win.wrappedJSObject.modhash
