@@ -49,7 +49,7 @@ var SocialiteProgressListener =
     
     if (window == window.top) {
       debug_log("SocialiteProgressListener", "onLocationChange (loading): " + aProgress.DOMWindow.location.href);
-      Socialite.linkStartLoad(window);
+      Socialite.linkStartLoad(window, aProgress.isLoadingDocument);
     }
   },
   
@@ -229,7 +229,7 @@ Socialite.watchLink = function(href, linkInfo) {
   debug_log("main", "Watching: " + href);
 }
 
-Socialite.linkStartLoad = function(win) {
+Socialite.linkStartLoad = function(win, isLoading) {
   var href = win.location.href;
 
   if (href in this.linksWatched) {
@@ -241,7 +241,7 @@ Socialite.linkStartLoad = function(win) {
     this.redditUpdateLinkInfo(linkInfo, hitch_handler(this, "updateButtons"));
   
     // Show the banner, without allowing actions yet
-    this.showNotificationBox(browser, linkInfo);
+    this.showNotificationBox(browser, linkInfo, isLoading);
   }
 }
   
@@ -307,15 +307,65 @@ Socialite.redditVote = function(linkInfo, isLiked, success_callback, fail_callba
     }
   });
 }
+
+Socialite.redditSave = function(linkInfo, success_callback, fail_callback) {
+  debug_log(linkInfo.linkID, "Making ajax save call");
   
-Socialite.showNotificationBox = function(browser, linkInfo) {
+  var params   = {
+    id:    linkInfo.linkID,
+    uh:    this.redditModHash,
+  };
+  
+  redditRequest("save", params, function(r){ 
+    if (r.status == STATUS_SUCCESS) {
+      success_callback(linkInfo);
+    } else {
+      fail_callback(linkInfo);
+    }
+  });
+}
+
+Socialite.redditUnsave = function(linkInfo, success_callback, fail_callback) {
+  debug_log(linkInfo.linkID, "Making ajax unsave call");
+  
+  var params   = {
+    id:    linkInfo.linkID,
+    uh:    this.redditModHash,
+  };
+  
+  redditRequest("unsave", params, function(r){ 
+    if (r.status == STATUS_SUCCESS) {
+      success_callback(linkInfo);
+    } else {
+      fail_callback(linkInfo);
+    }
+  });
+}
+  
+Socialite.showNotificationBox = function(browser, linkInfo, isNewPage) {
     var notificationBox = this.tabBrowser.getNotificationBox(browser);
     var notificationName = "socialite-header"+"-"+linkInfo.linkID;
     
-    var oldNotification = notificationBox.getNotificationWithValue(notificationName);
-    if (oldNotification) {
-      debug_log(linkInfo.linkID, "Notification box already exists");
-      return;
+    var toRemove = null;    
+    var curNotifications = notificationBox.allNotifications;
+    for (var i=0; i < curNotifications.length; i++) {
+      var n = curNotifications.item(i);
+      
+      if (n.value == notificationName) {
+        debug_log(linkInfo.linkID, "Notification box already exists");
+        
+        if (isNewPage && (this.prefs.getIntPref("persistmode") == 1)) {
+          n.persistence = this.prefs.getIntPref("persistlength");
+          debug_log(linkInfo.linkID, "Reset notification persistence count");
+        }
+        
+        return;
+      }
+      
+      if (n.value.match(/^socialite-header/)) {
+        debug_log(linkInfo.linkID, "Old notification found, queued to remove.");
+        toRemove = n;
+      }
     }
     
     var notification = notificationBox.appendNotification(
@@ -325,6 +375,11 @@ Socialite.showNotificationBox = function(browser, linkInfo) {
       notificationBox.PRIORITY_INFO_MEDIUM,
       []
     );
+    
+    // Remove the notification after appending the new one, so we get a smooth in-place slide.
+    if (toRemove) {
+      notificationBox.removeNotification(toRemove);
+    }
     
     // Ahoy! Commence the XUL hackage!
     // Let's make this notification a bit cooler.
@@ -388,6 +443,16 @@ Socialite.showNotificationBox = function(browser, linkInfo) {
     linkInfo.buttonSave = buttonSave;
     
     this.updateButtons(linkInfo);
+
+    // Persistence
+    var persistMode = this.prefs.getIntPref("persistmode");
+    if (persistMode == 0) {
+      notification.persistence = 0;
+    } else if (persistMode == 1) {
+      notification.persistence = this.prefs.getIntPref("persistlength");
+    } else if (persistMode == 2) {
+      notification.persistence = -1;
+    }   
     
     debug_log(linkInfo.linkID, "Notification box created");
     
@@ -479,14 +544,24 @@ Socialite.buttonCommentsClicked = function(linkInfo, e) {
 
 Socialite.buttonSaveClicked = function(linkInfo, e) {
   if (linkInfo.linkIsSaved) {
-    linkInfo.linkUnsave.onclick();
-    linkInfo.buttonSave.setAttribute("label", this.strings.getString("unsaved"));
+    
+    linkInfo.linkIsSaved = false;    
+    this.updateButtons(linkInfo);
+
+    this.redditUnsave(linkInfo,
+      hitch_handler_flip(this, "redditUpdateLinkInfo",
+        hitch_handler_flip(this, "updateButtons")));
+        
   } else {
-    linkInfo.linkSave.onclick()
-    linkInfo.buttonSave.setAttribute("label", this.strings.getString("saved"));
-  }
   
-  linkInfo.buttonSave.setAttribute("disabled", true);
+    linkInfo.linkIsSaved = true;    
+    this.updateButtons(linkInfo);
+
+    this.redditSave(linkInfo,
+      hitch_handler_flip(this, "redditUpdateLinkInfo",
+        hitch_handler_flip(this, "updateButtons")));
+        
+  }
 };
 
 

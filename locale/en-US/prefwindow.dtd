@@ -1,9 +1,19 @@
 <!ENTITY prefwindow.title "Socialite Preferences">
-<!ENTITY showgroup.caption "Info Bar Fields">
-<!ENTITY showlink.label "Show reddit link">
-<!ENTITY showlink.accesskey "r">
-<!ENTITY showcomments.label "Show comments button">
-<!ENTITY showcomments.accesskey "c">
-<!ENTITY showsave.label "Show save/unsave button">
-<!ENTITY showsave.accesskey "s">
 
+<!ENTITY persistgroup.caption     "Info Bar Persistence">
+<!ENTITY donotpersist.label       "Info bar closes upon navigation to another page">
+<!ENTITY donotpersist.accesskey   "p">
+<!ENTITY custompersist1.label     "Retain info bar for">
+<!ENTITY custompersist2.label     "additional pages">
+<!ENTITY custompersist.accesskey  "n">
+<!ENTITY alwayspersist.label      "Retain info bar indefinitely">
+<!ENTITY alwayspersist.accesskey  "i">
+
+
+<!ENTITY showgroup.caption        "Info Bar Fields">
+<!ENTITY showlink.label           "Show reddit link">
+<!ENTITY showlink.accesskey       "r">
+<!ENTITY showcomments.label       "Show comments button">
+<!ENTITY showcomments.accesskey   "c">
+<!ENTITY showsave.label           "Show save/unsave button">
+<!ENTITY showsave.accesskey       "s">
