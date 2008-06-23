@@ -21,6 +21,8 @@ REDDIT_LIKE_ACTIVE_IMAGE = "chrome://socialite/content/reddit_aupmod.png"
 REDDIT_DISLIKE_INACTIVE_IMAGE = "chrome://socialite/content/reddit_adowngray.png"
 REDDIT_DISLIKE_ACTIVE_IMAGE = "chrome://socialite/content/reddit_adownmod.png"
 
+STATUS_SUCCESS = 200;
+
 var nativeJSON = Components.classes["@mozilla.org/dom/json;1"]
                  .createInstance(Components.interfaces.nsIJSON);
 
@@ -243,7 +245,7 @@ Socialite.linkStartLoad = function(win) {
   }
 }
   
-Socialite.redditUpdateLinkInfo = function(linkInfo, callback) {
+Socialite.redditUpdateLinkInfo = function(linkInfo, success_callback, fail_callback) {
   debug_log(linkInfo.linkID, "Making ajax info call");
   
   var params   = {
@@ -252,28 +254,34 @@ Socialite.redditUpdateLinkInfo = function(linkInfo, callback) {
     count:  1,
   };
     
-  redditRequest("info.json", params, hitch_handler(this, "redditUpdateLinkInfoResp", linkInfo, callback), "get");
+  redditRequest("info.json", params, hitch_handler(this, "redditUpdateLinkInfoResp", linkInfo, success_callback, fail_callback), "get");
 }
 
-Socialite.redditUpdateLinkInfoResp = function(linkInfo, r) {
-  var d = nativeJSON.decode(r.responseText);
-  var linkData = d.data.children[0].data;
-  
-  linkInfo.linkIsLiked  = linkData.likes;
-  linkInfo.commentCount = linkData.num_comments;
-  linkInfo.linkIsSaved  = linkData.saved;
-  
-  debug_log(linkInfo.linkID, "Received ajax info call response: "        +
-                             "liked: "    + linkInfo.isLiked + ", "      +
-                             "comments: " + linkInfo.commentCount + ", " +
-                             "saved: "    + linkInfo.linkIsSaved);
-  
-  if (callback) {
-    callback(linkInfo);
+Socialite.redditUpdateLinkInfoResp = function(linkInfo, success_callback, fail_callback, r) {
+  if (r.status == STATUS_SUCCESS) {
+    var d = nativeJSON.decode(r.responseText);
+    var linkData = d.data.children[0].data;
+    
+    linkInfo.linkIsLiked  = linkData.likes;
+    linkInfo.commentCount = linkData.num_comments;
+    linkInfo.linkIsSaved  = linkData.saved;
+    
+    debug_log(linkInfo.linkID, "Received ajax info call response: "        +
+                               "liked: "    + linkInfo.linkIsLiked + ", "  +
+                               "comments: " + linkInfo.commentCount + ", " +
+                               "saved: "    + linkInfo.linkIsSaved);
+    
+    if (success_callback) {
+      success_callback(linkInfo);
+    }
+  } else {
+    if (fail_callback) {
+      fail_callback(linkInfo);
+    }
   }
 }
 
-Socialite.redditVote = function(linkInfo, isLiked, callback) {
+Socialite.redditVote = function(linkInfo, isLiked, success_callback, fail_callback) {
   debug_log(linkInfo.linkID, "Making ajax vote call");
   
   var dir;
@@ -291,7 +299,13 @@ Socialite.redditVote = function(linkInfo, isLiked, callback) {
     dir:   dir,
   };
   
-  redditRequest("vote", params, function(r){ callback(linkInfo); });
+  redditRequest("vote", params, function(r){ 
+    if (r.status == STATUS_SUCCESS) {
+      success_callback(linkInfo);
+    } else {
+      fail_callback(linkInfo);
+    }
+  });
 }
   
 Socialite.showNotificationBox = function(browser, linkInfo) {

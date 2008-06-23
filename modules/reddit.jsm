@@ -26,6 +26,8 @@ CondeNet, Inc. All Rights Reserved.
 
 var EXPORTED_SYMBOLS = ["redditRequest", "redditRequest_no_response"]
 
+STATUS_READY = 4;
+
 // Reddit access code patched together from the reddit.com javascript
 
 // From http://code.reddit.com/browser/r2/r2/public/static/utils.js
@@ -58,7 +60,7 @@ function redditRequest(op, parameters, worker_in, method) {
   var req = Components.classes["@mozilla.org/xmlextras/xmlhttprequest;1"].createInstance();
   
   var worker = function(r) {
-    if (r.target.readyState == 4) {
+    if (r.target.readyState == STATUS_READY) {
       return worker_in(r.target);
     }
   };
