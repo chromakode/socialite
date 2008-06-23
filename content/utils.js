@@ -1,5 +1,5 @@
-// Nice closure-based partial application method from Greasemonkey.
-function GM_hitch(obj, meth) {
+// Nice closure-based partial application method from Greasemonkey. (originally GM_hitch)
+function hitch_handler(obj, meth) {
   if (!obj[meth]) {
     throw "method '" + meth + "' does not exist on object '" + obj + "'";
   }
@@ -22,8 +22,8 @@ function GM_hitch(obj, meth) {
   };
 }
 
-// Similar to GM_hitch, but puts dynamic arguments before static ones
-function GM_hitch_flip(obj, meth) {
+// Similar to hitch_handler, but puts dynamic arguments before static ones
+function hitch_handler_flip(obj, meth) {
   if (!obj[meth]) {
     throw "method '" + meth + "' does not exist on object '" + obj + "'";
   }
