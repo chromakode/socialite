@@ -70,12 +70,13 @@ function redditRequest(op, parameters, worker_in, method) {
     req.onreadystatechange = worker;
     req.send(null);
   } else if (method == "post") {
-    req.open("post", op, true);
+    req.open("post", url, true);
+    req.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
     req.onreadystatechange = worker;
     req.send(get_params);
   }
 }
-function redditRequest_no_response(op, parameters) {
-  redditRequest(op, parameters, function(r){});
+function redditRequest_no_response(op, parameters, method) {
+  redditRequest(op, parameters, function(r){}, method);
 }
 
