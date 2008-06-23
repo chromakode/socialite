@@ -5,7 +5,7 @@
  // + Button preferences
  // - Login detection/button
  // - Display score
- // - Persistence Options
+ // + Persistence Options
  
  // Outstanding issues:
  // + Raw images seem to not be handled by DOMContentLoaded
