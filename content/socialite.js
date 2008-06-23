@@ -64,8 +64,8 @@ var Socialite = new Object();
 
 Socialite.init = function() {
   this.initialized = false;
-  window.addEventListener("load", hitch_handler(this, "onLoad"), false);
-  window.addEventListener("unload", hitch_handler(this, "onUnload"), false);
+  window.addEventListener("load", hitchHandler(this, "onLoad"), false);
+  window.addEventListener("unload", hitchHandler(this, "onUnload"), false);
 };
 
 Socialite.onLoad = function() {
@@ -89,11 +89,11 @@ Socialite.onLoad = function() {
   // Authentication hash
   this.redditModHash = null;
   
-  this.tabBrowser.addEventListener("DOMContentLoaded", hitch_handler(this, "contentLoad"), false);
+  this.tabBrowser.addEventListener("DOMContentLoaded", hitchHandler(this, "contentLoad"), false);
   
   // Watch for new tabs to add progress listener to them
-  this.tabBrowser.addEventListener("TabOpen", hitch_handler(this, "tabOpened"), false);
-  this.tabBrowser.addEventListener("TabClose", hitch_handler(this, "tabClosed"), false);
+  this.tabBrowser.addEventListener("TabOpen", hitchHandler(this, "tabOpened"), false);
+  this.tabBrowser.addEventListener("TabClose", hitchHandler(this, "tabClosed"), false);
   
   // Add progress listener to tabbrowser. This fires progress events for the current tab.
   this.setupProgressListener(this.tabBrowser);
@@ -147,7 +147,7 @@ Socialite.contentLoad = function(e) {
       
       for (var i=0; i < res.snapshotLength; i++) {
         var siteLink = res.snapshotItem(i);
-        siteLink.addEventListener("mouseup", hitch_handler(this, "linkClicked"), false);
+        siteLink.addEventListener("mouseup", hitchHandler(this, "linkClicked"), false);
         //siteLink.style.color = "red";
       }	
       
@@ -238,7 +238,7 @@ Socialite.linkStartLoad = function(win, isLoading) {
     
     debug_log(linkInfo.linkID, "Started loading");
   
-    this.redditUpdateLinkInfo(linkInfo, hitch_handler(this, "updateButtons"));
+    this.redditUpdateLinkInfo(linkInfo, hitchHandler(this, "updateButtons"));
   
     // Show the banner, without allowing actions yet
     this.showNotificationBox(browser, linkInfo, isLoading);
@@ -254,7 +254,7 @@ Socialite.redditUpdateLinkInfo = function(linkInfo, success_callback, fail_callb
     count:  1,
   };
     
-  redditRequest("info.json", params, hitch_handler(this, "redditUpdateLinkInfoResp", linkInfo, success_callback, fail_callback), "get");
+  redditRequest("info.json", params, hitchHandler(this, "redditUpdateLinkInfoResp", linkInfo, success_callback, fail_callback), "get");
 }
 
 Socialite.redditUpdateLinkInfoResp = function(linkInfo, success_callback, fail_callback, r) {
@@ -398,8 +398,8 @@ Socialite.showNotificationBox = function(browser, linkInfo, isNewPage) {
     siteLink.setAttribute("class", "text-link");
     siteLink.setAttribute("flex", true);
     siteLink.setAttribute("hidden", !this.prefs.getBoolPref("showlink"));
-    siteLink.addEventListener("click", hitch_handler(this, "siteLinkClicked"), false);
-    messageImage.addEventListener("click", hitch_handler(this, "siteLinkClicked"), false);
+    siteLink.addEventListener("click", hitchHandler(this, "siteLinkClicked"), false);
+    messageImage.addEventListener("click", hitchHandler(this, "siteLinkClicked"), false);
     details.insertBefore(siteLink, messageText);
     
     // XUL hackage done.    
@@ -411,7 +411,7 @@ Socialite.showNotificationBox = function(browser, linkInfo, isNewPage) {
     buttonLike.setAttribute("accesskey", this.strings.getString("likeit.accesskey"));
     buttonLike.setAttribute("image", REDDIT_LIKE_INACTIVE_IMAGE);
     buttonLike.setAttribute("autoCheck", "false");
-    buttonLike.addEventListener("click", hitch_handler(this, "buttonLikeClicked", linkInfo), false);
+    buttonLike.addEventListener("click", hitchHandler(this, "buttonLikeClicked", linkInfo), false);
     notification.appendChild(buttonLike);
     linkInfo.buttonLike = buttonLike;
     
@@ -423,7 +423,7 @@ Socialite.showNotificationBox = function(browser, linkInfo, isNewPage) {
     buttonDislike.setAttribute("image", REDDIT_DISLIKE_INACTIVE_IMAGE);
     buttonDislike.setAttribute("autoCheck", "false");
     notification.appendChild(buttonDislike);
-    buttonDislike.addEventListener("click", hitch_handler(this, "buttonDislikeClicked", linkInfo), false);
+    buttonDislike.addEventListener("click", hitchHandler(this, "buttonDislikeClicked", linkInfo), false);
     linkInfo.buttonDislike = buttonDislike;
     
     var buttonComments = document.createElement("button");
@@ -431,14 +431,14 @@ Socialite.showNotificationBox = function(browser, linkInfo, isNewPage) {
     buttonComments.setAttribute("label", this.strings.getFormattedString("comments", [linkInfo.commentCount.toString()]));
     buttonComments.setAttribute("accesskey", this.strings.getString("comments.accesskey"));
     buttonComments.setAttribute("hidden", !this.prefs.getBoolPref("showcomments"));
-    buttonComments.addEventListener("click", hitch_handler(this, "buttonCommentsClicked", linkInfo), false);
+    buttonComments.addEventListener("click", hitchHandler(this, "buttonCommentsClicked", linkInfo), false);
     notification.appendChild(buttonComments);
     linkInfo.buttonComments = buttonComments;
     
     var buttonSave = document.createElement("button");
     buttonSave.setAttribute("id", "socialite_save_"+linkInfo.linkID);
     buttonSave.setAttribute("hidden", !this.prefs.getBoolPref("showsave"));
-    buttonSave.addEventListener("click", hitch_handler(this, "buttonSaveClicked", linkInfo), false);
+    buttonSave.addEventListener("click", hitchHandler(this, "buttonSaveClicked", linkInfo), false);
     notification.appendChild(buttonSave);
     linkInfo.buttonSave = buttonSave;
     
@@ -517,8 +517,8 @@ Socialite.buttonLikeClicked = function(linkInfo, e) {
   // Submit the vote, update the link information, and then update the buttons
   // (proceeding after each AJAX call completes)
   this.redditVote(linkInfo, linkInfo.linkIsLiked,
-    hitch_handler_flip(this, "redditUpdateLinkInfo",
-      hitch_handler_flip(this, "updateButtons")));
+    hitchHandlerFlip(this, "redditUpdateLinkInfo",
+      hitchHandlerFlip(this, "updateButtons")));
 };
 
 Socialite.buttonDislikeClicked = function(linkInfo, e) {
@@ -534,8 +534,8 @@ Socialite.buttonDislikeClicked = function(linkInfo, e) {
   // Submit the vote, update the link information, and then update the buttons
   // (proceeding after each AJAX call completes)
   this.redditVote(linkInfo, linkInfo.linkIsLiked,
-    hitch_handler_flip(this, "redditUpdateLinkInfo",
-      hitch_handler_flip(this, "updateButtons")));
+    hitchHandlerFlip(this, "redditUpdateLinkInfo",
+      hitchHandlerFlip(this, "updateButtons")));
 };
 
 Socialite.buttonCommentsClicked = function(linkInfo, e) {
@@ -549,8 +549,8 @@ Socialite.buttonSaveClicked = function(linkInfo, e) {
     this.updateButtons(linkInfo);
 
     this.redditUnsave(linkInfo,
-      hitch_handler_flip(this, "redditUpdateLinkInfo",
-        hitch_handler_flip(this, "updateButtons")));
+      hitchHandlerFlip(this, "redditUpdateLinkInfo",
+        hitchHandlerFlip(this, "updateButtons")));
         
   } else {
   
@@ -558,8 +558,8 @@ Socialite.buttonSaveClicked = function(linkInfo, e) {
     this.updateButtons(linkInfo);
 
     this.redditSave(linkInfo,
-      hitch_handler_flip(this, "redditUpdateLinkInfo",
-        hitch_handler_flip(this, "updateButtons")));
+      hitchHandlerFlip(this, "redditUpdateLinkInfo",
+        hitchHandlerFlip(this, "updateButtons")));
         
   }
 };
