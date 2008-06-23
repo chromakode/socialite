@@ -57,6 +57,13 @@ function makeOneShot(instance, type, listener, useCapture) {
   instance.addEventListener(type, oneShotListener, useCapture);
 }
 
+var socialite_prefs = Components.classes["@mozilla.org/preferences-service;1"]
+                    .getService(Components.interfaces.nsIPrefService)
+                    .getBranch("extensions.socialite.");
+socialite_prefs.QueryInterface(Components.interfaces.nsIPrefBranch2);
+
 function debug_log(section, msg) {
-  dump("[Socialite] " + section + " -- " + msg + "\n");
+  if (socialite_prefs.getBoolPref("debug")) {
+    dump("[Socialite] " + section + " -- " + msg + "\n");
+  }
 }
