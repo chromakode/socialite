@@ -8,7 +8,6 @@
  // + Persistence Options
  // - Better error handling/retry
  // - Submit link command
- // - m.reddit.com support (Pickegnome)
  
  // Outstanding issues:
  // + Raw images seem to not be handled by DOMContentLoaded
@@ -19,6 +18,9 @@
  // + Reopen bar
  // + Some links still not working
  // - Link title alignment off
+ // - m.reddit.com support (Pickegnome)
+ // - Handle RSS readers
+ // - Disable on fullscreen
 
 REDDIT_LIKE_INACTIVE_IMAGE = "chrome://socialite/content/reddit_aupgray.png"
 REDDIT_LIKE_ACTIVE_IMAGE = "chrome://socialite/content/reddit_aupmod.png"
@@ -30,7 +32,11 @@ STATUS_SUCCESS = 200;
 var nativeJSON = Components.classes["@mozilla.org/dom/json;1"]
                  .createInstance(Components.interfaces.nsIJSON);
 
-Components.utils.import("resource://socialite/reddit.jsm");
+Components.utils.import("resource://socialite/utils/action.jsm");
+Components.utils.import("resource://socialite/utils/retry_action.jsm");
+reddit = Components.utils.import("resource://socialite/reddit/reddit.jsm");
+Components.utils.import("resource://socialite/preferences.jsm");
+Components.utils.import("resource://socialite/debug.jsm");
 
 // ---
 
@@ -244,8 +250,8 @@ Socialite.linkStartLoad = function(win, isLoading) {
     this.showNotificationBox(browser, linkInfo, isLoading);
   }
 }
-  
-Socialite.redditUpdateLinkInfo = function(linkInfo, successCallback, failCallback) {
+
+updateLinkInfo = function(linkInfo, successCallback, failCallback) {
   debug_log(linkInfo.linkID, "Making ajax info call");
   
   var params   = {
@@ -257,7 +263,7 @@ Socialite.redditUpdateLinkInfo = function(linkInfo, successCallback, failCallbac
   redditRequest("info.json", params, hitchHandler(this, "redditUpdateLinkInfoResp", linkInfo, successCallback, failCallback), "get");
 }
 
-Socialite.redditUpdateLinkInfoResp = function(linkInfo, successCallback, failCallback, r) {
+updateLinkInfoResp = function(linkInfo, successCallback, failCallback, r) {
   if (r.status == STATUS_SUCCESS) {
     var d = nativeJSON.decode(r.responseText);
     var linkData = d.data.children[0].data;
@@ -271,18 +277,26 @@ Socialite.redditUpdateLinkInfoResp = function(linkInfo, successCallback, failCal
                                "comments: " + linkInfo.commentCount + ", " +
                                "saved: "    + linkInfo.linkIsSaved);
     
-    if (successCallback) {
-      successCallback(linkInfo);
-    }
+    callIfNotNull(successCallback, linkInfo);
   } else {
-    if (failCallback) {
-      failCallback(linkInfo);
-    }
+    callIfNotNull(failCallback, linkInfo);
   }
 }
 
-Socialite.redditVote = function(linkInfo, isLiked, successCallback, failCallback) {
-  debug_log(linkInfo.linkID, "Making ajax vote call");
+info = function(linkInfo, successCallback, failCallback) {
+  debug_log("reddit", "Making ajax info call");
+  
+  var params   = {
+    url:    linkInfo.linkHref,
+    sr:     "",
+    count:  1,
+  };
+    
+  redditRequest("info.json", params, hitchHandler(this, "redditUpdateLinkInfoResp", linkInfo, successCallback, failCallback), "get");
+}
+
+vote = function(linkInfo, isLiked, successCallback, failCallback) {
+  debug_log("reddit", "Making ajax vote call");
   
   var dir;
   if (isLiked == true) {
@@ -300,16 +314,16 @@ Socialite.redditVote = function(linkInfo, isLiked, successCallback, failCallback
   };
   
   redditRequest("vote", params, function(r){ 
-    if (r.status == STATUS_SUCCESS || true) {
-      successCallback(linkInfo);
+    if (r.status == STATUS_SUCCESS && false) {
+      callIfNotNull(successCallback, linkInfo);
     } else {
-      failCallback(linkInfo, isLiked, successCallback);
+      callIfNotNull(failCallback, linkInfo, isLiked, successCallback);
     }
   });
 }
 
-Socialite.redditSave = function(linkInfo, successCallback, failCallback) {
-  debug_log(linkInfo.linkID, "Making ajax save call");
+save = function(linkInfo, successCallback, failCallback) {
+  debug_log("reddit", "Making ajax save call");
   
   var params   = {
     id:    linkInfo.linkID,
@@ -318,15 +332,15 @@ Socialite.redditSave = function(linkInfo, successCallback, failCallback) {
   
   redditRequest("save", params, function(r){ 
     if (r.status == STATUS_SUCCESS) {
-      successCallback(linkInfo);
+      callIfNotNull(successCallback, linkInfo);
     } else {
-      failCallback(linkInfo);
+      callIfNotNull(failCallback, linkInfo);
     }
   });
 }
 
-Socialite.redditUnsave = function(linkInfo, successCallback, failCallback) {
-  debug_log(linkInfo.linkID, "Making ajax unsave call");
+unsave = function(linkInfo, successCallback, failCallback) {
+  debug_log("reddit", "Making ajax unsave call");
   
   var params   = {
     id:    linkInfo.linkID,
@@ -335,9 +349,9 @@ Socialite.redditUnsave = function(linkInfo, successCallback, failCallback) {
   
   redditRequest("unsave", params, function(r){ 
     if (r.status == STATUS_SUCCESS) {
-      successCallback(linkInfo);
+      callIfNotNull(successCallback, linkInfo);
     } else {
-      failCallback(linkInfo);
+      callIfNotNull(failCallback, linkInfo);
     }
   });
 }
@@ -528,7 +542,7 @@ Socialite.buttonLikeClicked = function(linkInfo, e) {
   this.redditVote(linkInfo, linkInfo.linkIsLiked,
     hitchHandlerFlip(this, "redditUpdateLinkInfo",
       hitchHandlerFlip(this, "updateButtons")),
-    retryHandler(this, 3));
+    retryHandler(this, 3, this.redditVote));
 };
 
 Socialite.buttonDislikeClicked = function(linkInfo, e) {
