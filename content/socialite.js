@@ -491,7 +491,14 @@ Socialite.buttonSaveClicked = function(linkInfo, e) {
 };
 
 Socialite.buttonRandomClicked = function(e) {
-  openUILink("http://www.reddit.com/random/", e);
+  (new reddit.randomrising(
+    function (r, json) {
+      var linkInfo = LinkInfoFromJSON(json);
+      this.watchLink(linkInfo.linkHref, linkInfo);
+      openUILink(linkInfo.linkHref, e);
+    },
+    retryAction(RETRY_COUNT, RETRY_DELAY)
+  )).perform();
 };
 
 

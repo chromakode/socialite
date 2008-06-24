@@ -35,7 +35,7 @@ var randomrising = Action("reddit.randomrising", function() {
   debug_log("reddit", "Making ajax randomrising call");
   
   var params   = {
-    limit: 1;
+    limit: 1,
   };
     
   var self = this;
