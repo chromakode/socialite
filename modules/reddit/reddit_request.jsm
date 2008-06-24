@@ -48,15 +48,20 @@ function make_get_params(obj) {
 }
 
 // Chromakode: modified to include get/post method argument
-function redditRequest(op, parameters, worker_in, method) {
+function redditRequest(op, parameters, worker_in, method, base) {
   if (!parameters) {
     parameters = {};
   }
+  
   if (!method) {
     method = "post";
   }
   
-  var url = "http://www.reddit.com/api/" + op;
+  if (!base) {
+    var base = "http://www.reddit.com/api/";
+  }
+  
+  var url = base + op;
   var req = Components.classes["@mozilla.org/xmlextras/xmlhttprequest;1"].createInstance();
   
   var worker = function(r) {

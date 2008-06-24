@@ -31,6 +31,24 @@ var info = Action("reddit.info", function(href) {
   }, "get");
 });
 
+var randomrising = Action("reddit.randomrising", function() {
+  debug_log("reddit", "Making ajax randomrising call");
+  
+  var params   = {
+    limit: 1;
+  };
+    
+  var self = this;
+  redditRequest("randomrising", params, function(r){ 
+    if (r.status == STATUS_SUCCESS) {
+      var json = nativeJSON.decode(r.responseText);
+      self.success(r, json);
+    } else {
+      self.failure(r);
+    }
+  }, "get", "http://www.reddit.com/");
+});
+
 var vote = Action("reddit.vote", function(modHash, linkID, isLiked) {
   debug_log("reddit", "Making ajax vote call");
   
