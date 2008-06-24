@@ -35,6 +35,7 @@ Components.utils.import("resource://socialite/preferences.jsm");
 Components.utils.import("resource://socialite/debug.jsm");
 Components.utils.import("resource://socialite/utils/action.jsm");
 Components.utils.import("resource://socialite/utils/retry_action.jsm");
+Components.utils.import("resource://socialite/utils/hitch.jsm");
 reddit = Components.utils.import("resource://socialite/reddit/reddit.jsm");
 Components.utils.import("resource://socialite/reddit/link_info.jsm");
 
@@ -255,8 +256,22 @@ Socialite.redditUpdateLinkInfo = function(linkInfo) {
   linkInfo.update(hitchHandler(this, "updateButtons", linkInfo)).perform();
 }
 
-Socialite.notifyFailure = function(r) {
-  alertsService.showAlertNotification(icon, "title", "text", null, null, null, "socialite-failure");
+Socialite.failureNotification = function(r, action) {
+  debug_log("main", "Displaying failure alert, action: " + action.actionName + ", status: " + r.status);
+
+  var text;
+  
+  if (r.status != 200) {
+    text = "Unexpected HTTP status " + r.status + " recieved (" + action.actionName + ")";
+  } else {
+    text = "The requested action failed (" + action.actionName + ")";
+  }
+  
+  alertsService.showAlertNotification(
+    "chrome://global/skin/icons/Error.png",
+    "Socialite Connection Error",
+    text, 
+    null, null, null, "socialite-failure");
 }
   
 Socialite.showNotificationBox = function(browser, linkInfo, isNewPage) {
@@ -444,7 +459,8 @@ Socialite.buttonLikeClicked = function(linkInfo, e) {
   // (proceeding after each AJAX call completes)
   var submit = new reddit.vote(
     hitchHandler(this, "redditUpdateLinkInfo", linkInfo),
-    retryAction(RETRY_COUNT, RETRY_DELAY)
+    retryAction(RETRY_COUNT, RETRY_DELAY, null, null,
+      hitchHandler(this, "failureNotification"))
   );    
     
   submit.perform(this.redditModHash, linkInfo.linkID, linkInfo.linkIsLiked);
@@ -464,7 +480,8 @@ Socialite.buttonDislikeClicked = function(linkInfo, e) {
   // (proceeding after the AJAX call completes)
   var submit = new reddit.vote(
     hitchHandler(this, "redditUpdateLinkInfo", linkInfo),
-    retryAction(RETRY_COUNT, RETRY_DELAY)
+    retryAction(RETRY_COUNT, RETRY_DELAY, null, null,
+      hitchHandler(this, "failureNotification"))
   );
     
   submit.perform(this.redditModHash, linkInfo.linkID, linkInfo.linkIsLiked);
@@ -482,7 +499,8 @@ Socialite.buttonSaveClicked = function(linkInfo, e) {
 
     (new reddit.unsave(
       hitchHandler(this, "redditUpdateLinkInfo", linkInfo),
-      retryAction(RETRY_COUNT, RETRY_DELAY)
+      retryAction(RETRY_COUNT, RETRY_DELAY, null, null,
+        hitchHandler(this, "failureNotification"))
     )).perform(this.redditModHash, linkInfo.linkID);
         
   } else {
@@ -492,20 +510,23 @@ Socialite.buttonSaveClicked = function(linkInfo, e) {
 
     (new reddit.save(
       hitchHandler(this, "redditUpdateLinkInfo", linkInfo),
-      retryAction(RETRY_COUNT, RETRY_DELAY)
+      retryAction(RETRY_COUNT, RETRY_DELAY, null, null,
+        hitchHandler(this, "failureNotification"))
     )).perform(this.redditModHash, linkInfo.linkID);
   }
 };
 
 Socialite.buttonRandomClicked = function(e) {
   var self = this;
+
   (new reddit.randomrising(
     function (r, json) {
       var linkInfo = LinkInfoFromJSON(json);
       self.watchLink(linkInfo.linkHref, linkInfo);
       openUILink(linkInfo.linkHref, e);
     },
-    retryAction(RETRY_COUNT, RETRY_DELAY)
+    retryAction(RETRY_COUNT, RETRY_DELAY, null, null,
+      hitchHandler(this, "failureNotification"))
   )).perform();
 };
 

@@ -24,7 +24,7 @@ var _RetryAction = Action("retry", function() {
   var action = arguments[argsLen-1];
 
   if (!this.count) {
-    this.failure();
+    this.failure.apply(this, arguments);
   } else {
     var self = this;
     debug_log(self.actionName, action.actionName + " has failed, retrying (" + self.count + " retrys left)");
