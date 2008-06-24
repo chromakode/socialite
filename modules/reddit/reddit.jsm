@@ -94,10 +94,3 @@ var unsave = Action("reddit.unsave", function(modHash, linkID) {
     }
   });
 });
-
-var logSuccess = Action("logSuccess", function() {
-  var action = arguments[argsLen-1];
-  
-  debug_log("reddit", action.actionName + " succeeded.");
-  this.success();
-});
