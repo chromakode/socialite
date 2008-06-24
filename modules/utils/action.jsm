@@ -24,7 +24,7 @@ _MakeAction = function(successCallback, failureCallback) {
 function ActionType() {}
 
 ActionType.prototype.perform = function() {
-  debug_log(action.actionName, "Performing action");
+  debug_log("action", "Performing "+ this.actionName + " action");
 
   var result = this.actionFunc.apply(this, arguments);
 }
@@ -32,19 +32,25 @@ ActionType.prototype.perform = function() {
 ActionType.prototype.doCallback = function(callback, args) {
   // Arguments contain the arguments passed to this function,
   // with the action object and result at the end.
-  var newargs = Array.prototype.splice.call(arguments, 0) || [];
+  var newargs = Array.prototype.splice.call(args, 0) || [];
   newargs.push(this);
   
   if (callback) {
-    return callback.apply(null, newargs);
+    if (callback instanceof ActionType) {
+      return callback.perform.apply(callback, newargs);
+    } else {
+      return callback.apply(null, newargs);
+    }
   }
 }
 
 ActionType.prototype.success = function() {
+  debug_log("action", this.actionName + " succeeded");
   return this.doCallback(this.successCallback, arguments);
 }
 
 ActionType.prototype.failure = function() {
+  debug_log("action", this.actionName + " failed");
   return this.doCallback(this.failureCallback, arguments);
 }
 

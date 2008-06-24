@@ -5,6 +5,7 @@
  // + Button preferences
  // - Login detection/button
  // - Display score
+ // - Display subreddit
  // + Persistence Options
  // - Better error handling/retry
  // - Submit link command
@@ -27,16 +28,12 @@ REDDIT_LIKE_ACTIVE_IMAGE = "chrome://socialite/content/reddit_aupmod.png"
 REDDIT_DISLIKE_INACTIVE_IMAGE = "chrome://socialite/content/reddit_adowngray.png"
 REDDIT_DISLIKE_ACTIVE_IMAGE = "chrome://socialite/content/reddit_adownmod.png"
 
-STATUS_SUCCESS = 200;
-
-var nativeJSON = Components.classes["@mozilla.org/dom/json;1"]
-                 .createInstance(Components.interfaces.nsIJSON);
-
+Components.utils.import("resource://socialite/preferences.jsm");
+Components.utils.import("resource://socialite/debug.jsm");
 Components.utils.import("resource://socialite/utils/action.jsm");
 Components.utils.import("resource://socialite/utils/retry_action.jsm");
 reddit = Components.utils.import("resource://socialite/reddit/reddit.jsm");
-Components.utils.import("resource://socialite/preferences.jsm");
-Components.utils.import("resource://socialite/debug.jsm");
+Components.utils.import("resource://socialite/reddit/link_info.jsm");
 
 // ---
 
@@ -167,14 +164,13 @@ Socialite.linkClicked = function(e) {
   var link = e.target;
   var doc = link.ownerDocument;
   var browser = this.tabBrowser.getBrowserForDocument(doc);
-  
-  var linkInfo = {
-    linkTitle:      link.textContent,
     
-    // Remove title_ from title_XX_XXXXX
-    linkHref:       link.href,
-    linkID:         link.id.slice(6),
-  };
+  // Remove title_ from title_XX_XXXXX
+  var linkHref  = link.href;
+  var linkID    = link.id.slice(6);
+  var linkTitle = link.textContent;
+  
+  var linkInfo = new LinkInfo(linkHref, linkID, linkTitle);
   
   // Get some "preloaded" information from the page while we can.
   var linkLike            = doc.getElementById("up_"+linkInfo.linkID);
@@ -217,8 +213,6 @@ Socialite.linkClicked = function(e) {
     throw "Unexpected save link absence.";
   }
   
-  linkInfo.modActive = true;
-  
   debug_log(linkInfo.linkID, "Clicked");
   this.watchLink(link.href, linkInfo);
 };
@@ -244,116 +238,15 @@ Socialite.linkStartLoad = function(win, isLoading) {
     
     debug_log(linkInfo.linkID, "Started loading");
   
-    this.redditUpdateLinkInfo(linkInfo, hitchHandler(this, "updateButtons"));
+    this.redditUpdateLinkInfo(linkInfo);
   
     // Show the banner, without allowing actions yet
     this.showNotificationBox(browser, linkInfo, isLoading);
   }
 }
 
-updateLinkInfo = function(linkInfo, successCallback, failCallback) {
-  debug_log(linkInfo.linkID, "Making ajax info call");
-  
-  var params   = {
-    url:    linkInfo.linkHref,
-    sr:     "",
-    count:  1,
-  };
-    
-  redditRequest("info.json", params, hitchHandler(this, "redditUpdateLinkInfoResp", linkInfo, successCallback, failCallback), "get");
-}
-
-updateLinkInfoResp = function(linkInfo, successCallback, failCallback, r) {
-  if (r.status == STATUS_SUCCESS) {
-    var d = nativeJSON.decode(r.responseText);
-    var linkData = d.data.children[0].data;
-    
-    linkInfo.linkIsLiked  = linkData.likes;
-    linkInfo.commentCount = linkData.num_comments;
-    linkInfo.linkIsSaved  = linkData.saved;
-    
-    debug_log(linkInfo.linkID, "Received ajax info call response: "        +
-                               "liked: "    + linkInfo.linkIsLiked + ", "  +
-                               "comments: " + linkInfo.commentCount + ", " +
-                               "saved: "    + linkInfo.linkIsSaved);
-    
-    callIfNotNull(successCallback, linkInfo);
-  } else {
-    callIfNotNull(failCallback, linkInfo);
-  }
-}
-
-info = function(linkInfo, successCallback, failCallback) {
-  debug_log("reddit", "Making ajax info call");
-  
-  var params   = {
-    url:    linkInfo.linkHref,
-    sr:     "",
-    count:  1,
-  };
-    
-  redditRequest("info.json", params, hitchHandler(this, "redditUpdateLinkInfoResp", linkInfo, successCallback, failCallback), "get");
-}
-
-vote = function(linkInfo, isLiked, successCallback, failCallback) {
-  debug_log("reddit", "Making ajax vote call");
-  
-  var dir;
-  if (isLiked == true) {
-    dir = 1;
-  } else if (isLiked == false) {
-    dir = -1;
-  } else {
-    dir = 0;
-  }
-  
-  var params   = {
-    id:    linkInfo.linkID,
-    uh:    this.redditModHash,
-    dir:   dir,
-  };
-  
-  redditRequest("vote", params, function(r){ 
-    if (r.status == STATUS_SUCCESS && false) {
-      callIfNotNull(successCallback, linkInfo);
-    } else {
-      callIfNotNull(failCallback, linkInfo, isLiked, successCallback);
-    }
-  });
-}
-
-save = function(linkInfo, successCallback, failCallback) {
-  debug_log("reddit", "Making ajax save call");
-  
-  var params   = {
-    id:    linkInfo.linkID,
-    uh:    this.redditModHash,
-  };
-  
-  redditRequest("save", params, function(r){ 
-    if (r.status == STATUS_SUCCESS) {
-      callIfNotNull(successCallback, linkInfo);
-    } else {
-      callIfNotNull(failCallback, linkInfo);
-    }
-  });
-}
-
-unsave = function(linkInfo, successCallback, failCallback) {
-  debug_log("reddit", "Making ajax unsave call");
-  
-  var params   = {
-    id:    linkInfo.linkID,
-    uh:    this.redditModHash,
-  };
-  
-  redditRequest("unsave", params, function(r){ 
-    if (r.status == STATUS_SUCCESS) {
-      callIfNotNull(successCallback, linkInfo);
-    } else {
-      callIfNotNull(failCallback, linkInfo);
-    }
-  });
+Socialite.redditUpdateLinkInfo = function(linkInfo) {
+  linkInfo.update(hitchHandler(this, "updateButtons", linkInfo)).perform();
 }
   
 Socialite.showNotificationBox = function(browser, linkInfo, isNewPage) {
@@ -537,12 +430,14 @@ Socialite.buttonLikeClicked = function(linkInfo, e) {
   // Provide instant feedback before sending
   this.updateButtons(linkInfo);
   
-  // Submit the vote, update the link information, and then update the buttons
+  // Submit the vote, and then update state.
   // (proceeding after each AJAX call completes)
-  this.redditVote(linkInfo, linkInfo.linkIsLiked,
-    hitchHandlerFlip(this, "redditUpdateLinkInfo",
-      hitchHandlerFlip(this, "updateButtons")),
-    retryHandler(this, 3, this.redditVote));
+  var submit = new reddit.vote(
+    hitchHandler(this, "redditUpdateLinkInfo", linkInfo),
+    retryAction(3, 5000)
+  );    
+    
+  submit.perform(this.redditModHash, linkInfo.linkID, linkInfo.linkIsLiked);
 };
 
 Socialite.buttonDislikeClicked = function(linkInfo, e) {
@@ -555,11 +450,14 @@ Socialite.buttonDislikeClicked = function(linkInfo, e) {
   // Provide instant feedback before sending
   this.updateButtons(linkInfo);
   
-  // Submit the vote, update the link information, and then update the buttons
-  // (proceeding after each AJAX call completes)
-  this.redditVote(linkInfo, linkInfo.linkIsLiked,
-    hitchHandlerFlip(this, "redditUpdateLinkInfo",
-      hitchHandlerFlip(this, "updateButtons")));
+  // Submit the vote, and then update state.
+  // (proceeding after the AJAX call completes)
+  var submit = new reddit.vote(
+    hitchHandler(this, "redditUpdateLinkInfo", linkInfo),
+    retryAction(3, 5000)
+  );
+    
+  submit.perform(this.redditModHash, linkInfo.linkID, linkInfo.linkIsLiked);
 };
 
 Socialite.buttonCommentsClicked = function(linkInfo, e) {
@@ -572,19 +470,20 @@ Socialite.buttonSaveClicked = function(linkInfo, e) {
     linkInfo.linkIsSaved = false;    
     this.updateButtons(linkInfo);
 
-    this.redditUnsave(linkInfo,
-      hitchHandlerFlip(this, "redditUpdateLinkInfo",
-        hitchHandlerFlip(this, "updateButtons")));
+    (new reddit.unsave(
+      hitchHandler(this, "redditUpdateLinkInfo", linkInfo),
+      retryAction(3, 5000)
+    )).perform(this.redditModHash, linkInfo.linkID);
         
   } else {
   
     linkInfo.linkIsSaved = true;    
     this.updateButtons(linkInfo);
 
-    this.redditSave(linkInfo,
-      hitchHandlerFlip(this, "redditUpdateLinkInfo",
-        hitchHandlerFlip(this, "updateButtons")));
-        
+    (new reddit.save(
+      hitchHandler(this, "redditUpdateLinkInfo", linkInfo),
+      retryAction(3, 5000)
+    )).perform(this.redditModHash, linkInfo.linkID);
   }
 };
 

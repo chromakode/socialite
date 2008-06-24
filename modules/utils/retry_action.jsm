@@ -1,12 +1,17 @@
 // A failure callback to retry an action a set number of times
 
 Components.utils.import("resource://socialite/debug.jsm");
+Components.utils.import("resource://socialite/utils/action.jsm");
 
-var EXPORTED_SYMBOLS = ["RetryAction"]
+var nsITimer = Components.classes["@mozilla.org/timer;1"]
+             .createInstance(Components.interfaces.nsITimer);
 
-function retryAction(startCount, retryCallback, successCallback, failureCallback) {
+var EXPORTED_SYMBOLS = ["retryAction"]
+
+function retryAction(startCount, delay, retryCallback, successCallback, failureCallback) {
   var act = new _RetryAction(successCallback, failureCallback);
   act.count = startCount;
+  act.delay = delay
   act.retryCallback = retryCallback;
   
   return act;
@@ -19,16 +24,26 @@ var _RetryAction = Action("retry", function() {
   var action = arguments[argsLen-1];
 
   if (!this.count) {
-    return false;
+    this.failure();
   } else {
-    // Call the retry callback
-    this.doCallback(this.retryCallback, null, arguments);
+    var self = this;
+    debug_log(self.actionName, action.actionName + " has failed, retrying (" + self.count + " retrys left)");
     
-    debug_log(action.actionName+"-"+this.actionName, action.actionName + " failed, retrying (" + count + " retrys left)");
-       
-    this.count -= 1;
-      
-    // Perform the action again.
-    return action.perform.apply(action, arguments);
+    var doRetry = function() {
+      // Call the retry callback
+      self.doCallback(self.retryCallback, null, arguments);
+         
+      self.count -= 1;
+        
+      // Perform the action again.
+      action.perform.apply(action, arguments);
+    }
+    
+    if (this.delay) {
+      debug_log(self.actionName, "Waiting " + self.delay + " milliseconds");
+      nsITimer.initWithCallback(doRetry, this.delay,  nsITimer.TYPE_ONE_SHOT);
+    } else {
+      doRetry();
+    }
   }
 });
