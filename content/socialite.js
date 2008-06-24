@@ -7,7 +7,7 @@
  // - Display score
  // - Display subreddit
  // + Persistence Options
- // - Better error handling/retry
+ // + Better error handling/retry
  // - Submit link command
  
  // Outstanding issues:
@@ -37,6 +37,9 @@ Components.utils.import("resource://socialite/utils/action.jsm");
 Components.utils.import("resource://socialite/utils/retry_action.jsm");
 reddit = Components.utils.import("resource://socialite/reddit/reddit.jsm");
 Components.utils.import("resource://socialite/reddit/link_info.jsm");
+
+var alertsService = Components.classes["@mozilla.org/alerts-service;1"]
+                    .getService(Components.interfaces.nsIAlertsService);
 
 // ---
 
@@ -250,6 +253,10 @@ Socialite.linkStartLoad = function(win, isLoading) {
 
 Socialite.redditUpdateLinkInfo = function(linkInfo) {
   linkInfo.update(hitchHandler(this, "updateButtons", linkInfo)).perform();
+}
+
+Socialite.notifyFailure = function(r) {
+  alertsService.showAlertNotification(icon, "title", "text", null, null, null, "socialite-failure");
 }
   
 Socialite.showNotificationBox = function(browser, linkInfo, isNewPage) {
@@ -491,10 +498,11 @@ Socialite.buttonSaveClicked = function(linkInfo, e) {
 };
 
 Socialite.buttonRandomClicked = function(e) {
+  var self = this;
   (new reddit.randomrising(
     function (r, json) {
       var linkInfo = LinkInfoFromJSON(json);
-      this.watchLink(linkInfo.linkHref, linkInfo);
+      self.watchLink(linkInfo.linkHref, linkInfo);
       openUILink(linkInfo.linkHref, e);
     },
     retryAction(RETRY_COUNT, RETRY_DELAY)

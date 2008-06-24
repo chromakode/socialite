@@ -39,7 +39,7 @@ var randomrising = Action("reddit.randomrising", function() {
   };
     
   var self = this;
-  redditRequest("randomrising", params, function(r){ 
+  redditRequest("randomrising.json", params, function(r){ 
     if (r.status == STATUS_SUCCESS) {
       var json = nativeJSON.decode(r.responseText);
       self.success(r, json);
