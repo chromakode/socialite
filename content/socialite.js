@@ -7,6 +7,7 @@
  // - Display score
  // + Persistence Options
  // - Better error handling/retry
+ // - Submit link command
  
  // Outstanding issues:
  // + Raw images seem to not be handled by DOMContentLoaded
@@ -16,6 +17,7 @@
  // + Preserve after back-forward
  // + Reopen bar
  // + Some links still not working
+ // - Link title alignment off
 
 REDDIT_LIKE_INACTIVE_IMAGE = "chrome://socialite/content/reddit_aupgray.png"
 REDDIT_LIKE_ACTIVE_IMAGE = "chrome://socialite/content/reddit_aupmod.png"
@@ -444,6 +446,15 @@ Socialite.showNotificationBox = function(browser, linkInfo, isNewPage) {
     notification.appendChild(buttonSave);
     linkInfo.buttonSave = buttonSave;
     
+    var buttonRandom = document.createElement("button");
+    buttonRandom.setAttribute("id", "socialite_random_"+linkInfo.linkID);
+    buttonRandom.setAttribute("label", this.strings.getString("random"));
+    buttonRandom.setAttribute("accesskey", this.strings.getString("random.accesskey"));
+    buttonRandom.setAttribute("hidden", !this.prefs.getBoolPref("showrandom"));
+    buttonRandom.addEventListener("click", hitchHandler(this, "buttonRandomClicked"), false);
+    notification.appendChild(buttonRandom);
+    linkInfo.buttonRandom = buttonRandom;
+    
     this.updateButtons(linkInfo);
 
     // Persistence
@@ -564,6 +575,11 @@ Socialite.buttonSaveClicked = function(linkInfo, e) {
         hitchHandlerFlip(this, "updateButtons")));
         
   }
+};
+
+Socialite.buttonRandomClicked = function(e) {
+  openUILink("http://www.reddit.com/random/", e);
+  
 };
 
 

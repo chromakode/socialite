@@ -9,6 +9,7 @@
       <preference id="showlink" name="extensions.socialite.showlink" type="bool"/>
       <preference id="showcomments" name="extensions.socialite.showcomments" type="bool"/>
       <preference id="showsave" name="extensions.socialite.showsave" type="bool"/>
+      <preference id="showrandom" name="extensions.socialite.showrandom" type="bool"/>
     </preferences>
     
     <groupbox flex="1">      <caption label="&persistgroup.caption;"/>
@@ -27,6 +28,7 @@
       <checkbox id="showlink_pref" preference="showlink" label="&showlink.label;" accesskey="&showlink.accesskey;"/>
       <checkbox id="showcomments_pref" preference="showcomments" label="&showcomments.label;" accesskey="&showcomments.accesskey;"/>
       <checkbox id="showsave_pref" preference="showsave" label="&showsave.label;" accesskey="&showsave.accesskey;"/>
+      <checkbox id="showrandom_pref" preference="showrandom" label="&showrandom.label;" accesskey="&showrandom.accesskey;"/>
     </groupbox>
   </prefpane>
 </prefwindow>

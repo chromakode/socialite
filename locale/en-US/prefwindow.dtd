@@ -12,8 +12,10 @@
 
 <!ENTITY showgroup.caption        "Info Bar Fields">
 <!ENTITY showlink.label           "Show reddit link">
-<!ENTITY showlink.accesskey       "r">
+<!ENTITY showlink.accesskey       "l">
 <!ENTITY showcomments.label       "Show comments button">
 <!ENTITY showcomments.accesskey   "c">
 <!ENTITY showsave.label           "Show save/unsave button">
 <!ENTITY showsave.accesskey       "s">
+<!ENTITY showrandom.label         "Show random link button">
+<!ENTITY showrandom.accesskey     "r">
