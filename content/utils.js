@@ -1,3 +1,8 @@
+var SocialitePrefs = Components.classes["@mozilla.org/preferences-service;1"]
+                    .getService(Components.interfaces.nsIPrefService)
+                    .getBranch("extensions.socialite.");
+SocialitePrefs.QueryInterface(Components.interfaces.nsIPrefBranch2);
+
 // Nice closure-based partial application method from Greasemonkey. (originally GM_hitch)
 function hitchHandler(obj, meth) {
   if (!obj[meth]) {
@@ -57,13 +62,27 @@ function makeOneShot(instance, type, listener, useCapture) {
   instance.addEventListener(type, oneShotListener, useCapture);
 }
 
-var socialite_prefs = Components.classes["@mozilla.org/preferences-service;1"]
-                    .getService(Components.interfaces.nsIPrefService)
-                    .getBranch("extensions.socialite.");
-socialite_prefs.QueryInterface(Components.interfaces.nsIPrefBranch2);
+function retryHandler(thisArg, count) {
+  retry = function() {
+    var thisFunc = arguments.callee;
+
+//    debug_log("retryHandler", 
+
+    // Retry the handler call with the given arguments,
+    // and a fail handler to retry with the decremented count.
+    thisFunc.caller.apply(thisArg, arguments,
+      retryHandler(count-1, thisArg));
+  }
+}
 
 function debug_log(section, msg) {
-  if (socialite_prefs.getBoolPref("debug")) {
-    dump("[Socialite] " + section + " -- " + msg + "\n");
+  if (SocialitePrefs.getBoolPref("debug")) {
+    if (SocialitePrefs.getBoolPref("debugInErrorConsole")) {
+      const consoleService = Components.classes["@mozilla.org/consoleservice;1"]
+                                       .getService(Components.interfaces.nsIConsoleService);
+      consoleService.logStringMessage("[Socialite] " + section + " -- " + msg + "\n");
+    } else {
+      dump("[Socialite] " + section + " -- " + msg + "\n");
+    }
   }
 }

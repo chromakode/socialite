@@ -1,4 +1,5 @@
 pref("extensions.socialite.debug", false);
+pref("extensions.socialite.debugInErrorConsole", false);
 
 pref("extensions.socialite.persistmode", 0);
 pref("extensions.socialite.persistlength", 3);
