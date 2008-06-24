@@ -28,6 +28,9 @@ REDDIT_LIKE_ACTIVE_IMAGE = "chrome://socialite/content/reddit_aupmod.png"
 REDDIT_DISLIKE_INACTIVE_IMAGE = "chrome://socialite/content/reddit_adowngray.png"
 REDDIT_DISLIKE_ACTIVE_IMAGE = "chrome://socialite/content/reddit_adownmod.png"
 
+RETRY_COUNT = 3;
+RETRY_DELAY = 5000;
+
 Components.utils.import("resource://socialite/preferences.jsm");
 Components.utils.import("resource://socialite/debug.jsm");
 Components.utils.import("resource://socialite/utils/action.jsm");
@@ -434,7 +437,7 @@ Socialite.buttonLikeClicked = function(linkInfo, e) {
   // (proceeding after each AJAX call completes)
   var submit = new reddit.vote(
     hitchHandler(this, "redditUpdateLinkInfo", linkInfo),
-    retryAction(3, 5000)
+    retryAction(RETRY_COUNT, RETRY_DELAY)
   );    
     
   submit.perform(this.redditModHash, linkInfo.linkID, linkInfo.linkIsLiked);
@@ -454,7 +457,7 @@ Socialite.buttonDislikeClicked = function(linkInfo, e) {
   // (proceeding after the AJAX call completes)
   var submit = new reddit.vote(
     hitchHandler(this, "redditUpdateLinkInfo", linkInfo),
-    retryAction(3, 5000)
+    retryAction(RETRY_COUNT, RETRY_DELAY)
   );
     
   submit.perform(this.redditModHash, linkInfo.linkID, linkInfo.linkIsLiked);
@@ -472,7 +475,7 @@ Socialite.buttonSaveClicked = function(linkInfo, e) {
 
     (new reddit.unsave(
       hitchHandler(this, "redditUpdateLinkInfo", linkInfo),
-      retryAction(3, 5000)
+      retryAction(RETRY_COUNT, RETRY_DELAY)
     )).perform(this.redditModHash, linkInfo.linkID);
         
   } else {
@@ -482,7 +485,7 @@ Socialite.buttonSaveClicked = function(linkInfo, e) {
 
     (new reddit.save(
       hitchHandler(this, "redditUpdateLinkInfo", linkInfo),
-      retryAction(3, 5000)
+      retryAction(RETRY_COUNT, RETRY_DELAY)
     )).perform(this.redditModHash, linkInfo.linkID);
   }
 };
