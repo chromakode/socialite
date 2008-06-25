@@ -2,7 +2,8 @@
 
 Components.utils.import("resource://socialite/debug.jsm");
 Components.utils.import("resource://socialite/reddit/reddit_request.jsm");
-Components.utils.import("resource://socialite/utils/action.jsm");
+Components.utils.import("resource://socialite/utils/action/action.jsm");
+Components.utils.import("resource://socialite/utils/quantized_action.jsm");
 
 var nativeJSON = Components.classes["@mozilla.org/dom/json;1"]
                  .createInstance(Components.interfaces.nsIJSON);
@@ -10,6 +11,8 @@ var nativeJSON = Components.classes["@mozilla.org/dom/json;1"]
 var EXPORTED_SYMBOLS = ["info", "vote", "save", "unsave", "logSuccess"]
 
 STATUS_SUCCESS = 200;
+
+QUANTIZE_TIME = 1000;
 
 var info = Action("reddit.info", function(href) {
   debug_log("reddit", "Making ajax info call");
@@ -49,7 +52,7 @@ var randomrising = Action("reddit.randomrising", function() {
   }, "get", "http://www.reddit.com/");
 });
 
-var vote = Action("reddit.vote", function(modHash, linkID, isLiked) {
+var vote = QuantizedAction("reddit.vote", function(modHash, linkID, isLiked) {
   debug_log("reddit", "Making ajax vote call");
   
   var dir;
@@ -76,6 +79,14 @@ var vote = Action("reddit.vote", function(modHash, linkID, isLiked) {
     }
   });
 });
+
+vote.interval = QUANTIZE_TIME;
+vote.sameFunc = function(arg1, arg2) {
+  var linkID1 = arg1[1];
+  var linkID2 = arg2[1];
+  
+  return (linkID1 == linkID2);
+};
 
 var save = Action("reddit.save", function(modHash, linkID) {
   debug_log("reddit", "Making ajax save call");

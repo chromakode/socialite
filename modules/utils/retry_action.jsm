@@ -3,9 +3,6 @@
 Components.utils.import("resource://socialite/debug.jsm");
 Components.utils.import("resource://socialite/utils/action.jsm");
 
-var nsITimer = Components.classes["@mozilla.org/timer;1"]
-             .createInstance(Components.interfaces.nsITimer);
-
 var EXPORTED_SYMBOLS = ["retryAction"]
 
 function retryAction(startCount, delay, retryCallback, successCallback, failureCallback) {
@@ -13,7 +10,8 @@ function retryAction(startCount, delay, retryCallback, successCallback, failureC
   act.count = startCount;
   act.delay = delay
   act.retryCallback = retryCallback;
-  
+  act.timer = Components.classes["@mozilla.org/timer;1"]
+              .createInstance(Components.interfaces.nsITimer);
   return act;
 }
 
@@ -39,9 +37,9 @@ var _RetryAction = Action("retry", function() {
       action.perform.apply(action, arguments);
     }
     
-    if (this.delay) {
+    if (this.delay) {      
       debug_log(self.actionName, "Waiting " + self.delay + " milliseconds");
-      nsITimer.initWithCallback(doRetry, this.delay,  nsITimer.TYPE_ONE_SHOT);
+      this.timer.initWithCallback(doRetry, this.delay, this.timer.TYPE_ONE_SHOT);
     } else {
       doRetry();
     }

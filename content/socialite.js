@@ -451,7 +451,8 @@ Socialite.updateButtons = function(linkInfo) {
 
 Socialite.buttonLikeClicked = function(linkInfo, e) {
   var newIsLiked;
-  if (linkInfo.linkIsLiked == true) {
+
+  if (linkInfo.buttons.buttonLike.getAttribute("checked") == "true") {
     newIsLiked = null;
   } else {
     newIsLiked = true;
@@ -473,7 +474,7 @@ Socialite.buttonLikeClicked = function(linkInfo, e) {
 
 Socialite.buttonDislikeClicked = function(linkInfo, e) {
   var newIsLiked;
-  if (linkInfo.linkIsLiked == false) {
+  if (linkInfo.buttons.buttonDislike.getAttribute("checked") == "true") {
     newIsLiked = null;
   } else {
     newIsLiked = false;
@@ -503,7 +504,7 @@ Socialite.buttonSaveClicked = function(linkInfo, e) {
   if (linkInfo.linkIsSaved) {
     
     newIsSaved = false;    
-    this.updateButtons(linkInfo.buttons, newIsSaved);
+    this.updateSaveButton(linkInfo.buttons, newIsSaved);
 
     (new reddit.unsave(
       hitchHandler(this, "redditUpdateLinkInfo", linkInfo),
@@ -514,7 +515,7 @@ Socialite.buttonSaveClicked = function(linkInfo, e) {
   } else {
   
     newIsSaved = true;    
-    this.updateButtons(linkInfo.buttons, newIsSaved);
+    this.updateSaveButton(linkInfo.buttons, newIsSaved);
 
     (new reddit.save(
       hitchHandler(this, "redditUpdateLinkInfo", linkInfo),
