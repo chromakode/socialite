@@ -223,6 +223,8 @@ Socialite.linkClicked = function(e) {
     throw "Unexpected save link absence.";
   }
   
+  linkInfo.updateUIState();
+  
   debug_log(linkInfo.id, "Clicked");
   this.watchLink(link.href, linkInfo);
 };

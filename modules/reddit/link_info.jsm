@@ -71,10 +71,14 @@ LinkInfo.prototype.updateFromJSON = function(json) {
   this.state.commentCount = linkData.num_comments;
   this.state.isSaved  = linkData.saved;
   
-  this.uiState.copy(this.state);
+  this.updateUIState();
   
   debug_log(this.linkID, "Updated from JSON info: "                    +
                          "liked: "    + this.state.isLiked + ", "      +
                          "comments: " + this.state.commentCount + ", " +
                          "saved: "    + this.state.isSaved             );
+}
+
+LinkInfo.prototype.updateUIState = function() {
+  this.uiState.copy(this.state);
 }
