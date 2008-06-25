@@ -1,5 +1,5 @@
  // Todo:
- // - Modularize
+ // = Modularize
  // - Download list of current top links and auto-apply to pages
  // + Save button
  // + Button preferences
@@ -9,6 +9,7 @@
  // + Persistence Options
  // + Better error handling/retry
  // - Submit link command
+ // - Make roll-in an option
  
  // Outstanding issues:
  // + Raw images seem to not be handled by DOMContentLoaded
@@ -272,6 +273,9 @@ Socialite.failureNotification = function(r, action) {
     "Socialite Connection Error",
     text, 
     null, null, null, "socialite-failure");
+    
+  // Finally, update the buttons to make sure their state matches the data.
+  this.updateButtons(linkInfo);
 }
   
 Socialite.showNotificationBox = function(browser, linkInfo, isNewPage) {
@@ -345,7 +349,7 @@ Socialite.showNotificationBox = function(browser, linkInfo, isNewPage) {
   buttonLike.setAttribute("autoCheck", "false");
   buttonLike.addEventListener("click", hitchHandler(this, "buttonLikeClicked", linkInfo), false);
   notification.appendChild(buttonLike);
-  linkInfo.buttonLike = buttonLike;
+  linkInfo.buttons.buttonLike = buttonLike;
   
   var buttonDislike = document.createElement("button");
   buttonDislike.setAttribute("id", "socialite_mod_down_"+linkInfo.linkID);
@@ -356,7 +360,7 @@ Socialite.showNotificationBox = function(browser, linkInfo, isNewPage) {
   buttonDislike.setAttribute("autoCheck", "false");
   notification.appendChild(buttonDislike);
   buttonDislike.addEventListener("click", hitchHandler(this, "buttonDislikeClicked", linkInfo), false);
-  linkInfo.buttonDislike = buttonDislike;
+  linkInfo.buttons.buttonDislike = buttonDislike;
   
   var buttonComments = document.createElement("button");
   buttonComments.setAttribute("id", "socialite_comments_"+linkInfo.linkID);
@@ -365,14 +369,14 @@ Socialite.showNotificationBox = function(browser, linkInfo, isNewPage) {
   buttonComments.setAttribute("hidden", !SocialitePrefs.getBoolPref("showcomments"));
   buttonComments.addEventListener("click", hitchHandler(this, "buttonCommentsClicked", linkInfo), false);
   notification.appendChild(buttonComments);
-  linkInfo.buttonComments = buttonComments;
+  linkInfo.buttons.buttonComments = buttonComments;
   
   var buttonSave = document.createElement("button");
   buttonSave.setAttribute("id", "socialite_save_"+linkInfo.linkID);
   buttonSave.setAttribute("hidden", !SocialitePrefs.getBoolPref("showsave"));
   buttonSave.addEventListener("click", hitchHandler(this, "buttonSaveClicked", linkInfo), false);
   notification.appendChild(buttonSave);
-  linkInfo.buttonSave = buttonSave;
+  linkInfo.buttons.buttonSave = buttonSave;
   
   var buttonRandom = document.createElement("button");
   buttonRandom.setAttribute("id", "socialite_random_"+linkInfo.linkID);
@@ -381,7 +385,7 @@ Socialite.showNotificationBox = function(browser, linkInfo, isNewPage) {
   buttonRandom.setAttribute("hidden", !SocialitePrefs.getBoolPref("showrandom"));
   buttonRandom.addEventListener("click", hitchHandler(this, "buttonRandomClicked"), false);
   notification.appendChild(buttonRandom);
-  linkInfo.buttonRandom = buttonRandom;
+  linkInfo.buttons.buttonRandom = buttonRandom;
   
   this.updateButtons(linkInfo);
 
@@ -400,60 +404,61 @@ Socialite.showNotificationBox = function(browser, linkInfo, isNewPage) {
   linkInfo.notification = notification;
 };
 
-Socialite.updateButtonLike = function(buttonLike, isLiked) {
+Socialite.updateLikeButtons = function(buttons, isLiked) {
   if (isLiked == true) {
-    buttonLike.setAttribute("image", REDDIT_LIKE_ACTIVE_IMAGE);
-    buttonLike.setAttribute("checked", true);
+    buttons.buttonLike.setAttribute("image", REDDIT_LIKE_ACTIVE_IMAGE);
+    buttons.buttonLike.setAttribute("checked", true);
   } else {
-    buttonLike.setAttribute("image", REDDIT_LIKE_INACTIVE_IMAGE);
-    buttonLike.setAttribute("checked", false);
+    buttons.buttonLike.setAttribute("image", REDDIT_LIKE_INACTIVE_IMAGE);
+    buttons.buttonLike.setAttribute("checked", false);
+  }
+  
+  if (isLiked == false) {
+    buttons.buttonDislike.setAttribute("image", REDDIT_DISLIKE_ACTIVE_IMAGE);
+    buttons.buttonDislike.setAttribute("checked", true);
+  } else {
+    buttons.buttonDislike.setAttribute("image", REDDIT_DISLIKE_INACTIVE_IMAGE);
+    buttons.buttonDislike.setAttribute("checked", false);
   }
 };
 
-Socialite.updateButtonDislike = function(buttonDislike, isLiked) {
-  if (isLiked == false) {
-    buttonDislike.setAttribute("image", REDDIT_DISLIKE_ACTIVE_IMAGE);
-    buttonDislike.setAttribute("checked", true);
+Socialite.updateSaveButton = function(buttons, isSaved) {
+  if (isSaved) {
+    buttons.buttonSave.setAttribute("label", this.strings.getString("unsave"));
+    buttons.buttonSave.setAttribute("accesskey", this.strings.getString("unsave.accesskey"));
   } else {
-    buttonDislike.setAttribute("image", REDDIT_DISLIKE_INACTIVE_IMAGE);
-    buttonDislike.setAttribute("checked", false);
+    buttons.buttonSave.setAttribute("label", this.strings.getString("save"));
+    buttons.buttonSave.setAttribute("accesskey", this.strings.getString("save.accesskey"));
   }
-};
+}
 
 Socialite.updateButtons = function(linkInfo) {
   if (linkInfo.modActive) {
-    linkInfo.buttonLike.setAttribute("disabled", false);
-    linkInfo.buttonDislike.setAttribute("disabled", false);
-    linkInfo.buttonSave.setAttribute("disabled", false);
+    linkInfo.buttons.buttonLike.setAttribute("disabled", false);
+    linkInfo.buttons.buttonDislike.setAttribute("disabled", false);
+    linkInfo.buttons.buttonSave.setAttribute("disabled", false);
   } else {
-    linkInfo.buttonLike.setAttribute("disabled", true);
-    linkInfo.buttonDislike.setAttribute("disabled", true);
-    linkInfo.buttonSave.setAttribute("disabled", true);
+    linkInfo.buttons.buttonLike.setAttribute("disabled", true);
+    linkInfo.buttons.buttonDislike.setAttribute("disabled", true);
+    linkInfo.buttons.buttonSave.setAttribute("disabled", true);
   }
   
-  if (linkInfo.linkIsSaved) {
-    linkInfo.buttonSave.setAttribute("label", this.strings.getString("unsave"));
-    linkInfo.buttonSave.setAttribute("accesskey", this.strings.getString("unsave.accesskey"));
-  } else {
-    linkInfo.buttonSave.setAttribute("label", this.strings.getString("save"));
-    linkInfo.buttonSave.setAttribute("accesskey", this.strings.getString("save.accesskey"));
-  }
-  
-  this.updateButtonLike(linkInfo.buttonLike, linkInfo.linkIsLiked);
-  this.updateButtonDislike(linkInfo.buttonDislike, linkInfo.linkIsLiked);
+  this.updateLikeButtons(linkInfo.buttons, linkInfo.linkIsLiked);
+  this.updateSaveButton(linkInfo.buttons, linkInfo.linkIsSaved);
   
   debug_log(linkInfo.linkID, "Updated buttons");
 }
 
 Socialite.buttonLikeClicked = function(linkInfo, e) {
+  var newIsLiked;
   if (linkInfo.linkIsLiked == true) {
-    linkInfo.linkIsLiked = null;
+    newIsLiked = null;
   } else {
-    linkInfo.linkIsLiked = true;
+    newIsLiked = true;
   }
 
   // Provide instant feedback before sending
-  this.updateButtons(linkInfo);
+  this.updateLikeButtons(linkInfo.buttons, newIsLiked);
   
   // Submit the vote, and then update state.
   // (proceeding after each AJAX call completes)
@@ -463,18 +468,19 @@ Socialite.buttonLikeClicked = function(linkInfo, e) {
       hitchHandler(this, "failureNotification"))
   );    
     
-  submit.perform(this.redditModHash, linkInfo.linkID, linkInfo.linkIsLiked);
+  submit.perform(this.redditModHash, linkInfo.linkID, newIsLiked);
 };
 
 Socialite.buttonDislikeClicked = function(linkInfo, e) {
+  var newIsLiked;
   if (linkInfo.linkIsLiked == false) {
-    linkInfo.linkIsLiked = null;
+    newIsLiked = null;
   } else {
-    linkInfo.linkIsLiked = false;
+    newIsLiked = false;
   }
   
   // Provide instant feedback before sending
-  this.updateButtons(linkInfo);
+  this.updateLikeButtons(linkInfo.buttons, newIsLiked);
   
   // Submit the vote, and then update state.
   // (proceeding after the AJAX call completes)
@@ -484,7 +490,7 @@ Socialite.buttonDislikeClicked = function(linkInfo, e) {
       hitchHandler(this, "failureNotification"))
   );
     
-  submit.perform(this.redditModHash, linkInfo.linkID, linkInfo.linkIsLiked);
+  submit.perform(this.redditModHash, linkInfo.linkID, newIsLiked);
 };
 
 Socialite.buttonCommentsClicked = function(linkInfo, e) {
@@ -492,10 +498,12 @@ Socialite.buttonCommentsClicked = function(linkInfo, e) {
 };
 
 Socialite.buttonSaveClicked = function(linkInfo, e) {
+  var newIsSaved;
+
   if (linkInfo.linkIsSaved) {
     
-    linkInfo.linkIsSaved = false;    
-    this.updateButtons(linkInfo);
+    newIsSaved = false;    
+    this.updateButtons(linkInfo.buttons, newIsSaved);
 
     (new reddit.unsave(
       hitchHandler(this, "redditUpdateLinkInfo", linkInfo),
@@ -505,8 +513,8 @@ Socialite.buttonSaveClicked = function(linkInfo, e) {
         
   } else {
   
-    linkInfo.linkIsSaved = true;    
-    this.updateButtons(linkInfo);
+    newIsSaved = true;    
+    this.updateButtons(linkInfo.buttons, newIsSaved);
 
     (new reddit.save(
       hitchHandler(this, "redditUpdateLinkInfo", linkInfo),
