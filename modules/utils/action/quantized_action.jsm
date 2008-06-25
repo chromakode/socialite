@@ -1,7 +1,7 @@
 // An action that ensures that it only calls the function once the action has not been performed for an interval (a form of flood control).
 
 Components.utils.import("resource://socialite/debug.jsm");
-Components.utils.import("resource://socialite/utils/action.jsm");
+Components.utils.import("resource://socialite/utils/action/action.jsm");
 
 var EXPORTED_SYMBOLS = ["QuantizedAction"]
 

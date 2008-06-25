@@ -1,7 +1,7 @@
 // A failure callback to retry an action a set number of times
 
 Components.utils.import("resource://socialite/debug.jsm");
-Components.utils.import("resource://socialite/utils/action.jsm");
+Components.utils.import("resource://socialite/utils/action/action.jsm");
 
 var EXPORTED_SYMBOLS = ["retryAction"]
 

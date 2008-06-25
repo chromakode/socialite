@@ -34,8 +34,8 @@ RETRY_DELAY = 5000;
 
 Components.utils.import("resource://socialite/preferences.jsm");
 Components.utils.import("resource://socialite/debug.jsm");
-Components.utils.import("resource://socialite/utils/action.jsm");
-Components.utils.import("resource://socialite/utils/retry_action.jsm");
+Components.utils.import("resource://socialite/utils/action/action.jsm");
+Components.utils.import("resource://socialite/utils/action/retry_action.jsm");
 Components.utils.import("resource://socialite/utils/hitch.jsm");
 reddit = Components.utils.import("resource://socialite/reddit/reddit.jsm");
 Components.utils.import("resource://socialite/reddit/link_info.jsm");

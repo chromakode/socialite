@@ -3,7 +3,7 @@
 Components.utils.import("resource://socialite/debug.jsm");
 Components.utils.import("resource://socialite/reddit/reddit_request.jsm");
 Components.utils.import("resource://socialite/utils/action/action.jsm");
-Components.utils.import("resource://socialite/utils/quantized_action.jsm");
+Components.utils.import("resource://socialite/utils/action/quantized_action.jsm");
 
 var nativeJSON = Components.classes["@mozilla.org/dom/json;1"]
                  .createInstance(Components.interfaces.nsIJSON);
