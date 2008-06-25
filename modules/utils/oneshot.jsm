@@ -1,4 +1,7 @@
 // Add an event listener that only fires once.
+
+var EXPORTED_SYMBOLS = ["makeOneShot"]
+
 function makeOneShot(instance, type, listener, useCapture) {
 
   var oneShotListener = function () {

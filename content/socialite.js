@@ -37,6 +37,7 @@ Components.utils.import("resource://socialite/debug.jsm");
 Components.utils.import("resource://socialite/utils/action/action.jsm");
 Components.utils.import("resource://socialite/utils/action/retry_action.jsm");
 Components.utils.import("resource://socialite/utils/hitch.jsm");
+Components.utils.import("resource://socialite/utils/oneshot.jsm");
 reddit = Components.utils.import("resource://socialite/reddit/reddit.jsm");
 Components.utils.import("resource://socialite/reddit/link_info.jsm");
 

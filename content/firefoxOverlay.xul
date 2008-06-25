@@ -39,8 +39,6 @@
 <!DOCTYPE overlay SYSTEM "chrome://socialite/locale/socialite.dtd">
 <overlay id="socialite-overlay"
          xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul">
-  <script src="utils.js"/>
-  <script src="reddit.js"/>
   <script src="socialite.js"/>
   <stringbundleset id="stringbundleset">
     <stringbundle id="socialite-strings" src="chrome://socialite/locale/socialite.properties"/>
