@@ -1,5 +1,6 @@
  // Todo:
  // = Modularize
+ // ---- Watches
  // - Download list of current top links and auto-apply to pages
  // + Save button
  // + Button preferences
@@ -175,39 +176,39 @@ Socialite.linkClicked = function(e) {
   var browser = this.tabBrowser.getBrowserForDocument(doc);
     
   // Remove title_ from title_XX_XXXXX
-  var linkHref  = link.href;
+  var linkURL   = link.href;
   var linkID    = link.id.slice(6);
   var linkTitle = link.textContent;
   
-  var linkInfo = new LinkInfo(linkHref, linkID, linkTitle);
+  var linkInfo = new LinkInfo(linkURL, linkID, linkTitle);
   
   // Get some "preloaded" information from the page while we can.
-  var linkLike            = doc.getElementById("up_"+linkInfo.linkID);
+  var linkLike            = doc.getElementById("up_"+linkInfo.id);
   var linkLikeActive      = /upmod/.test(linkLike.className);
   
-  var linkDislike         = doc.getElementById("down_"+linkInfo.linkID);
+  var linkDislike         = doc.getElementById("down_"+linkInfo.id);
   var linkDislikeActive   = /downmod/.test(linkDislike.className);
 
   if (linkLikeActive) {
-    linkInfo.linkIsLiked  = true;
+    linkInfo.state.isLiked  = true;
   } else if (linkDislikeActive) {
-    linkInfo.linkIsLiked  = false;
+    linkInfo.state.isLiked  = false;
   } else {
-    linkInfo.linkIsLiked  = null;
+    linkInfo.state.isLiked  = null;
   }
 
-  var linkComments        = doc.getElementById("comment_"+linkInfo.linkID);
+  var linkComments        = doc.getElementById("comment_"+linkInfo.id);
   linkInfo.commentURL     = linkComments.href;
   
   var commentNum          = /((\d+)\s)?comment[s]?/.exec(linkComments.textContent)[2];
   if (commentNum) {
-    linkInfo.commentCount = parseInt(commentNum);
+    linkInfo.state.commentCount = parseInt(commentNum);
   } else {
-    linkInfo.commentCount = 0;
+    linkInfo.state.commentCount = 0;
   }
   
-  var linkSave            = doc.getElementById("save_"+linkInfo.linkID+"_a");
-  var linkUnsave          = doc.getElementById("unsave_"+linkInfo.linkID+"_a");
+  var linkSave            = doc.getElementById("save_"+linkInfo.id+"_a");
+  var linkUnsave          = doc.getElementById("unsave_"+linkInfo.id+"_a");
   
   if (linkSave != null) {
     // If there's a save link
@@ -222,7 +223,7 @@ Socialite.linkClicked = function(e) {
     throw "Unexpected save link absence.";
   }
   
-  debug_log(linkInfo.linkID, "Clicked");
+  debug_log(linkInfo.id, "Clicked");
   this.watchLink(link.href, linkInfo);
 };
 
@@ -245,7 +246,7 @@ Socialite.linkStartLoad = function(win, isLoading) {
     var linkInfo = this.linksWatched[href];
     var browser = this.tabBrowser.getBrowserForDocument(win.document);
     
-    debug_log(linkInfo.linkID, "Started loading");
+    debug_log(linkInfo.id, "Started loading");
   
     this.redditUpdateLinkInfo(linkInfo);
   
@@ -281,7 +282,7 @@ Socialite.failureNotification = function(r, action) {
   
 Socialite.showNotificationBox = function(browser, linkInfo, isNewPage) {
   var notificationBox = this.tabBrowser.getNotificationBox(browser);
-  var notificationName = "socialite-header"+"-"+linkInfo.linkID;
+  var notificationName = "socialite-header"+"-"+linkInfo.id;
   
   var toRemove = null;    
   var curNotifications = notificationBox.allNotifications;
@@ -289,24 +290,24 @@ Socialite.showNotificationBox = function(browser, linkInfo, isNewPage) {
     var n = curNotifications.item(i);
     
     if (n.value == notificationName) {
-      debug_log(linkInfo.linkID, "Notification box already exists");
+      debug_log(linkInfo.id, "Notification box already exists");
       
       if (isNewPage && (SocialitePrefs.getIntPref("persistmode") == 1)) {
         n.persistence = SocialitePrefs.getIntPref("persistlength");
-        debug_log(linkInfo.linkID, "Reset notification persistence count");
+        debug_log(linkInfo.id, "Reset notification persistence count");
       }
       
       return;
     }
     
     if (n.value.match(/^socialite-header/)) {
-      debug_log(linkInfo.linkID, "Old notification found, queued to remove.");
+      debug_log(linkInfo.id, "Old notification found, queued to remove.");
       toRemove = n;
     }
   }
   
   var notification = notificationBox.appendNotification(
-    linkInfo.linkTitle,
+    linkInfo.title,
     notificationName,
     "chrome://socialite/content/reddit_favicon.ico",
     notificationBox.PRIORITY_INFO_MEDIUM,
@@ -330,7 +331,7 @@ Socialite.showNotificationBox = function(browser, linkInfo, isNewPage) {
   
   // Muahahahahaha
   var siteLink = document.createElement("label");
-  siteLink.setAttribute("id", "socialite_site_link_"+linkInfo.linkID);
+  siteLink.setAttribute("id", "socialite_site_link_"+linkInfo.id);
   siteLink.setAttribute("value", "reddit");
   siteLink.setAttribute("class", "text-link");
   siteLink.setAttribute("flex", true);
@@ -342,7 +343,7 @@ Socialite.showNotificationBox = function(browser, linkInfo, isNewPage) {
   // XUL hackage done.    
   
   var buttonLike = document.createElement("button");
-  buttonLike.setAttribute("id", "socialite_mod_up_"+linkInfo.linkID);
+  buttonLike.setAttribute("id", "socialite_mod_up_"+linkInfo.id);
   buttonLike.setAttribute("type", "checkbox");
   buttonLike.setAttribute("label", this.strings.getString("likeit"));
   buttonLike.setAttribute("accesskey", this.strings.getString("likeit.accesskey"));
@@ -353,7 +354,7 @@ Socialite.showNotificationBox = function(browser, linkInfo, isNewPage) {
   linkInfo.buttons.buttonLike = buttonLike;
   
   var buttonDislike = document.createElement("button");
-  buttonDislike.setAttribute("id", "socialite_mod_down_"+linkInfo.linkID);
+  buttonDislike.setAttribute("id", "socialite_mod_down_"+linkInfo.id);
   buttonDislike.setAttribute("type", "checkbox");
   buttonDislike.setAttribute("label", this.strings.getString("dislikeit"));
   buttonDislike.setAttribute("accesskey", this.strings.getString("dislikeit.accesskey"));
@@ -364,8 +365,7 @@ Socialite.showNotificationBox = function(browser, linkInfo, isNewPage) {
   linkInfo.buttons.buttonDislike = buttonDislike;
   
   var buttonComments = document.createElement("button");
-  buttonComments.setAttribute("id", "socialite_comments_"+linkInfo.linkID);
-  buttonComments.setAttribute("label", this.strings.getFormattedString("comments", [linkInfo.commentCount.toString()]));
+  buttonComments.setAttribute("id", "socialite_comments_"+linkInfo.id);
   buttonComments.setAttribute("accesskey", this.strings.getString("comments.accesskey"));
   buttonComments.setAttribute("hidden", !SocialitePrefs.getBoolPref("showcomments"));
   buttonComments.addEventListener("click", hitchHandler(this, "buttonCommentsClicked", linkInfo), false);
@@ -373,14 +373,14 @@ Socialite.showNotificationBox = function(browser, linkInfo, isNewPage) {
   linkInfo.buttons.buttonComments = buttonComments;
   
   var buttonSave = document.createElement("button");
-  buttonSave.setAttribute("id", "socialite_save_"+linkInfo.linkID);
+  buttonSave.setAttribute("id", "socialite_save_"+linkInfo.id);
   buttonSave.setAttribute("hidden", !SocialitePrefs.getBoolPref("showsave"));
   buttonSave.addEventListener("click", hitchHandler(this, "buttonSaveClicked", linkInfo), false);
   notification.appendChild(buttonSave);
   linkInfo.buttons.buttonSave = buttonSave;
   
   var buttonRandom = document.createElement("button");
-  buttonRandom.setAttribute("id", "socialite_random_"+linkInfo.linkID);
+  buttonRandom.setAttribute("id", "socialite_random_"+linkInfo.id);
   buttonRandom.setAttribute("label", this.strings.getString("random"));
   buttonRandom.setAttribute("accesskey", this.strings.getString("random.accesskey"));
   buttonRandom.setAttribute("hidden", !SocialitePrefs.getBoolPref("showrandom"));
@@ -400,7 +400,7 @@ Socialite.showNotificationBox = function(browser, linkInfo, isNewPage) {
     notification.persistence = -1;
   }   
   
-  debug_log(linkInfo.linkID, "Notification box created");
+  debug_log(linkInfo.id, "Notification box created");
   
   linkInfo.notification = notification;
 };
@@ -433,6 +433,10 @@ Socialite.updateSaveButton = function(buttons, isSaved) {
   }
 }
 
+Socialite.updateCommentsButton = function(buttons, commentCount) {
+  buttons.buttonComments.setAttribute("label", this.strings.getFormattedString("comments", [commentCount.toString()]));
+}
+
 Socialite.updateButtons = function(linkInfo) {
   if (linkInfo.modActive) {
     linkInfo.buttons.buttonLike.setAttribute("disabled", false);
@@ -444,23 +448,22 @@ Socialite.updateButtons = function(linkInfo) {
     linkInfo.buttons.buttonSave.setAttribute("disabled", true);
   }
   
-  this.updateLikeButtons(linkInfo.buttons, linkInfo.linkIsLiked);
-  this.updateSaveButton(linkInfo.buttons, linkInfo.linkIsSaved);
+  this.updateLikeButtons(linkInfo.buttons, linkInfo.uiState.isLiked);
+  this.updateCommentsButton(linkInfo.buttons, linkInfo.uiState.commentCount);
+  this.updateSaveButton(linkInfo.buttons, linkInfo.uiState.isSaved);
   
-  debug_log(linkInfo.linkID, "Updated buttons");
+  debug_log(linkInfo.id, "Updated buttons");
 }
 
 Socialite.buttonLikeClicked = function(linkInfo, e) {
-  var newIsLiked;
-
-  if (linkInfo.buttons.buttonLike.getAttribute("checked") == "true") {
-    newIsLiked = null;
+  if (linkInfo.uiState.isLiked == true) {
+    linkInfo.uiState.isLiked = null;
   } else {
-    newIsLiked = true;
+    linkInfo.uiState.isLiked = true;
   }
 
   // Provide instant feedback before sending
-  this.updateLikeButtons(linkInfo.buttons, newIsLiked);
+  this.updateLikeButtons(linkInfo.buttons, linkInfo.uiState.isLiked);
   
   // Submit the vote, and then update state.
   // (proceeding after each AJAX call completes)
@@ -470,19 +473,18 @@ Socialite.buttonLikeClicked = function(linkInfo, e) {
       hitchHandler(this, "failureNotification"))
   );    
     
-  submit.perform(this.redditModHash, linkInfo.linkID, newIsLiked);
+  submit.perform(this.redditModHash, linkInfo.id, linkInfo.uiState.isLiked);
 };
 
 Socialite.buttonDislikeClicked = function(linkInfo, e) {
-  var newIsLiked;
-  if (linkInfo.buttons.buttonDislike.getAttribute("checked") == "true") {
-    newIsLiked = null;
+  if (linkInfo.uiState.isLiked == false) {
+    linkInfo.uiState.isLiked = null;
   } else {
-    newIsLiked = false;
+    linkInfo.uiState.isLiked = false;
   }
   
   // Provide instant feedback before sending
-  this.updateLikeButtons(linkInfo.buttons, newIsLiked);
+  this.updateLikeButtons(linkInfo.buttons, linkInfo.uiState.isLiked);
   
   // Submit the vote, and then update state.
   // (proceeding after the AJAX call completes)
@@ -492,7 +494,7 @@ Socialite.buttonDislikeClicked = function(linkInfo, e) {
       hitchHandler(this, "failureNotification"))
   );
     
-  submit.perform(this.redditModHash, linkInfo.linkID, newIsLiked);
+  submit.perform(this.redditModHash, linkInfo.id, linkInfo.uiState.isLiked);
 };
 
 Socialite.buttonCommentsClicked = function(linkInfo, e) {
@@ -500,29 +502,27 @@ Socialite.buttonCommentsClicked = function(linkInfo, e) {
 };
 
 Socialite.buttonSaveClicked = function(linkInfo, e) {
-  var newIsSaved;
-
-  if (linkInfo.linkIsSaved) {
+  if (linkInfo.uiState.isSaved) {
     
-    newIsSaved = false;    
-    this.updateSaveButton(linkInfo.buttons, newIsSaved);
+    linkInfo.uiState.isSaved = false;    
+    this.updateSaveButton(linkInfo.buttons, linkInfo.uiState.isSaved);
 
     (new reddit.unsave(
       hitchHandler(this, "redditUpdateLinkInfo", linkInfo),
       retryAction(RETRY_COUNT, RETRY_DELAY, null, null,
         hitchHandler(this, "failureNotification"))
-    )).perform(this.redditModHash, linkInfo.linkID);
+    )).perform(this.redditModHash, linkInfo.id);
         
   } else {
   
-    newIsSaved = true;    
-    this.updateSaveButton(linkInfo.buttons, newIsSaved);
+    linkInfo.uiState.isSaved = true;    
+    this.updateSaveButton(linkInfo.buttons, linkInfo.uiState.isSaved);
 
     (new reddit.save(
       hitchHandler(this, "redditUpdateLinkInfo", linkInfo),
       retryAction(RETRY_COUNT, RETRY_DELAY, null, null,
         hitchHandler(this, "failureNotification"))
-    )).perform(this.redditModHash, linkInfo.linkID);
+    )).perform(this.redditModHash, linkInfo.id);
   }
 };
 
@@ -532,8 +532,8 @@ Socialite.buttonRandomClicked = function(e) {
   (new reddit.randomrising(
     function (r, json) {
       var linkInfo = LinkInfoFromJSON(json);
-      self.watchLink(linkInfo.linkHref, linkInfo);
-      openUILink(linkInfo.linkHref, e);
+      self.watchLink(linkInfo.url, linkInfo);
+      openUILink(linkInfo.url, e);
     },
     retryAction(RETRY_COUNT, RETRY_DELAY, null, null,
       hitchHandler(this, "failureNotification"))

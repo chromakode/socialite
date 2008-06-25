@@ -14,11 +14,11 @@ STATUS_SUCCESS = 200;
 
 QUANTIZE_TIME = 1000;
 
-var info = Action("reddit.info", function(href) {
+var info = QuantizedAction("reddit.info", function(url) {
   debug_log("reddit", "Making ajax info call");
   
   var params   = {
-    url:    href,
+    url:    url,
     sr:     "",
     count:  1,
   };
@@ -33,6 +33,13 @@ var info = Action("reddit.info", function(href) {
     }
   }, "get");
 });
+info.interval = QUANTIZE_TIME;
+info.sameFunc = function(arg1, arg2) {
+  var url1 = arg1[0];
+  var url2 = arg2[0];
+  
+  return (url1 == url2);
+};
 
 var randomrising = Action("reddit.randomrising", function() {
   debug_log("reddit", "Making ajax randomrising call");
