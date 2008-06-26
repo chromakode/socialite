@@ -1,5 +1,15 @@
 var EXPORTED_SYMBOLS = ["hitchHandler", "hitchHandlerFlip"]
 
+// Little helper to ease simple hitching operations
+function hitchThis(thisArg, func) {
+  var self = thisArg;
+  var hitched = function() {
+    func.apply(thisArg, func);
+  }
+  
+  return hitched;
+}
+
 // Nice closure-based partial application method from Greasemonkey. (originally GM_hitch)
 function hitchHandler(obj, meth) {
   if (!obj[meth]) {
