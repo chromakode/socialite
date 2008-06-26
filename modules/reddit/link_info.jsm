@@ -10,15 +10,21 @@ var EXPORTED_SYMBOLS = ["LinkInfo", "LinkInfoFromJSON"]
 // ---
 
 function LinkInfoState() {
+  this.lastUpdated = null;
   this.isLiked = null;
   this.commentCount = null;
   this.isSaved = null;
+}
+
+LinkInfoState.prototype.updated = function() {
+  this.lastUpdated = Date.now();
 }
 
 LinkInfoState.prototype.copy = function(state) {
   this.isLiked = state.isLiked;
   this.commentCount = state.commentCount;
   this.isSaved = state.isSaved;
+  this.updated();
 }
 
 // ---
@@ -45,13 +51,13 @@ function LinkInfo(url, id, title) {
   this.buttons = {};
 }
 
-LinkInfo.prototype.update = function(successCallback, failureCallback, action) {
-  var act = Action("LinkInfo.update", hitchThis(this, function() {
+LinkInfo.prototype.update = function(successCallback, failureCallback) {
+  var act = Action("LinkInfo.update", hitchThis(this, function(action) {
     var infoCall = new reddit.info(
-      function success(r, json) {
+      hitchThis(this, function success(r, json) {
         this.updateFromJSON(json);
         action.success();
-      },
+      }),
       function fail() {
         action.failure();
       }
@@ -69,6 +75,7 @@ LinkInfo.prototype.updateFromJSON = function(json) {
   this.state.isLiked  = linkData.likes;
   this.state.commentCount = linkData.num_comments;
   this.state.isSaved  = linkData.saved;
+  this.state.updated();
   
   debug_log(this.linkID, "Updated from JSON info: "                    +
                          "liked: "    + this.state.isLiked + ", "      +
