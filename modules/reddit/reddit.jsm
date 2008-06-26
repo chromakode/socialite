@@ -3,18 +3,25 @@
 Components.utils.import("resource://socialite/debug.jsm");
 Components.utils.import("resource://socialite/reddit/reddit_request.jsm");
 Components.utils.import("resource://socialite/utils/action/action.jsm");
-Components.utils.import("resource://socialite/utils/action/quantized_action.jsm");
+Components.utils.import("resource://socialite/utils/quantizer.jsm");
 
 var nativeJSON = Components.classes["@mozilla.org/dom/json;1"]
                  .createInstance(Components.interfaces.nsIJSON);
 
-var EXPORTED_SYMBOLS = ["info", "randomrising", "vote", "save", "unsave"]
+var EXPORTED_SYMBOLS = ["info", "randomrising", "vote", "save", "unsave"];
 
 STATUS_SUCCESS = 200;
 
 QUANTIZE_TIME = 1000;
 
-var info = QuantizedAction("reddit.info", function(url) {
+var infoQuantizer = new Quantizer("reddit.info.quantizer", QUANTIZE_TIME);
+infoQuantizer.sameFunc = function(func1, arg1, func2, arg2) {
+  var url1 = arg1[0];
+  var url2 = arg2[0];
+  
+  return (url1 == url2);
+};
+var info = Action("reddit.info", infoQuantizer.quantize(function(url) {
   debug_log("reddit", "Making ajax info call");
   
   var params   = {
@@ -32,14 +39,8 @@ var info = QuantizedAction("reddit.info", function(url) {
       self.failure(r);
     }
   }, "get");
-});
-info.interval = QUANTIZE_TIME;
-info.sameFunc = function(arg1, arg2) {
-  var url1 = arg1[0];
-  var url2 = arg2[0];
-  
-  return (url1 == url2);
-};
+}));
+
 
 var randomrising = Action("reddit.randomrising", function() {
   debug_log("reddit", "Making ajax randomrising call");
@@ -59,14 +60,15 @@ var randomrising = Action("reddit.randomrising", function() {
   }, "get", "http://www.reddit.com/");
 });
 
-var sameLinkID = function(arg1, arg2) {
+var sameLinkID = function(func1, arg1, func2, arg2) {
   var linkID1 = arg1[1];
   var linkID2 = arg2[1];
   
   return (linkID1 == linkID2);
 };
 
-var vote = QuantizedAction("reddit.vote", function(modHash, linkID, isLiked) {
+var voteQuantizer = new Quantizer("reddit.vote.quantizer", QUANTIZE_TIME, sameLinkID);
+var vote = Action("reddit.vote", voteQuantizer.quantize(function(modHash, linkID, isLiked) {
   debug_log("reddit", "Making ajax vote call");
   
   var dir;
@@ -92,11 +94,10 @@ var vote = QuantizedAction("reddit.vote", function(modHash, linkID, isLiked) {
       self.failure(r);
     }
   });
-});
-vote.interval = QUANTIZE_TIME;
-vote.sameFunc = sameLinkID;
+}));
 
-var save = QuantizedAction("reddit.save", function(modHash, linkID) {
+var saveQuantizer = new Quantizer("reddit.save.quantizer", QUANTIZE_TIME, sameLinkID);
+var save = Action("reddit.save", saveQuantizer.quantize(function(modHash, linkID) {
   debug_log("reddit", "Making ajax save call");
   
   var params   = {
@@ -112,11 +113,9 @@ var save = QuantizedAction("reddit.save", function(modHash, linkID) {
       self.failure(r);
     }
   });
-});
-save.interval = QUANTIZE_TIME;
-save.sameFunc = sameLinkID;
+}));
 
-var unsave = QuantizedAction("reddit.unsave", function(modHash, linkID) {
+var unsave = Action("reddit.unsave", saveQuantizer.quantize(function(modHash, linkID) {
   debug_log("reddit", "Making ajax unsave call");
   
   var params   = {
@@ -132,6 +131,4 @@ var unsave = QuantizedAction("reddit.unsave", function(modHash, linkID) {
       self.failure(r);
     }
   });
-});
-unsave.interval = QUANTIZE_TIME;
-unsave.sameFunc = sameLinkID;
+}));

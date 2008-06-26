@@ -2,7 +2,7 @@
 
 Components.utils.import("resource://socialite/debug.jsm");
 
-var EXPORTED_SYMBOLS = ["Action", "ActionType"]
+var EXPORTED_SYMBOLS = ["Action", "ActionType"];
 
 function Action(name, func) {
   // Make a copy of the constructor function

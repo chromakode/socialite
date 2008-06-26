@@ -3,7 +3,7 @@
 Components.utils.import("resource://socialite/debug.jsm");
 Components.utils.import("resource://socialite/utils/action/action.jsm");
 
-var EXPORTED_SYMBOLS = ["retryAction"]
+var EXPORTED_SYMBOLS = ["retryAction"];
 
 function retryAction(startCount, delay, retryCallback, successCallback, failureCallback) {
   var act = new _RetryAction(successCallback, failureCallback);
