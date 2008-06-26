@@ -34,6 +34,7 @@ var _RetryAction = Action("retry", function() {
       this.count -= 1;
         
       // Perform the action again.
+      action.performed = false;
       action.perform.apply(action, arguments);
     }
     
