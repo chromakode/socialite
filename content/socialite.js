@@ -258,7 +258,16 @@ Socialite.linkStartLoad = function(win, isLoading) {
 }
 
 Socialite.redditUpdateLinkInfo = function(linkInfo) {
-  linkInfo.update(hitchHandler(this, "updateButtons", linkInfo)).perform();
+  linkInfo.update(hitchThis(this, function(action) {
+    // Only update the UI if the update started after the last user-caused UI update.
+    if (action.startTime >= linkInfo.uiState.lastUpdated) {
+      debug_log(linkInfo.id, "Updating UI");
+      linkInfo.updateUIState();
+      this.updateButtons(linkInfo);
+    } else {
+      debug_log(linkInfo.id, "UI changed since update request, not updating UI");
+    }
+  })).perform();
 }
 
 Socialite.failureNotification = function(r, action) {
@@ -463,6 +472,7 @@ Socialite.buttonLikeClicked = function(linkInfo, e) {
   } else {
     linkInfo.uiState.isLiked = true;
   }
+  linkInfo.uiState.updated();
 
   // Provide instant feedback before sending
   this.updateLikeButtons(linkInfo.buttons, linkInfo.uiState.isLiked);
@@ -484,6 +494,7 @@ Socialite.buttonDislikeClicked = function(linkInfo, e) {
   } else {
     linkInfo.uiState.isLiked = false;
   }
+  linkInfo.uiState.updated();
   
   // Provide instant feedback before sending
   this.updateLikeButtons(linkInfo.buttons, linkInfo.uiState.isLiked);
@@ -506,7 +517,8 @@ Socialite.buttonCommentsClicked = function(linkInfo, e) {
 Socialite.buttonSaveClicked = function(linkInfo, e) {
   if (linkInfo.uiState.isSaved) {
     
-    linkInfo.uiState.isSaved = false;    
+    linkInfo.uiState.isSaved = false;
+    linkInfo.uiState.updated();
     this.updateSaveButton(linkInfo.buttons, linkInfo.uiState.isSaved);
 
     (new reddit.unsave(
@@ -517,7 +529,8 @@ Socialite.buttonSaveClicked = function(linkInfo, e) {
         
   } else {
   
-    linkInfo.uiState.isSaved = true;    
+    linkInfo.uiState.isSaved = true;
+    linkInfo.uiState.updated();   
     this.updateSaveButton(linkInfo.buttons, linkInfo.uiState.isSaved);
 
     (new reddit.save(
