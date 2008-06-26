@@ -19,14 +19,22 @@ function Action(name, func) {
 _MakeAction = function(successCallback, failureCallback) {
   this.successCallback = successCallback;
   this.failureCallback = failureCallback;
+  this.performed = false;
+  this.startTime = null;
 }
 
 function ActionType() {}
 
 ActionType.prototype.perform = function() {
-  debug_log("action", "Performing "+ this.name + " action");
+  debug_log("action", "Performing " + this.name + " action");
 
-  var result = this.func.apply(this, arguments);
+  if (!this.performed) {
+    this.performed = true;
+    this.startTime = Date.now();
+    var result = this.func.apply(this, arguments);
+  } else {
+    throw "Action has already been performed.";
+  }
 }
 
 ActionType.prototype.doCallback = function(callback, args) {
