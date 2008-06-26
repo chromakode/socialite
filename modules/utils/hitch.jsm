@@ -1,10 +1,10 @@
-var EXPORTED_SYMBOLS = ["hitchHandler", "hitchHandlerFlip"]
+var EXPORTED_SYMBOLS = ["hitchThis", "hitchHandler", "hitchHandlerFlip"]
 
 // Little helper to ease simple hitching operations
 function hitchThis(thisArg, func) {
   var self = thisArg;
   var hitched = function() {
-    func.apply(thisArg, func);
+    func.apply(thisArg, arguments);
   }
   
   return hitched;
