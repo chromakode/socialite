@@ -30,7 +30,7 @@ var info = Action("reddit.info", infoQuantizer.quantize(function(url, action) {
     count:  1,
   };
     
-  redditRequest("info.json", params, function(r){ 
+  redditRequest("info.json", params, function(r) { 
     if (r.status == STATUS_SUCCESS) {
       var json = nativeJSON.decode(r.responseText);
       action.success(r, json);
@@ -48,7 +48,7 @@ var randomrising = Action("reddit.randomrising", function(action) {
     limit: 1,
   };
     
-  redditRequest("randomrising.json", params, function(r){ 
+  redditRequest("randomrising.json", params, function(r) { 
     if (r.status == STATUS_SUCCESS) {
       var json = nativeJSON.decode(r.responseText);
       action.success(r, json);
@@ -84,7 +84,7 @@ var vote = Action("reddit.vote", voteQuantizer.quantize(function(modHash, linkID
     dir:   dir,
   };
   
-  redditRequest("vote", params, function(r){ 
+  redditRequest("vote", params, function(r) { 
     if (r.status == STATUS_SUCCESS) {
       action.success(r);
     } else {
@@ -102,7 +102,7 @@ var save = Action("reddit.save", saveQuantizer.quantize(function(modHash, linkID
     uh:    modHash,
   };
   
-  redditRequest("save", params, function(r){ 
+  redditRequest("save", params, function(r) { 
     if (r.status == STATUS_SUCCESS) {
       action.success(r);
     } else {
@@ -119,7 +119,7 @@ var unsave = Action("reddit.unsave", saveQuantizer.quantize(function(modHash, li
     uh:    modHash,
   };
   
-  redditRequest("unsave", params, function(r){ 
+  redditRequest("unsave", params, function(r) { 
     if (r.status == STATUS_SUCCESS) {
       action.success(r);
     } else {

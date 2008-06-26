@@ -258,27 +258,29 @@ Socialite.linkStartLoad = function(win, isLoading) {
 }
 
 Socialite.redditUpdateLinkInfo = function(linkInfo) {
-  linkInfo.update(hitchThis(this, function(action) {
-    // Only update the UI if the update started after the last user-caused UI update.
-    if (action.startTime >= linkInfo.uiState.lastUpdated) {
-      debug_log(linkInfo.id, "Updating UI");
-      linkInfo.updateUIState();
-      this.updateButtons(linkInfo);
-    } else {
-      debug_log(linkInfo.id, "UI changed since update request, not updating UI");
-    }
-  })).perform();
+  linkInfo.update(
+    hitchThis(this, function success(action) {
+      // Only update the UI if the update started after the last user-caused UI update.
+      if (action.startTime >= linkInfo.uiState.lastUpdated) {
+        debug_log(linkInfo.id, "Updating UI");
+        linkInfo.updateUIState();
+        this.updateButtons(linkInfo);
+      } else {
+        debug_log(linkInfo.id, "UI changed since update request, not updating UI");
+      }
+    }),
+    retryAction(RETRY_COUNT, RETRY_DELAY, null, null,
+      hitchHandler(this, "failureNotification"))
+  ).perform();
 }
 
 Socialite.failureNotification = function(r, action) {
-  debug_log("main", "Displaying failure alert, action: " + action.actionName + ", status: " + r.status);
-
   var text;
   
   if (r.status != 200) {
-    text = "Unexpected HTTP status " + r.status + " recieved (" + action.actionName + ")";
+    text = "Unexpected HTTP status " + r.status + " recieved (" + action.name + ")";
   } else {
-    text = "The requested action failed (" + action.actionName + ")";
+    text = "The requested action failed (" + action.name + ")";
   }
   
   alertsService.showAlertNotification(

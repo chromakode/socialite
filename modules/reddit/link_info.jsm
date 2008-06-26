@@ -56,10 +56,10 @@ LinkInfo.prototype.update = function(successCallback, failureCallback) {
     var infoCall = new reddit.info(
       hitchThis(this, function success(r, json) {
         this.updateFromJSON(json);
-        action.success();
+        action.success(r, json);
       }),
-      function fail() {
-        action.failure();
+      function fail(r) {
+        action.failure(r);
       }
     );
     

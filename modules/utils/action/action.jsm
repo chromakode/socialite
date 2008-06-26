@@ -20,6 +20,7 @@ _MakeAction = function(successCallback, failureCallback) {
   this.successCallback = successCallback;
   this.failureCallback = failureCallback;
   this.startTime = null;
+  this.lastArgs = null;
 }
 
 function ActionType() {}
@@ -29,8 +30,13 @@ ActionType.prototype.perform = function() {
 
   this.startTime = Date.now();
   
+  var argArray = Array.prototype.splice.call(arguments, 0) || [];
+
+  // Copy and store the array
+  this.lastArgs = argArray.concat();
+  
   // Add this action object to the end of the arguments list and call.
-  var newargs = this.addToArgs(arguments);
+  var newargs = this.addToArgs(argArray);
   return this.func.apply(null, newargs);
 }
 
