@@ -55,8 +55,10 @@ LinkInfo.prototype.update = function(successCallback, failureCallback) {
   var act = Action("LinkInfo.update", hitchThis(this, function(action) {
     var infoCall = new reddit.info(
       hitchThis(this, function success(r, json) {
-        this.updateFromJSON(json);
-        action.success(r, json);
+        if (action.startTime >= linkInfo.state.lastUpdated) {
+          this.updateFromJSON(json);
+          action.success(r, json);
+        }
       }),
       function fail(r) {
         action.failure(r);

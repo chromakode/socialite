@@ -11,6 +11,7 @@
  // + Better error handling/retry
  // - Submit link command
  // - Make roll-in an option
+ // - Unsuccessful action queue
  
  // Outstanding issues:
  // + Raw images seem to not be handled by DOMContentLoaded
@@ -269,12 +270,20 @@ Socialite.redditUpdateLinkInfo = function(linkInfo) {
         debug_log(linkInfo.id, "UI changed since update request, not updating UI");
       }
     }),
-    retryAction(RETRY_COUNT, RETRY_DELAY, null, null,
-      hitchHandler(this, "failureNotification"))
+    hitchThis(this, function failure(action) {
+      this.failureNotification(linkInfo);
+      linkInfo.updateUIState();
+      this.updateButtons(linkInfo);
+    })
   ).perform();
 }
 
-Socialite.failureNotification = function(r, action) {
+Socialite.failureHandler = function(linkInfo, r, action) {
+  this.failureNotification(linkInfo, r, action);
+  this.redditUpdateLinkInfo(linkInfo);
+}
+
+Socialite.failureNotification = function(linkInfo, r, action) {
   var text;
   
   if (r.status != 200) {
@@ -288,9 +297,6 @@ Socialite.failureNotification = function(r, action) {
     "Socialite Connection Error",
     text, 
     null, null, null, "socialite-failure");
-    
-  // Finally, update the buttons to make sure their state matches the data.
-  this.updateButtons(linkInfo);
 }
   
 Socialite.showNotificationBox = function(browser, linkInfo, isNewPage) {
@@ -401,6 +407,7 @@ Socialite.showNotificationBox = function(browser, linkInfo, isNewPage) {
   notification.appendChild(buttonRandom);
   linkInfo.buttons.buttonRandom = buttonRandom;
   
+  linkInfo.updateUIState();
   this.updateButtons(linkInfo);
 
   // Persistence
@@ -483,8 +490,7 @@ Socialite.buttonLikeClicked = function(linkInfo, e) {
   // (proceeding after each AJAX call completes)
   var submit = new reddit.vote(
     hitchHandler(this, "redditUpdateLinkInfo", linkInfo),
-    retryAction(RETRY_COUNT, RETRY_DELAY, null, null,
-      hitchHandler(this, "failureNotification"))
+    hitchHandler(this, "failureHandler", linkInfo)
   );    
     
   submit.perform(this.redditModHash, linkInfo.id, linkInfo.uiState.isLiked);
@@ -505,8 +511,7 @@ Socialite.buttonDislikeClicked = function(linkInfo, e) {
   // (proceeding after the AJAX call completes)
   var submit = new reddit.vote(
     hitchHandler(this, "redditUpdateLinkInfo", linkInfo),
-    retryAction(RETRY_COUNT, RETRY_DELAY, null, null,
-      hitchHandler(this, "failureNotification"))
+    hitchHandler(this, "failureHandler", linkInfo)
   );
     
   submit.perform(this.redditModHash, linkInfo.id, linkInfo.uiState.isLiked);
@@ -525,9 +530,8 @@ Socialite.buttonSaveClicked = function(linkInfo, e) {
 
     (new reddit.unsave(
       hitchHandler(this, "redditUpdateLinkInfo", linkInfo),
-      retryAction(RETRY_COUNT, RETRY_DELAY, null, null,
-        hitchHandler(this, "failureNotification"))
-    )).perform(this.redditModHash, linkInfo.id);
+      hitchHandler(this, "failureHandler", linkInfo))
+    ).perform(this.redditModHash, linkInfo.id);
         
   } else {
   
@@ -537,9 +541,8 @@ Socialite.buttonSaveClicked = function(linkInfo, e) {
 
     (new reddit.save(
       hitchHandler(this, "redditUpdateLinkInfo", linkInfo),
-      retryAction(RETRY_COUNT, RETRY_DELAY, null, null,
-        hitchHandler(this, "failureNotification"))
-    )).perform(this.redditModHash, linkInfo.id);
+      hitchHandler(this, "failureHandler", linkInfo))
+    ).perform(this.redditModHash, linkInfo.id);
   }
 };
 
@@ -552,9 +555,8 @@ Socialite.buttonRandomClicked = function(e) {
       self.watchLink(linkInfo.url, linkInfo);
       openUILink(linkInfo.url, e);
     },
-    retryAction(RETRY_COUNT, RETRY_DELAY, null, null,
-      hitchHandler(this, "failureNotification"))
-  )).perform();
+    hitchHandler(this, "failureNotification", linkInfo))
+  ).perform();
 };
 
 

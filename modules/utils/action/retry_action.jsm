@@ -30,14 +30,16 @@ var _RetryAction = Action("retry", function() {
     var args = arguments;
     var doRetry = function() {
       // Call the retry callback
-      retryAction.doCallback(this.retryCallback, null, args);
-         
-      retryAction.count -= 1;
-      
-      debug_log("retry-lastargs", action.lastArgs.toString());
-      
-      // Perform the action again.
-      action.perform.apply(action, action.lastArgs);
+      var continueRetry = retryAction.doCallback(this.retryCallback, null, args);
+      if (continueRetry == null || continueRetry == true) {
+        retryAction.count -= 1;
+        
+        // Perform the action again.
+        action.perform.apply(action, action.lastArgs);
+      } else {
+        debug_log(retryAction.name, "Retry callback has signalled to stop retrying; retry aborted");
+        retryAction.failure.apply(retryAction, arguments);
+      }
     };
     
     if (retryAction.delay) {      
