@@ -31,19 +31,23 @@ ActionType.prototype.perform = function() {
   if (!this.performed) {
     this.performed = true;
     this.startTime = Date.now();
-    var result = this.func.apply(this, arguments);
+    
+    // Add this action object to the end of the arguments list and call.
+    var newargs = Array.prototype.splice.call(arguments, 0) || [];
+    newargs.push(this);
+    return this.func.apply(null, newargs);
   } else {
     throw "Action has already been performed.";
   }
 }
 
 ActionType.prototype.doCallback = function(callback, args) {
-  // Arguments contain the arguments passed to this function,
-  // with the action object and result at the end.
+  // Arguments contain the arguments passed to this function, with this action object at the end.
   var newargs = Array.prototype.splice.call(args, 0) || [];
   newargs.push(this);
   
   if (callback) {
+    // A little sugar to allow actions to be passed in without calling toFunction()
     if (callback instanceof ActionType) {
       return callback.perform.apply(callback, newargs);
     } else {

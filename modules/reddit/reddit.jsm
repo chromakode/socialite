@@ -21,7 +21,7 @@ infoQuantizer.sameFunc = function(func1, arg1, func2, arg2) {
   
   return (url1 == url2);
 };
-var info = Action("reddit.info", infoQuantizer.quantize(function(url) {
+var info = Action("reddit.info", infoQuantizer.quantize(function(url, action) {
   debug_log("reddit", "Making ajax info call");
   
   var params   = {
@@ -30,32 +30,30 @@ var info = Action("reddit.info", infoQuantizer.quantize(function(url) {
     count:  1,
   };
     
-  var self = this;
   redditRequest("info.json", params, function(r){ 
     if (r.status == STATUS_SUCCESS) {
       var json = nativeJSON.decode(r.responseText);
-      self.success(r, json);
+      action.success(r, json);
     } else {
-      self.failure(r);
+      action.failure(r);
     }
   }, "get");
 }));
 
 
-var randomrising = Action("reddit.randomrising", function() {
+var randomrising = Action("reddit.randomrising", function(action) {
   debug_log("reddit", "Making ajax randomrising call");
   
   var params   = {
     limit: 1,
   };
     
-  var self = this;
   redditRequest("randomrising.json", params, function(r){ 
     if (r.status == STATUS_SUCCESS) {
       var json = nativeJSON.decode(r.responseText);
-      self.success(r, json);
+      action.success(r, json);
     } else {
-      self.failure(r);
+      action.failure(r);
     }
   }, "get", "http://www.reddit.com/");
 });
@@ -68,7 +66,7 @@ var sameLinkID = function(func1, arg1, func2, arg2) {
 };
 
 var voteQuantizer = new Quantizer("reddit.vote.quantizer", QUANTIZE_TIME, sameLinkID);
-var vote = Action("reddit.vote", voteQuantizer.quantize(function(modHash, linkID, isLiked) {
+var vote = Action("reddit.vote", voteQuantizer.quantize(function(modHash, linkID, isLiked, action) {
   debug_log("reddit", "Making ajax vote call");
   
   var dir;
@@ -86,18 +84,17 @@ var vote = Action("reddit.vote", voteQuantizer.quantize(function(modHash, linkID
     dir:   dir,
   };
   
-  var self = this;
   redditRequest("vote", params, function(r){ 
     if (r.status == STATUS_SUCCESS) {
-      self.success(r);
+      action.success(r);
     } else {
-      self.failure(r);
+      action.failure(r);
     }
   });
 }));
 
 var saveQuantizer = new Quantizer("reddit.save.quantizer", QUANTIZE_TIME, sameLinkID);
-var save = Action("reddit.save", saveQuantizer.quantize(function(modHash, linkID) {
+var save = Action("reddit.save", saveQuantizer.quantize(function(modHash, linkID, action) {
   debug_log("reddit", "Making ajax save call");
   
   var params   = {
@@ -105,17 +102,16 @@ var save = Action("reddit.save", saveQuantizer.quantize(function(modHash, linkID
     uh:    modHash,
   };
   
-  var self = this;
   redditRequest("save", params, function(r){ 
     if (r.status == STATUS_SUCCESS) {
-      self.success(r);
+      action.success(r);
     } else {
-      self.failure(r);
+      action.failure(r);
     }
   });
 }));
 
-var unsave = Action("reddit.unsave", saveQuantizer.quantize(function(modHash, linkID) {
+var unsave = Action("reddit.unsave", saveQuantizer.quantize(function(modHash, linkID, action) {
   debug_log("reddit", "Making ajax unsave call");
   
   var params   = {
@@ -123,12 +119,11 @@ var unsave = Action("reddit.unsave", saveQuantizer.quantize(function(modHash, li
     uh:    modHash,
   };
   
-  var self = this;
   redditRequest("unsave", params, function(r){ 
     if (r.status == STATUS_SUCCESS) {
-      self.success(r);
+      action.success(r);
     } else {
-      self.failure(r);
+      action.failure(r);
     }
   });
 }));
