@@ -27,19 +27,25 @@ function ActionType() {}
 ActionType.prototype.perform = function() {
   debug_log("action", "Performing " + this.name + " action");
 
-  this.performed = true;
   this.startTime = Date.now();
   
   // Add this action object to the end of the arguments list and call.
-  var newargs = Array.prototype.splice.call(arguments, 0) || [];
-  newargs.push(this);
+  var newargs = this.addToArgs(arguments);
   return this.func.apply(null, newargs);
+}
+
+ActionType.prototype.addToArgs = function(args) {
+  // Arguments contain the arguments passed to this function, with this action object at the end.
+  var newargs = Array.prototype.splice.call(args, 0) || [];
+  if (newargs[newargs.length-1] != this) {
+    newargs.push(this);
+  }
+  return newargs;
 }
 
 ActionType.prototype.doCallback = function(callback, args) {
   // Arguments contain the arguments passed to this function, with this action object at the end.
-  var newargs = Array.prototype.splice.call(args, 0) || [];
-  newargs.push(this);
+  var newargs = this.addToArgs(args);
   
   if (callback) {
     // A little sugar to allow actions to be passed in without calling toFunction()
