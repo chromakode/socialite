@@ -19,6 +19,7 @@ function Action(name, func) {
 _MakeAction = function(successCallback, failureCallback) {
   this.successCallback = successCallback;
   this.failureCallback = failureCallback;
+  this.performed = false;
   this.startTime = null;
 }
 
@@ -27,12 +28,17 @@ function ActionType() {}
 ActionType.prototype.perform = function() {
   debug_log("action", "Performing " + this.name + " action");
 
-  this.startTime = Date.now();
-  
-  // Add this action object to the end of the arguments list and call.
-  var newargs = Array.prototype.splice.call(arguments, 0) || [];
-  newargs.push(this);
-  return this.func.apply(null, newargs);
+  if (!this.performed) {
+    this.performed = true;
+    this.startTime = Date.now();
+    
+    // Add this action object to the end of the arguments list and call.
+    var newargs = Array.prototype.splice.call(arguments, 0) || [];
+    newargs.push(this);
+    return this.func.apply(null, newargs);
+  } else {
+    throw "Action has already been performed.";
+  }
 }
 
 ActionType.prototype.doCallback = function(callback, args) {
