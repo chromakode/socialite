@@ -1,6 +1,7 @@
 // Contains information about a particular link.
 
 Components.utils.import("resource://socialite/debug.jsm");
+Components.utils.import("resource://socialite/utils/hitch.jsm");
 Components.utils.import("resource://socialite/utils/action/action.jsm");
 reddit = Components.utils.import("resource://socialite/reddit/reddit.jsm");
 
@@ -44,13 +45,11 @@ function LinkInfo(url, id, title) {
   this.buttons = {};
 }
 
-LinkInfo.prototype.update = function(successCallback, failureCallback) {
-  var linkInfo = this;
-  var act = Action("LinkInfo.update", function() {
-    var action = this;
+LinkInfo.prototype.update = function(successCallback, failureCallback, action) {
+  var act = Action("LinkInfo.update", hitchThis(this, function() {
     var infoCall = new reddit.info(
       function success(r, json) {
-        linkInfo.updateFromJSON(json);
+        this.updateFromJSON(json);
         action.success();
       },
       function fail() {
@@ -58,8 +57,8 @@ LinkInfo.prototype.update = function(successCallback, failureCallback) {
       }
     );
     
-    infoCall.perform(linkInfo.url);
-  });
+    infoCall.perform(this.url);
+  }));
   
   return (new act(successCallback, failureCallback));
 }
@@ -70,8 +69,6 @@ LinkInfo.prototype.updateFromJSON = function(json) {
   this.state.isLiked  = linkData.likes;
   this.state.commentCount = linkData.num_comments;
   this.state.isSaved  = linkData.saved;
-  
-  this.updateUIState();
   
   debug_log(this.linkID, "Updated from JSON info: "                    +
                          "liked: "    + this.state.isLiked + ", "      +
