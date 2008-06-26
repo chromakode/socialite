@@ -19,28 +19,31 @@ function retryAction(startCount, delay, retryCallback, successCallback, failureC
 var _RetryAction = Action("retry", function() {
   var argsLen = arguments.length;
   
-  // Get the last argument
-  var action = arguments[argsLen-1];
+  var retryAction = arguments[argsLen-1];
+  var action = arguments[argsLen-2];
 
-  if (!this.count) {
-    this.failure.apply(this, arguments);
+  if (!retryAction.count) {
+    retryAction.failure.apply(retryAction, arguments);
   } else {
-    debug_log(this.name, action.name + " has failed, retrying (" + this.count + " retrys left)");
+    debug_log(this.name, action.name + " has failed, retrying (" + retryAction.count + " retrys left)");
     
     var doRetry = function() {
       // Call the retry callback
-      this.doCallback(this.retryCallback, null, arguments);
+      retryAction.doCallback(this.retryCallback, null, arguments);
          
-      this.count -= 1;
+      retryAction.count -= 1;
         
       // Perform the action again.
-      action.performed = false;
       action.perform.apply(action, arguments);
-    }
+    };
     
     if (this.delay) {      
       debug_log(this.name, "Waiting " + this.delay + " milliseconds");
-      this.timer.initWithCallback(hitchThis(this, doRetry), this.delay, this.timer.TYPE_ONE_SHOT);
+      retryAction.timer.initWithCallback(
+        doRetry,
+        retryAction.delay,
+        retryAction.timer.TYPE_ONE_SHOT
+      );
     } else {
       doRetry();
     }
