@@ -2,6 +2,7 @@
 
 Components.utils.import("resource://socialite/debug.jsm");
 Components.utils.import("resource://socialite/utils/action/action.jsm");
+Components.utils.import("resource://socialite/utils/hitch.jsm");
 
 var EXPORTED_SYMBOLS = ["retryAction"];
 
@@ -24,22 +25,21 @@ var _RetryAction = Action("retry", function() {
   if (!this.count) {
     this.failure.apply(this, arguments);
   } else {
-    var self = this;
-    debug_log(self.name, action.name + " has failed, retrying (" + self.count + " retrys left)");
+    debug_log(this.name, action.name + " has failed, retrying (" + this.count + " retrys left)");
     
     var doRetry = function() {
       // Call the retry callback
-      self.doCallback(self.retryCallback, null, arguments);
+      this.doCallback(this.retryCallback, null, arguments);
          
-      self.count -= 1;
+      this.count -= 1;
         
       // Perform the action again.
       action.perform.apply(action, arguments);
     }
     
     if (this.delay) {      
-      debug_log(self.name, "Waiting " + self.delay + " milliseconds");
-      this.timer.initWithCallback(doRetry, this.delay, this.timer.TYPE_ONE_SHOT);
+      debug_log(this.name, "Waiting " + this.delay + " milliseconds");
+      this.timer.initWithCallback(hitchThis(this, doRetry), this.delay, this.timer.TYPE_ONE_SHOT);
     } else {
       doRetry();
     }
