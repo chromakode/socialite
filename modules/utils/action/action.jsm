@@ -4,14 +4,14 @@ Components.utils.import("resource://socialite/debug.jsm");
 
 var EXPORTED_SYMBOLS = ["Action", "ActionType"]
 
-function Action(actionName, actionFunc) {
+function Action(name, func) {
   // Make a copy of the constructor function
   var action = function() { _MakeAction.apply(this, arguments); };
 
   // Make an action object, instantiatable with callbacks
   action.prototype = new ActionType();
-  action.prototype.actionName = actionName;
-  action.prototype.actionFunc = actionFunc;
+  action.prototype.name = name;
+  action.prototype.func = func;
   
   return action;
 }
@@ -24,9 +24,9 @@ _MakeAction = function(successCallback, failureCallback) {
 function ActionType() {}
 
 ActionType.prototype.perform = function() {
-  debug_log("action", "Performing "+ this.actionName + " action");
+  debug_log("action", "Performing "+ this.name + " action");
 
-  var result = this.actionFunc.apply(this, arguments);
+  var result = this.func.apply(this, arguments);
 }
 
 ActionType.prototype.doCallback = function(callback, args) {
@@ -45,12 +45,12 @@ ActionType.prototype.doCallback = function(callback, args) {
 }
 
 ActionType.prototype.success = function() {
-  debug_log("action", this.actionName + " succeeded");
+  debug_log("action", this.name + " succeeded");
   return this.doCallback(this.successCallback, arguments);
 }
 
 ActionType.prototype.failure = function() {
-  debug_log("action", this.actionName + " failed");
+  debug_log("action", this.name + " failed");
   return this.doCallback(this.failureCallback, arguments);
 }
 

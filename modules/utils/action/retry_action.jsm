@@ -25,7 +25,7 @@ var _RetryAction = Action("retry", function() {
     this.failure.apply(this, arguments);
   } else {
     var self = this;
-    debug_log(self.actionName, action.actionName + " has failed, retrying (" + self.count + " retrys left)");
+    debug_log(self.name, action.name + " has failed, retrying (" + self.count + " retrys left)");
     
     var doRetry = function() {
       // Call the retry callback
@@ -38,7 +38,7 @@ var _RetryAction = Action("retry", function() {
     }
     
     if (this.delay) {      
-      debug_log(self.actionName, "Waiting " + self.delay + " milliseconds");
+      debug_log(self.name, "Waiting " + self.delay + " milliseconds");
       this.timer.initWithCallback(doRetry, this.delay, this.timer.TYPE_ONE_SHOT);
     } else {
       doRetry();
