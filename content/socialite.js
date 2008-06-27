@@ -22,7 +22,7 @@
  // + Preserve after back-forward
  // + Reopen bar
  // + Some links still not working
- // - Link title alignment off
+ // + Link title alignment off
  // - m.reddit.com support (Pickegnome)
  // - Handle RSS readers
  // - Disable on fullscreen
@@ -369,6 +369,10 @@ Socialite.showNotificationBox = function(browser, linkInfo, isNewPage) {
   siteLink.addEventListener("click", hitchHandler(this, "siteLinkClicked"), false);
   messageImage.addEventListener("click", hitchHandler(this, "siteLinkClicked"), false);
   details.insertBefore(siteLink, messageText);
+  
+  // Slight hack to fix description vertical centering
+  // XXX Does this work on all platforms?
+  messageText.style.marginTop = "2px"
   
   // XUL hackage done.    
   
