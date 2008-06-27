@@ -15,6 +15,7 @@ function LinkInfoState() {
   this.addField("isLiked");
   this.addField("commentCount");
   this.addField("isSaved");
+  this.addField("isHidden");
 }
 
 LinkInfoState.prototype = new TimestampedData;
@@ -23,6 +24,7 @@ LinkInfoState.prototype.copy = function(state) {
   this.isLiked = state.isLiked;
   this.commentCount = state.commentCount;
   this.isSaved = state.isSaved;
+  this.isHidden = state.isHidden;
 }
 
 // ---
@@ -77,11 +79,13 @@ LinkInfo.prototype.updateFromJSON = function(json) {
   this.state.isLiked  = linkData.likes;
   this.state.commentCount = linkData.num_comments;
   this.state.isSaved  = linkData.saved;
+  this.state.isHidden  = linkData.hidden;
   
   debug_log(this.id, "Updated from JSON info: "                    +
                      "liked: "    + this.state.isLiked + ", "      +
                      "comments: " + this.state.commentCount + ", " +
-                     "saved: "    + this.state.isSaved             );
+                     "saved: "    + this.state.isSaved + ", "      +
+                     "hidden: "   + this.state.isHidden            );
 }
 
 LinkInfo.prototype.updateUIState = function() {

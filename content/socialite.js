@@ -13,6 +13,7 @@
  // - Make roll-in an option
  // - Unsuccessful action queue
  // - Option of working indicator (throbber)
+ // - Autoclose bar based on link clicks, not persistence
  
  // Outstanding issues:
  // + Raw images seem to not be handled by DOMContentLoaded
@@ -184,7 +185,9 @@ Socialite.linkClicked = function(e) {
   
   var linkInfo = new LinkInfo(linkURL, linkID, linkTitle);
   
+  //
   // Get some "preloaded" information from the page while we can.
+  //
   var linkLike            = doc.getElementById("up_"+linkInfo.id);
   var linkLikeActive      = /upmod/.test(linkLike.className);
   
@@ -215,16 +218,31 @@ Socialite.linkClicked = function(e) {
   if (linkSave != null) {
     // If there's a save link
     // Whether it's clicked
-    linkInfo.linkIsSaved = (linkSave.style.display == "none");
+    linkInfo.isSaved = (linkSave.style.display == "none");
   } else if (linkUnsave != null) {
     // If there's an unsave link (assumption)
     // Whether it's not clicked
-    linkInfo.linkIsSaved = (linkUnsave.style.display != "none");
+    linkInfo.isSaved = (linkUnsave.style.display != "none");
   } else {
     // No save or unsave link present -- this shouldn't happen, as far as I know.
-    throw "Unexpected save link absence.";
+    debug_log(linkInfo.id, "Unexpected save link absence.");
   }
   
+  // You'd think the link was hidden, the user couldn't have clicked on it
+  // But they could find it in their hidden links list.
+  var linkHide            = doc.getElementById("hide_"+linkInfo.id+"_a");
+  var linkUnhide          = doc.getElementById("unsave_"+linkInfo.id+"_a");
+  
+  if (linkHide != null) {
+    linkInfo.isHidden = false;
+  } else if (linkUnhide != null) {
+    linkInfo.isHidden = true;
+  } else {
+    // No hide or unhide link present -- this shouldn't happen, as far as I know.
+    debug_log(linkInfo.id, "Unexpected hide link absence.");
+  }
+  
+  // Add the information we collected to the watch list  
   debug_log(linkInfo.id, "Clicked");
   this.watchLink(link.href, linkInfo);
 };
@@ -413,6 +431,13 @@ Socialite.showNotificationBox = function(browser, linkInfo, isNewPage) {
   notification.appendChild(buttonSave);
   linkInfo.buttons.buttonSave = buttonSave;
   
+  var buttonHide = document.createElement("button");
+  buttonHide.setAttribute("id", "socialite_hide_"+linkInfo.id);
+  buttonHide.setAttribute("hidden", !SocialitePrefs.getBoolPref("showhide"));
+  buttonHide.addEventListener("click", hitchHandler(this, "buttonHideClicked", linkInfo), false);
+  notification.appendChild(buttonHide);
+  linkInfo.buttons.buttonHide = buttonHide;
+  
   var buttonRandom = document.createElement("button");
   buttonRandom.setAttribute("id", "socialite_random_"+linkInfo.id);
   buttonRandom.setAttribute("label", this.strings.getString("random"));
@@ -467,6 +492,16 @@ Socialite.updateSaveButton = function(buttons, isSaved) {
   }
 }
 
+Socialite.updateHideButton = function(buttons, isHidden) {
+  if (isHidden) {
+    buttons.buttonHide.setAttribute("label", this.strings.getString("unhide"));
+    buttons.buttonHide.setAttribute("accesskey", this.strings.getString("unhide.accesskey"));
+  } else {
+    buttons.buttonHide.setAttribute("label", this.strings.getString("hide"));
+    buttons.buttonHide.setAttribute("accesskey", this.strings.getString("hide.accesskey"));
+  }
+}
+
 Socialite.updateCommentsButton = function(buttons, commentCount) {
   buttons.buttonComments.setAttribute("label", this.strings.getFormattedString("comments", [commentCount.toString()]));
 }
@@ -485,6 +520,7 @@ Socialite.updateButtons = function(linkInfo) {
   this.updateLikeButtons(linkInfo.buttons, linkInfo.uiState.isLiked);
   this.updateCommentsButton(linkInfo.buttons, linkInfo.uiState.commentCount);
   this.updateSaveButton(linkInfo.buttons, linkInfo.uiState.isSaved);
+  this.updateHideButton(linkInfo.buttons, linkInfo.uiState.isHidden);
   
   debug_log(linkInfo.id, "Updated buttons");
 }
@@ -562,6 +598,35 @@ Socialite.buttonSaveClicked = function(linkInfo, e) {
       hitchHandler(this, "redditUpdateLinkInfo", linkInfo),
       sequenceCalls(
         hitchHandler(this, "revertUIState", linkInfo, ["isSaved"]),
+        hitchHandler(this, "actionFailureHandler", linkInfo)
+      )
+    )).perform(this.redditModHash, linkInfo.id);
+  }
+};
+
+Socialite.buttonHideClicked = function(linkInfo, e) {
+  if (linkInfo.uiState.isHidden) {
+    
+    linkInfo.uiState.isHidden = false;
+    this.updateHideButton(linkInfo.buttons, linkInfo.uiState.isHidden);
+
+    (new reddit.unhide(
+      hitchHandler(this, "redditUpdateLinkInfo", linkInfo),
+      sequenceCalls(
+        hitchHandler(this, "revertUIState", linkInfo, ["isHidden"]),
+        hitchHandler(this, "actionFailureHandler", linkInfo)
+      )
+    )).perform(this.redditModHash, linkInfo.id);
+        
+  } else {
+  
+    linkInfo.uiState.isHidden = true;
+    this.updateHideButton(linkInfo.buttons, linkInfo.uiState.isHidden);
+
+    (new reddit.hide(
+      hitchHandler(this, "redditUpdateLinkInfo", linkInfo),
+      sequenceCalls(
+        hitchHandler(this, "revertUIState", linkInfo, ["isHidden"]),
         hitchHandler(this, "actionFailureHandler", linkInfo)
       )
     )).perform(this.redditModHash, linkInfo.id);

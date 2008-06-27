@@ -8,7 +8,7 @@ Components.utils.import("resource://socialite/utils/quantizer.jsm");
 var nativeJSON = Components.classes["@mozilla.org/dom/json;1"]
                  .createInstance(Components.interfaces.nsIJSON);
 
-var EXPORTED_SYMBOLS = ["info", "randomrising", "vote", "save", "unsave"];
+var EXPORTED_SYMBOLS = ["info", "randomrising", "vote", "save", "unsave", "hide", "unhide"];
 
 STATUS_SUCCESS = 200;
 
@@ -120,6 +120,41 @@ var unsave = Action("reddit.unsave", saveQuantizer.quantize(function(modHash, li
   };
   
   redditRequest("unsave", params, function(r) { 
+    if (r.status == STATUS_SUCCESS) {
+      action.success(r);
+    } else {
+      action.failure(r);
+    }
+  });
+}));
+
+var hideQuantizer = new Quantizer("reddit.hide.quantizer", QUANTIZE_TIME, sameLinkID);
+var hide = Action("reddit.hide", hideQuantizer.quantize(function(modHash, linkID, action) {
+  debug_log("reddit", "Making ajax hide call");
+  
+  var params   = {
+    id:    linkID,
+    uh:    modHash,
+  };
+  
+  redditRequest("hide", params, function(r) { 
+    if (r.status == STATUS_SUCCESS) {
+      action.success(r);
+    } else {
+      action.failure(r);
+    }
+  });
+}));
+
+var unhide = Action("reddit.unhide", hideQuantizer.quantize(function(modHash, linkID, action) {
+  debug_log("reddit", "Making ajax unhide call");
+  
+  var params   = {
+    id:    linkID,
+    uh:    modHash,
+  };
+  
+  redditRequest("unhide", params, function(r) { 
     if (r.status == STATUS_SUCCESS) {
       action.success(r);
     } else {
