@@ -24,6 +24,8 @@ All portions of the code written by CondeNet are Copyright (c) 2006-2008
 CondeNet, Inc. All Rights Reserved.
 */
 
+Components.utils.import("resource://socialite/debug.jsm");
+
 var EXPORTED_SYMBOLS = ["redditRequest", "redditRequest_no_response"]
 
 STATUS_READY = 4;
@@ -73,13 +75,16 @@ function redditRequest(op, parameters, worker_in, method, base) {
   var get_params = make_get_params(parameters);
   
   if (method == "get") {
-    req.open("get", url + "?" + get_params, true);
+    var target = url + "?" + get_params;
+    debug_log("reddit_request", "GET request to " + target);
+    req.open("get", target, true);
     req.onreadystatechange = worker;
     req.send(null);
   } else if (method == "post") {
     req.open("post", url, true);
     req.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
     req.onreadystatechange = worker;
+    debug_log("reddit_request", "POST to " + url + " (sent: " + get_params +  ")");
     req.send(get_params);
   }
 }
