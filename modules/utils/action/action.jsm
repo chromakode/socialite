@@ -20,7 +20,6 @@ _MakeAction = function(successCallback, failureCallback) {
   this.successCallback = successCallback;
   this.failureCallback = failureCallback;
   this.startTime = null;
-  this.lastArgs = null;
 }
 
 function ActionType() {}

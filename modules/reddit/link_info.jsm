@@ -2,6 +2,7 @@
 
 Components.utils.import("resource://socialite/debug.jsm");
 Components.utils.import("resource://socialite/utils/hitch.jsm");
+Components.utils.import("resource://socialite/utils/timestamped_data.jsm");
 Components.utils.import("resource://socialite/utils/action/action.jsm");
 reddit = Components.utils.import("resource://socialite/reddit/reddit.jsm");
 
@@ -10,21 +11,18 @@ var EXPORTED_SYMBOLS = ["LinkInfo", "LinkInfoFromJSON"]
 // ---
 
 function LinkInfoState() {
-  this.lastUpdated = null;
-  this.isLiked = null;
-  this.commentCount = null;
-  this.isSaved = null;
+  TimestampedData.apply(this);
+  this.addField("isLiked");
+  this.addField("commentCount");
+  this.addField("isSaved");
 }
 
-LinkInfoState.prototype.updated = function() {
-  this.lastUpdated = Date.now();
-}
+LinkInfoState.prototype = new TimestampedData;
 
 LinkInfoState.prototype.copy = function(state) {
   this.isLiked = state.isLiked;
   this.commentCount = state.commentCount;
   this.isSaved = state.isSaved;
-  this.updated();
 }
 
 // ---
@@ -55,9 +53,11 @@ LinkInfo.prototype.update = function(successCallback, failureCallback) {
   var act = Action("LinkInfo.update", hitchThis(this, function(action) {
     var infoCall = new reddit.info(
       hitchThis(this, function success(r, json) {
-        if (action.startTime >= linkInfo.state.lastUpdated) {
+        if (action.startTime >= this.state.lastUpdated) {
           this.updateFromJSON(json);
           action.success(r, json);
+        } else {
+          debug_log(linkInfo.id, "State updated since update request, not updating state");
         }
       }),
       function fail(r) {
@@ -77,7 +77,6 @@ LinkInfo.prototype.updateFromJSON = function(json) {
   this.state.isLiked  = linkData.likes;
   this.state.commentCount = linkData.num_comments;
   this.state.isSaved  = linkData.saved;
-  this.state.updated();
   
   debug_log(this.id, "Updated from JSON info: "                    +
                      "liked: "    + this.state.isLiked + ", "      +
@@ -87,4 +86,19 @@ LinkInfo.prototype.updateFromJSON = function(json) {
 
 LinkInfo.prototype.updateUIState = function() {
   this.uiState.copy(this.state);
+}
+
+LinkInfo.prototype.revertUIState = function(properties, timestamp) {
+  debug_log(this.id, "Reverting UI state properties: [" + properties.toString() + "]");
+  for (var i=0; i<properties.length; i++) {
+    var prop = properties[i];
+    
+    // If the uiState hasn't been updated since the timestamp, revert it.
+    if ((timestamp == null) || (timestamp >= this.uiState.getTimestamp(prop))) {
+      debug_log(this.id, "Reverting UI state property " + prop + " from " + this.uiState[prop] + " to " + this.state[prop]);
+      this.uiState[prop] = this.state[prop];
+    } else {
+      debug_log(this.id, "UI state property " + prop + " modified since revert timestamp, skipping revert.");
+    }
+  }
 }
