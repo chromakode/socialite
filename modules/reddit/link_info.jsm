@@ -13,6 +13,7 @@ var EXPORTED_SYMBOLS = ["LinkInfo", "LinkInfoFromJSON"]
 function LinkInfoState() {
   TimestampedData.apply(this);
   this.addField("isLiked");
+  this.addField("score");
   this.addField("commentCount");
   this.addField("isSaved");
   this.addField("isHidden");
@@ -22,6 +23,7 @@ LinkInfoState.prototype = new TimestampedData;
 
 LinkInfoState.prototype.copy = function(state) {
   this.isLiked = state.isLiked;
+  this.score = state.score;
   this.commentCount = state.commentCount;
   this.isSaved = state.isSaved;
   this.isHidden = state.isHidden;
@@ -48,7 +50,7 @@ function LinkInfo(url, id, title) {
   this.state = new LinkInfoState();
   this.uiState = new LinkInfoState();
   
-  this.buttons = {};
+  this.ui = {};
 }
 
 LinkInfo.prototype.update = function(successCallback, failureCallback) {
@@ -76,13 +78,15 @@ LinkInfo.prototype.update = function(successCallback, failureCallback) {
 LinkInfo.prototype.updateFromJSON = function(json) {
   var linkData = json.data.children[0].data;
   
-  this.state.isLiked  = linkData.likes;
+  this.state.isLiked      = linkData.likes;
+  this.state.score        = linkData.score;
   this.state.commentCount = linkData.num_comments;
-  this.state.isSaved  = linkData.saved;
-  this.state.isHidden  = linkData.hidden;
+  this.state.isSaved      = linkData.saved;
+  this.state.isHidden     = linkData.hidden;
   
   debug_log(this.id, "Updated from JSON info: "                    +
                      "liked: "    + this.state.isLiked + ", "      +
+                     "score: "    + this.state.score + ", "        +
                      "comments: " + this.state.commentCount + ", " +
                      "saved: "    + this.state.isSaved + ", "      +
                      "hidden: "   + this.state.isHidden            );

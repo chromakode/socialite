@@ -1,4 +1,5 @@
 content	socialite	content/
 resource socialite modules/
 locale	socialite	en-US	locale/en-US/
+skin	socialite	classic/1.0	skin/
 overlay	chrome://browser/content/browser.xul	chrome://socialite/content/firefoxOverlay.xul

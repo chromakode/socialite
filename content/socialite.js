@@ -5,7 +5,7 @@
  // + Save button
  // + Button preferences
  // - Login detection/button
- // - Display score
+ // + Display score
  // - Display subreddit
  // + Persistence Options
  // + Better error handling/retry
@@ -27,6 +27,7 @@
  // - m.reddit.com support (Pickegnome)
  // - Handle RSS readers
  // - Disable on fullscreen
+ // - Open tabs in background?
 
 REDDIT_LIKE_INACTIVE_IMAGE = "chrome://socialite/content/reddit_aupgray.png"
 REDDIT_LIKE_ACTIVE_IMAGE = "chrome://socialite/content/reddit_aupmod.png"
@@ -201,6 +202,8 @@ Socialite.linkClicked = function(e) {
   } else {
     linkInfo.state.isLiked  = null;
   }
+  
+  linkInfo.state.score    = doc.getElementById("score_"+linkInfo.id).textContent;
 
   var linkComments        = doc.getElementById("comment_"+linkInfo.id);
   linkInfo.commentURL     = linkComments.href;
@@ -281,7 +284,6 @@ Socialite.redditUpdateLinkInfo = function(linkInfo) {
     hitchThis(this, function success(r, json, action) {
       // Only update the UI if the update started after the last user-caused UI update.
       if (action.startTime >= linkInfo.uiState.lastUpdated) {
-        debug_log(linkInfo.id, "Updating UI");
         linkInfo.updateUIState();
         this.updateButtons(linkInfo);
       } else {
@@ -372,25 +374,42 @@ Socialite.showNotificationBox = function(browser, linkInfo, isNewPage) {
   
   // XXX is this an okay approach? (compatibility, is there a better way, etc)
   
-  var roothbox = notification.boxObject.firstChild;
-  var details = roothbox.getElementsByAttribute("anonid", "details")[0];
-  var messageImage = roothbox.getElementsByAttribute("anonid", "messageImage")[0];
-  var messageText = roothbox.getElementsByAttribute("anonid", "messageText")[0];
+  var details = notification.boxObject.firstChild.getElementsByAttribute("anonid", "details")[0];
+  var messageImage = document.getAnonymousElementByAttribute(notification, "anonid", "messageImage");
+  var messageText = document.getAnonymousElementByAttribute(notification, "anonid", "messageText");
   
-  // Muahahahahaha
+  var hboxFix = document.createElement("hbox");
+  hboxFix.setAttribute("align", "center");
+  details.insertBefore(hboxFix, messageText);  
+  
   var siteLink = document.createElement("label");
   siteLink.setAttribute("id", "socialite_site_link_"+linkInfo.id);
   siteLink.setAttribute("value", "reddit");
   siteLink.setAttribute("class", "text-link");
-  siteLink.setAttribute("flex", true);
   siteLink.setAttribute("hidden", !SocialitePrefs.getBoolPref("showlink"));
   siteLink.addEventListener("click", hitchHandler(this, "siteLinkClicked"), false);
+  hboxFix.appendChild(siteLink);  
+  
   messageImage.addEventListener("click", hitchHandler(this, "siteLinkClicked"), false);
-  details.insertBefore(siteLink, messageText);
+  
+  var labelScore = document.createElement("label");
+  labelScore.setAttribute("id", "socialite_score_"+linkInfo.id);
+  labelScore.setAttribute("hidden", !SocialitePrefs.getBoolPref("showscore"));
+  // FIXME tooltip here
+  linkInfo.ui.labelScore = labelScore;
+
+  // We need to have some text in the label so that it has a display size.
+  // This is important to the next line, for some reason.
+  labelScore.setAttribute("value", " ");
+  
+  // FIXME Strangely, disturbingly, insertion only works with the proper ordering if we use details.childNodes[1] to refer to messageText, rather than a call to getAnonymousElementByAttribute.
+  hboxFix.appendChild(labelScore);
+
   
   // Slight hack to fix description vertical centering
-  // XXX Does this work on all platforms?
-  messageText.style.marginTop = "2px"
+  // XXX Does this look good on all platforms?
+  messageText.setAttribute("id", "socialite_title_"+linkInfo.id);
+  messageText.setAttribute("class", "messageText socialite-title");
   
   // XUL hackage done.    
   
@@ -403,7 +422,7 @@ Socialite.showNotificationBox = function(browser, linkInfo, isNewPage) {
   buttonLike.setAttribute("autoCheck", "false");
   buttonLike.addEventListener("click", hitchHandler(this, "buttonLikeClicked", linkInfo), false);
   notification.appendChild(buttonLike);
-  linkInfo.buttons.buttonLike = buttonLike;
+  linkInfo.ui.buttonLike = buttonLike;
   
   var buttonDislike = document.createElement("button");
   buttonDislike.setAttribute("id", "socialite_mod_down_"+linkInfo.id);
@@ -414,7 +433,7 @@ Socialite.showNotificationBox = function(browser, linkInfo, isNewPage) {
   buttonDislike.setAttribute("autoCheck", "false");
   notification.appendChild(buttonDislike);
   buttonDislike.addEventListener("click", hitchHandler(this, "buttonDislikeClicked", linkInfo), false);
-  linkInfo.buttons.buttonDislike = buttonDislike;
+  linkInfo.ui.buttonDislike = buttonDislike;
   
   var buttonComments = document.createElement("button");
   buttonComments.setAttribute("id", "socialite_comments_"+linkInfo.id);
@@ -422,21 +441,21 @@ Socialite.showNotificationBox = function(browser, linkInfo, isNewPage) {
   buttonComments.setAttribute("hidden", !SocialitePrefs.getBoolPref("showcomments"));
   buttonComments.addEventListener("click", hitchHandler(this, "buttonCommentsClicked", linkInfo), false);
   notification.appendChild(buttonComments);
-  linkInfo.buttons.buttonComments = buttonComments;
+  linkInfo.ui.buttonComments = buttonComments;
   
   var buttonSave = document.createElement("button");
   buttonSave.setAttribute("id", "socialite_save_"+linkInfo.id);
   buttonSave.setAttribute("hidden", !SocialitePrefs.getBoolPref("showsave"));
   buttonSave.addEventListener("click", hitchHandler(this, "buttonSaveClicked", linkInfo), false);
   notification.appendChild(buttonSave);
-  linkInfo.buttons.buttonSave = buttonSave;
+  linkInfo.ui.buttonSave = buttonSave;
   
   var buttonHide = document.createElement("button");
   buttonHide.setAttribute("id", "socialite_hide_"+linkInfo.id);
   buttonHide.setAttribute("hidden", !SocialitePrefs.getBoolPref("showhide"));
   buttonHide.addEventListener("click", hitchHandler(this, "buttonHideClicked", linkInfo), false);
   notification.appendChild(buttonHide);
-  linkInfo.buttons.buttonHide = buttonHide;
+  linkInfo.ui.buttonHide = buttonHide;
   
   var buttonRandom = document.createElement("button");
   buttonRandom.setAttribute("id", "socialite_random_"+linkInfo.id);
@@ -445,7 +464,7 @@ Socialite.showNotificationBox = function(browser, linkInfo, isNewPage) {
   buttonRandom.setAttribute("hidden", !SocialitePrefs.getBoolPref("showrandom"));
   buttonRandom.addEventListener("click", hitchHandler(this, "buttonRandomClicked"), false);
   notification.appendChild(buttonRandom);
-  linkInfo.buttons.buttonRandom = buttonRandom;
+  linkInfo.ui.buttonRandom = buttonRandom;
   
   this.updateButtons(linkInfo);
 
@@ -464,65 +483,77 @@ Socialite.showNotificationBox = function(browser, linkInfo, isNewPage) {
   linkInfo.notification = notification;
 };
 
-Socialite.updateLikeButtons = function(buttons, isLiked) {
+Socialite.updateLikeButtons = function(ui, isLiked) {
   if (isLiked == true) {
-    buttons.buttonLike.setAttribute("image", REDDIT_LIKE_ACTIVE_IMAGE);
-    buttons.buttonLike.setAttribute("checked", true);
+    ui.buttonLike.setAttribute("image", REDDIT_LIKE_ACTIVE_IMAGE);
+    ui.buttonLike.setAttribute("checked", true);
   } else {
-    buttons.buttonLike.setAttribute("image", REDDIT_LIKE_INACTIVE_IMAGE);
-    buttons.buttonLike.setAttribute("checked", false);
+    ui.buttonLike.setAttribute("image", REDDIT_LIKE_INACTIVE_IMAGE);
+    ui.buttonLike.setAttribute("checked", false);
   }
   
   if (isLiked == false) {
-    buttons.buttonDislike.setAttribute("image", REDDIT_DISLIKE_ACTIVE_IMAGE);
-    buttons.buttonDislike.setAttribute("checked", true);
+    ui.buttonDislike.setAttribute("image", REDDIT_DISLIKE_ACTIVE_IMAGE);
+    ui.buttonDislike.setAttribute("checked", true);
   } else {
-    buttons.buttonDislike.setAttribute("image", REDDIT_DISLIKE_INACTIVE_IMAGE);
-    buttons.buttonDislike.setAttribute("checked", false);
+    ui.buttonDislike.setAttribute("image", REDDIT_DISLIKE_INACTIVE_IMAGE);
+    ui.buttonDislike.setAttribute("checked", false);
   }
 };
 
-Socialite.updateSaveButton = function(buttons, isSaved) {
+Socialite.updateSaveButton = function(ui, isSaved) {
   if (isSaved) {
-    buttons.buttonSave.setAttribute("label", this.strings.getString("unsave"));
-    buttons.buttonSave.setAttribute("accesskey", this.strings.getString("unsave.accesskey"));
+    ui.buttonSave.setAttribute("label", this.strings.getString("unsave"));
+    ui.buttonSave.setAttribute("accesskey", this.strings.getString("unsave.accesskey"));
   } else {
-    buttons.buttonSave.setAttribute("label", this.strings.getString("save"));
-    buttons.buttonSave.setAttribute("accesskey", this.strings.getString("save.accesskey"));
+    ui.buttonSave.setAttribute("label", this.strings.getString("save"));
+    ui.buttonSave.setAttribute("accesskey", this.strings.getString("save.accesskey"));
   }
 }
 
-Socialite.updateHideButton = function(buttons, isHidden) {
+Socialite.updateHideButton = function(ui, isHidden) {
   if (isHidden) {
-    buttons.buttonHide.setAttribute("label", this.strings.getString("unhide"));
-    buttons.buttonHide.setAttribute("accesskey", this.strings.getString("unhide.accesskey"));
+    ui.buttonHide.setAttribute("label", this.strings.getString("unhide"));
+    ui.buttonHide.setAttribute("accesskey", this.strings.getString("unhide.accesskey"));
   } else {
-    buttons.buttonHide.setAttribute("label", this.strings.getString("hide"));
-    buttons.buttonHide.setAttribute("accesskey", this.strings.getString("hide.accesskey"));
+    ui.buttonHide.setAttribute("label", this.strings.getString("hide"));
+    ui.buttonHide.setAttribute("accesskey", this.strings.getString("hide.accesskey"));
   }
 }
 
-Socialite.updateCommentsButton = function(buttons, commentCount) {
-  buttons.buttonComments.setAttribute("label", this.strings.getFormattedString("comments", [commentCount.toString()]));
+Socialite.updateScoreLabel = function(ui, score, isLiked) {
+  ui.labelScore.setAttribute("value", score);
+  if (isLiked == true) {
+    ui.labelScore.setAttribute("class", "socialite-score socialite-liked");
+  } else if (isLiked == false) {
+    ui.labelScore.setAttribute("class", "socialite-score socialite-disliked");  
+  } else {
+    ui.labelScore.setAttribute("class", "socialite-score");  
+  }
+}
+
+Socialite.updateCommentsButton = function(ui, commentCount) {
+  ui.buttonComments.setAttribute("label", this.strings.getFormattedString("comments", [commentCount.toString()]));
 }
 
 Socialite.updateButtons = function(linkInfo) {
   if (linkInfo.modActive) {
-    linkInfo.buttons.buttonLike.setAttribute("disabled", false);
-    linkInfo.buttons.buttonDislike.setAttribute("disabled", false);
-    linkInfo.buttons.buttonSave.setAttribute("disabled", false);
+    linkInfo.ui.buttonLike.setAttribute("disabled", false);
+    linkInfo.ui.buttonDislike.setAttribute("disabled", false);
+    linkInfo.ui.buttonSave.setAttribute("disabled", false);
   } else {
-    linkInfo.buttons.buttonLike.setAttribute("disabled", true);
-    linkInfo.buttons.buttonDislike.setAttribute("disabled", true);
-    linkInfo.buttons.buttonSave.setAttribute("disabled", true);
+    linkInfo.ui.buttonLike.setAttribute("disabled", true);
+    linkInfo.ui.buttonDislike.setAttribute("disabled", true);
+    linkInfo.ui.buttonSave.setAttribute("disabled", true);
   }
   
-  this.updateLikeButtons(linkInfo.buttons, linkInfo.uiState.isLiked);
-  this.updateCommentsButton(linkInfo.buttons, linkInfo.uiState.commentCount);
-  this.updateSaveButton(linkInfo.buttons, linkInfo.uiState.isSaved);
-  this.updateHideButton(linkInfo.buttons, linkInfo.uiState.isHidden);
+  this.updateLikeButtons(linkInfo.ui, linkInfo.uiState.isLiked);
+  this.updateScoreLabel(linkInfo.ui, linkInfo.uiState.score, linkInfo.uiState.isLiked);
+  this.updateCommentsButton(linkInfo.ui, linkInfo.uiState.commentCount);
+  this.updateSaveButton(linkInfo.ui, linkInfo.uiState.isSaved);
+  this.updateHideButton(linkInfo.ui, linkInfo.uiState.isHidden);
   
-  debug_log(linkInfo.id, "Updated buttons");
+  debug_log(linkInfo.id, "Updated UI");
 }
 
 Socialite.buttonLikeClicked = function(linkInfo, e) {
@@ -533,7 +564,7 @@ Socialite.buttonLikeClicked = function(linkInfo, e) {
   }
 
   // Provide instant feedback before sending
-  this.updateLikeButtons(linkInfo.buttons, linkInfo.uiState.isLiked);
+  this.updateLikeButtons(linkInfo.ui, linkInfo.uiState.isLiked);
   
   // Submit the vote, and then update state.
   // (proceeding after each AJAX call completes)
@@ -556,7 +587,7 @@ Socialite.buttonDislikeClicked = function(linkInfo, e) {
   }
   
   // Provide instant feedback before sending
-  this.updateLikeButtons(linkInfo.buttons, linkInfo.uiState.isLiked);
+  this.updateLikeButtons(linkInfo.ui, linkInfo.uiState.isLiked);
   
   // Submit the vote, and then update state.
   // (proceeding after the AJAX call completes)
@@ -579,7 +610,7 @@ Socialite.buttonSaveClicked = function(linkInfo, e) {
   if (linkInfo.uiState.isSaved) {
     
     linkInfo.uiState.isSaved = false;
-    this.updateSaveButton(linkInfo.buttons, linkInfo.uiState.isSaved);
+    this.updateSaveButton(linkInfo.ui, linkInfo.uiState.isSaved);
 
     (new reddit.unsave(
       hitchHandler(this, "redditUpdateLinkInfo", linkInfo),
@@ -592,7 +623,7 @@ Socialite.buttonSaveClicked = function(linkInfo, e) {
   } else {
   
     linkInfo.uiState.isSaved = true;
-    this.updateSaveButton(linkInfo.buttons, linkInfo.uiState.isSaved);
+    this.updateSaveButton(linkInfo.ui, linkInfo.uiState.isSaved);
 
     (new reddit.save(
       hitchHandler(this, "redditUpdateLinkInfo", linkInfo),
@@ -608,7 +639,7 @@ Socialite.buttonHideClicked = function(linkInfo, e) {
   if (linkInfo.uiState.isHidden) {
     
     linkInfo.uiState.isHidden = false;
-    this.updateHideButton(linkInfo.buttons, linkInfo.uiState.isHidden);
+    this.updateHideButton(linkInfo.ui, linkInfo.uiState.isHidden);
 
     (new reddit.unhide(
       hitchHandler(this, "redditUpdateLinkInfo", linkInfo),
@@ -621,7 +652,7 @@ Socialite.buttonHideClicked = function(linkInfo, e) {
   } else {
   
     linkInfo.uiState.isHidden = true;
-    this.updateHideButton(linkInfo.buttons, linkInfo.uiState.isHidden);
+    this.updateHideButton(linkInfo.ui, linkInfo.uiState.isHidden);
 
     (new reddit.hide(
       hitchHandler(this, "redditUpdateLinkInfo", linkInfo),
