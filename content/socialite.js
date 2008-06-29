@@ -203,7 +203,10 @@ Socialite.linkClicked = function(e) {
     linkInfo.state.isLiked  = null;
   }
   
-  linkInfo.state.score    = doc.getElementById("score_"+linkInfo.id).textContent;
+  var scoreSpan           = doc.getElementById("score_"+linkInfo.id)
+  if (scoreSpan) {
+    linkInfo.state.score    = scoreSpan.textContent;
+  }
 
   var linkComments        = doc.getElementById("comment_"+linkInfo.id);
   linkInfo.commentURL     = linkComments.href;
@@ -378,38 +381,50 @@ Socialite.showNotificationBox = function(browser, linkInfo, isNewPage) {
   var messageImage = document.getAnonymousElementByAttribute(notification, "anonid", "messageImage");
   var messageText = document.getAnonymousElementByAttribute(notification, "anonid", "messageText");
   
-  var hboxFix = document.createElement("hbox");
-  hboxFix.setAttribute("align", "center");
-  details.insertBefore(hboxFix, messageText);  
+  var customHBox = document.createElement("hbox");
+  customHBox.setAttribute("align", "center");
+  customHBox.setAttribute("flex", "1");
+  
+  // Bye bye, annoying XBL bindings
+  details.parentNode.replaceChild(customHBox, details);
+  
+  var siteBox = document.createElement("hbox");
+  
+  siteBox.setAttribute("align", "center");
+  siteBox.appendChild(messageImage);
   
   var siteLink = document.createElement("label");
   siteLink.setAttribute("id", "socialite_site_link_"+linkInfo.id);
   siteLink.setAttribute("value", "reddit");
-  siteLink.setAttribute("class", "text-link");
+  siteLink.setAttribute("class", "text-link socialite-sitelink");
   siteLink.setAttribute("hidden", !SocialitePrefs.getBoolPref("showlink"));
-  siteLink.addEventListener("click", hitchHandler(this, "siteLinkClicked"), false);
-  hboxFix.appendChild(siteLink);  
+  siteBox.appendChild(siteLink);  
   
-  messageImage.addEventListener("click", hitchHandler(this, "siteLinkClicked"), false);
+  siteBox.addEventListener("click", hitchHandler(this, "siteLinkClicked"), false);
+  customHBox.appendChild(siteBox);
   
   var labelScore = document.createElement("label");
   labelScore.setAttribute("id", "socialite_score_"+linkInfo.id);
   labelScore.setAttribute("hidden", !SocialitePrefs.getBoolPref("showscore"));
-  // FIXME tooltip here
+  // FIXME tooltip here with ups and downs
   linkInfo.ui.labelScore = labelScore;
+  customHBox.appendChild(labelScore);
 
-  // We need to have some text in the label so that it has a display size.
-  // This is important to the next line, for some reason.
-  labelScore.setAttribute("value", " ");
-  
-  // FIXME Strangely, disturbingly, insertion only works with the proper ordering if we use details.childNodes[1] to refer to messageText, rather than a call to getAnonymousElementByAttribute.
-  hboxFix.appendChild(labelScore);
-
-  
   // Slight hack to fix description vertical centering
   // XXX Does this look good on all platforms?
   messageText.setAttribute("id", "socialite_title_"+linkInfo.id);
   messageText.setAttribute("class", "messageText socialite-title");
+  customHBox.appendChild(messageText);
+
+  // Slight hack to fix description vertical centering
+  // XXX Does this look good on all platforms?
+  messageText.setAttribute("id", "socialite_title_"+linkInfo.id);
+  messageText.setAttribute("class", "messageText socialite-title");
+  customHBox.appendChild(messageText);
+  
+  var spacer = document.createElement("spacer");
+  spacer.setAttribute("flex", "1");
+  customHBox.appendChild(spacer);
   
   // XUL hackage done.    
   
@@ -421,7 +436,7 @@ Socialite.showNotificationBox = function(browser, linkInfo, isNewPage) {
   buttonLike.setAttribute("image", REDDIT_LIKE_INACTIVE_IMAGE);
   buttonLike.setAttribute("autoCheck", "false");
   buttonLike.addEventListener("click", hitchHandler(this, "buttonLikeClicked", linkInfo), false);
-  notification.appendChild(buttonLike);
+  customHBox.appendChild(buttonLike);
   linkInfo.ui.buttonLike = buttonLike;
   
   var buttonDislike = document.createElement("button");
@@ -431,7 +446,7 @@ Socialite.showNotificationBox = function(browser, linkInfo, isNewPage) {
   buttonDislike.setAttribute("accesskey", this.strings.getString("dislikeit.accesskey"));
   buttonDislike.setAttribute("image", REDDIT_DISLIKE_INACTIVE_IMAGE);
   buttonDislike.setAttribute("autoCheck", "false");
-  notification.appendChild(buttonDislike);
+  customHBox.appendChild(buttonDislike);
   buttonDislike.addEventListener("click", hitchHandler(this, "buttonDislikeClicked", linkInfo), false);
   linkInfo.ui.buttonDislike = buttonDislike;
   
@@ -440,21 +455,21 @@ Socialite.showNotificationBox = function(browser, linkInfo, isNewPage) {
   buttonComments.setAttribute("accesskey", this.strings.getString("comments.accesskey"));
   buttonComments.setAttribute("hidden", !SocialitePrefs.getBoolPref("showcomments"));
   buttonComments.addEventListener("click", hitchHandler(this, "buttonCommentsClicked", linkInfo), false);
-  notification.appendChild(buttonComments);
+  customHBox.appendChild(buttonComments);
   linkInfo.ui.buttonComments = buttonComments;
   
   var buttonSave = document.createElement("button");
   buttonSave.setAttribute("id", "socialite_save_"+linkInfo.id);
   buttonSave.setAttribute("hidden", !SocialitePrefs.getBoolPref("showsave"));
   buttonSave.addEventListener("click", hitchHandler(this, "buttonSaveClicked", linkInfo), false);
-  notification.appendChild(buttonSave);
+  customHBox.appendChild(buttonSave);
   linkInfo.ui.buttonSave = buttonSave;
   
   var buttonHide = document.createElement("button");
   buttonHide.setAttribute("id", "socialite_hide_"+linkInfo.id);
   buttonHide.setAttribute("hidden", !SocialitePrefs.getBoolPref("showhide"));
   buttonHide.addEventListener("click", hitchHandler(this, "buttonHideClicked", linkInfo), false);
-  notification.appendChild(buttonHide);
+  customHBox.appendChild(buttonHide);
   linkInfo.ui.buttonHide = buttonHide;
   
   var buttonRandom = document.createElement("button");
@@ -463,7 +478,7 @@ Socialite.showNotificationBox = function(browser, linkInfo, isNewPage) {
   buttonRandom.setAttribute("accesskey", this.strings.getString("random.accesskey"));
   buttonRandom.setAttribute("hidden", !SocialitePrefs.getBoolPref("showrandom"));
   buttonRandom.addEventListener("click", hitchHandler(this, "buttonRandomClicked"), false);
-  notification.appendChild(buttonRandom);
+  customHBox.appendChild(buttonRandom);
   linkInfo.ui.buttonRandom = buttonRandom;
   
   this.updateButtons(linkInfo);
