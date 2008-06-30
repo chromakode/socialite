@@ -6,6 +6,7 @@ Components.utils.import("resource://socialite/utils/hitch.jsm");
 var EXPORTED_SYMBOLS = ["TimestampedData"];
 
 function TimestampedData() {
+  this.fields = [];
   this.values = {};
   this.timestamps = {};
   this.lastUpdated = Date.now();
@@ -15,6 +16,7 @@ TimestampedData.prototype.addField = function(name, initialValue) {
   if (!initialValue) {
     initialValue = null;
   }
+  this.fields.push(name);
   this.values[name] = initialValue;
   this.__defineSetter__(name, hitchHandler(this, "setField", name));
   this.__defineGetter__(name, hitchHandler(this, "getField", name));
@@ -36,4 +38,13 @@ TimestampedData.prototype.setField = function(name, value) {
 
 TimestampedData.prototype.getTimestamp = function(name) {
   return this.timestamps[name];
+}
+
+TimestampedData.prototype.copy = function(data, omit) {
+  for (var i=0; i<data.length; i++) {
+    var field = data.fields[i];
+    if ((field in this) && !(field in omit)) {  
+      this[field] = data[field];
+    }
+  }
 }

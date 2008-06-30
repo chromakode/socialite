@@ -21,14 +21,6 @@ function LinkInfoState() {
 
 LinkInfoState.prototype = new TimestampedData;
 
-LinkInfoState.prototype.copy = function(state) {
-  this.isLiked = state.isLiked;
-  this.score = state.score;
-  this.commentCount = state.commentCount;
-  this.isSaved = state.isSaved;
-  this.isHidden = state.isHidden;
-}
-
 // ---
 
 function LinkInfoFromJSON(json) {
