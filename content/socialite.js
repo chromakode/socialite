@@ -282,12 +282,12 @@ Socialite.linkStartLoad = function(win, isLoading) {
   }
 }
 
-Socialite.redditUpdateLinkInfo = function(linkInfo) {
+Socialite.redditUpdateLinkInfo = function(linkInfo, omit) {
   linkInfo.update(
     hitchThis(this, function success(r, json, action) {
       // Only update the UI if the update started after the last user-caused UI update.
       if (action.startTime >= linkInfo.uiState.lastUpdated) {
-        linkInfo.updateUIState();
+        linkInfo.updateUIState(omit);
         this.updateButtons(linkInfo);
       } else {
         debug_log(linkInfo.id, "UI changed since update request, not updating UI");
@@ -572,10 +572,16 @@ Socialite.updateButtons = function(linkInfo) {
 }
 
 Socialite.buttonLikeClicked = function(linkInfo, e) {
+  // We'll update the score locally, without using live data, since this is typically cached on reddit. In general, it makes more sense if there is a visible change in the score, even though we're not being totally accurate!
   if (linkInfo.uiState.isLiked == true) {
     linkInfo.uiState.isLiked = null;
+    linkInfo.uiState.score -= 1;
+  } else if (linkInfo.uiState.isLiked == false) {
+    linkInfo.uiState.isLiked = true;
+    linkInfo.uiState.score += 2;
   } else {
     linkInfo.uiState.isLiked = true;
+    linkInfo.uiState.score += 1;
   }
 
   // Provide instant feedback before sending
@@ -584,7 +590,7 @@ Socialite.buttonLikeClicked = function(linkInfo, e) {
   // Submit the vote, and then update state.
   // (proceeding after each AJAX call completes)
   var submit = new reddit.vote(
-    hitchHandler(this, "redditUpdateLinkInfo", linkInfo),
+    hitchHandler(this, "redditUpdateLinkInfo", linkInfo, ["score"]),
     sequenceCalls(
       hitchHandler(this, "revertUIState", linkInfo, ["isLiked"]),
       hitchHandler(this, "actionFailureHandler", linkInfo)
@@ -595,10 +601,15 @@ Socialite.buttonLikeClicked = function(linkInfo, e) {
 };
 
 Socialite.buttonDislikeClicked = function(linkInfo, e) {
-  if (linkInfo.uiState.isLiked == false) {
+  if (linkInfo.uiState.isLiked == true) {
+    linkInfo.uiState.isLiked = false;
+    linkInfo.uiState.score -= 2;
+  } else if (linkInfo.uiState.isLiked == false) {
     linkInfo.uiState.isLiked = null;
+    linkInfo.uiState.score += 1;
   } else {
     linkInfo.uiState.isLiked = false;
+    linkInfo.uiState.score -= 1;
   }
   
   // Provide instant feedback before sending
@@ -607,7 +618,7 @@ Socialite.buttonDislikeClicked = function(linkInfo, e) {
   // Submit the vote, and then update state.
   // (proceeding after the AJAX call completes)
   var submit = new reddit.vote(
-    hitchHandler(this, "redditUpdateLinkInfo", linkInfo),
+    hitchHandler(this, "redditUpdateLinkInfo", linkInfo, ["score"]),
     sequenceCalls(
       hitchHandler(this, "revertUIState", linkInfo, ["isLiked"]),
       hitchHandler(this, "actionFailureHandler", linkInfo)

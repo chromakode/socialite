@@ -84,8 +84,8 @@ LinkInfo.prototype.updateFromJSON = function(json) {
                      "hidden: "   + this.state.isHidden            );
 }
 
-LinkInfo.prototype.updateUIState = function() {
-  this.uiState.copy(this.state);
+LinkInfo.prototype.updateUIState = function(omit) {
+  this.uiState.copy(this.state, omit);
 }
 
 LinkInfo.prototype.revertUIState = function(properties, timestamp) {

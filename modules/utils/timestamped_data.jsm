@@ -43,7 +43,8 @@ TimestampedData.prototype.getTimestamp = function(name) {
 TimestampedData.prototype.copy = function(data, omit) {
   for (var i=0; i<data.length; i++) {
     var field = data.fields[i];
-    if ((field in this) && !(field in omit)) {  
+    if ((field in this) &&
+        (omit && !(field in omit)) {  
       this[field] = data[field];
     }
   }
