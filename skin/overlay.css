@@ -1,0 +1,24 @@
+.socialite-sitelink {
+  border-right: #BBB solid 1px;
+  padding-right: 10px;
+  margin-right: 5px;
+}
+
+.socialite-title {
+  margin-top: 2px;
+}
+
+.socialite-score {
+  font-weight: bold;
+  color: #969696;
+  margin-left: 5px;
+  margin-right: 4px;
+}
+
+.socialite-liked {
+  color: #FF8B60;
+}
+
+.socialite-disliked {
+  color: #9494FF;
+}
