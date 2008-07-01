@@ -276,7 +276,6 @@ Socialite.watchLink = function(href, linkInfo) {
 
 Socialite.linkStartLoad = function(win, isLoading) {
   var href = win.location.href;
-  var currentTab = this.tabBrowser.selectedTab;
   var browser = this.tabBrowser.getBrowserForDocument(win.document);
   var notificationBox = this.tabBrowser.getNotificationBox(browser);
 
@@ -293,21 +292,6 @@ Socialite.linkStartLoad = function(win, isLoading) {
   
     // Show the banner, without allowing actions yet
     this.showNotificationBox(browser, linkInfo, isLoading);
-  } else {
-    // Handle persistence changes, if any.
-    var linkInfo = this.tabInfo[this.tabBrowser.tabContainer.selectedIndex];
-
-    if (linkInfo) {
-      for (var field in linkInfo) {
-        debug_log("hmm", field + " " + linkInfo[field]);
-      }
-      linkInfo.ui.persistence -= 1;
-      debug_log(linkInfo.id, "Decremented persistence, new value: " + linkInfo.ui.persistence);
-      if (linkInfo.ui.persistence == 0) {
-        notificationBox.removeNotification(linkInfo.notification);
-        debug_log(linkInfo.id, "Removed notification");
-      }
-    }
   }
 }
 
@@ -375,7 +359,7 @@ Socialite.showNotificationBox = function(browser, linkInfo, isNewPage) {
       debug_log(linkInfo.id, "Notification box already exists");
       
       if (isNewPage && (SocialitePrefs.getIntPref("persistmode") == 1)) {
-        linkInfo.ui.persistence = SocialitePrefs.getIntPref("persistlength");
+        notification.persistence = SocialitePrefs.getIntPref("persistlength");
         debug_log(linkInfo.id, "Reset notification persistence count");
       }
       
@@ -517,11 +501,11 @@ Socialite.showNotificationBox = function(browser, linkInfo, isNewPage) {
   
   var persistMode = SocialitePrefs.getIntPref("persistmode");
   if (persistMode == 0) {
-    linkInfo.ui.persistence = 1;
+    notification.persistence = 1;
   } else if (persistMode == 1) {
-    linkInfo.ui.persistence = SocialitePrefs.getIntPref("persistlength")+1;
+    notification.persistence = SocialitePrefs.getIntPref("persistlength")+1;
   } else if (persistMode == 2) {
-    linkInfo.ui.persistence = -1;
+    notification.persistence = -1;
   }
   
   debug_log(linkInfo.id, "Notification box created");
@@ -617,6 +601,7 @@ Socialite.buttonLikeClicked = function(linkInfo, e) {
 
   // Provide instant feedback before sending
   this.updateLikeButtons(linkInfo.ui, linkInfo.uiState.isLiked);
+  this.updateScoreLabel(linkInfo.ui, linkInfo.uiState.score, linkInfo.uiState.isLiked);
   
   // Submit the vote, and then update state.
   // (proceeding after each AJAX call completes)
@@ -645,6 +630,7 @@ Socialite.buttonDislikeClicked = function(linkInfo, e) {
   
   // Provide instant feedback before sending
   this.updateLikeButtons(linkInfo.ui, linkInfo.uiState.isLiked);
+  this.updateScoreLabel(linkInfo.ui, linkInfo.uiState.score, linkInfo.uiState.isLiked);
   
   // Submit the vote, and then update state.
   // (proceeding after the AJAX call completes)
