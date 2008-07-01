@@ -49,6 +49,10 @@ Components.utils.import("resource://socialite/reddit/link_info.jsm");
 var alertsService = Components.classes["@mozilla.org/alerts-service;1"]
                     .getService(Components.interfaces.nsIAlertsService);
 
+var sessionStore  = Components.classes["@mozilla.org/browser/sessionstore;1"]
+                    .getService(Components.interfaces.nsISessionStore);
+
+
 // ---
 
 const STATE_START = Components.interfaces.nsIWebProgressListener.STATE_START;
@@ -97,6 +101,7 @@ Socialite.onLoad = function() {
   this.appContent = document.getElementById("appcontent");
   
   this.linksWatched = {};
+  this.tabInfo = [];
   
   // FIFO queue for removing old watched links
   this.linksWatchedQueue = [];
@@ -178,74 +183,78 @@ Socialite.linkClicked = function(e) {
   var link = e.target;
   var doc = link.ownerDocument;
   var browser = this.tabBrowser.getBrowserForDocument(doc);
+  
+  try {
+    // Remove title_ from title_XX_XXXXX
+    var linkURL   = link.href;
+    var linkID    = link.id.slice(6);
+    var linkTitle = link.textContent;
     
-  // Remove title_ from title_XX_XXXXX
-  var linkURL   = link.href;
-  var linkID    = link.id.slice(6);
-  var linkTitle = link.textContent;
-  
-  var linkInfo = new LinkInfo(linkURL, linkID, linkTitle);
-  
-  //
-  // Get some "preloaded" information from the page while we can.
-  //
-  var linkLike            = doc.getElementById("up_"+linkInfo.id);
-  var linkLikeActive      = /upmod/.test(linkLike.className);
-  
-  var linkDislike         = doc.getElementById("down_"+linkInfo.id);
-  var linkDislikeActive   = /downmod/.test(linkDislike.className);
+    var linkInfo = new LinkInfo(linkURL, linkID, linkTitle);
+    
+    //
+    // Get some "preloaded" information from the page while we can.
+    //
+    var linkLike             = doc.getElementById("up_"+linkInfo.id);
+    var linkLikeActive       = /upmod/.test(linkLike.className);
+    
+    var linkDislike          = doc.getElementById("down_"+linkInfo.id);
+    var linkDislikeActive    = /downmod/.test(linkDislike.className);
 
-  if (linkLikeActive) {
-    linkInfo.state.isLiked  = true;
-  } else if (linkDislikeActive) {
-    linkInfo.state.isLiked  = false;
-  } else {
-    linkInfo.state.isLiked  = null;
-  }
-  
-  var scoreSpan           = doc.getElementById("score_"+linkInfo.id)
-  if (scoreSpan) {
-    linkInfo.state.score    = scoreSpan.textContent;
-  }
+    if (linkLikeActive) {
+      linkInfo.state.isLiked = true;
+    } else if (linkDislikeActive) {
+      linkInfo.state.isLiked = false;
+    } else {
+      linkInfo.state.isLiked = null;
+    }
+    
+    var scoreSpan            = doc.getElementById("score_"+linkInfo.id)
+    if (scoreSpan) {
+      linkInfo.state.score   = scoreSpan.textContent;
+    }
 
-  var linkComments        = doc.getElementById("comment_"+linkInfo.id);
-  linkInfo.commentURL     = linkComments.href;
-  
-  var commentNum          = /((\d+)\s)?comment[s]?/.exec(linkComments.textContent)[2];
-  if (commentNum) {
-    linkInfo.state.commentCount = parseInt(commentNum);
-  } else {
-    linkInfo.state.commentCount = 0;
-  }
-  
-  var linkSave            = doc.getElementById("save_"+linkInfo.id+"_a");
-  var linkUnsave          = doc.getElementById("unsave_"+linkInfo.id+"_a");
-  
-  if (linkSave != null) {
-    // If there's a save link
-    // Whether it's clicked
-    linkInfo.isSaved = (linkSave.style.display == "none");
-  } else if (linkUnsave != null) {
-    // If there's an unsave link (assumption)
-    // Whether it's not clicked
-    linkInfo.isSaved = (linkUnsave.style.display != "none");
-  } else {
-    // No save or unsave link present -- this shouldn't happen, as far as I know.
-    debug_log(linkInfo.id, "Unexpected save link absence.");
-  }
-  
-  // You'd think the link was hidden, the user couldn't have clicked on it
-  // But they could find it in their hidden links list.
-  var linkHide            = doc.getElementById("hide_"+linkInfo.id+"_a");
-  var linkUnhide          = doc.getElementById("unsave_"+linkInfo.id+"_a");
-  
-  if (linkHide != null) {
-    linkInfo.isHidden = false;
-  } else if (linkUnhide != null) {
-    linkInfo.isHidden = true;
-  } else {
-    // No hide or unhide link present -- this shouldn't happen, as far as I know.
-    debug_log(linkInfo.id, "Unexpected hide link absence.");
+    var linkComments         = doc.getElementById("comment_"+linkInfo.id);
+    linkInfo.commentURL      = linkComments.href;
+    
+    var commentNum           = /((\d+)\s)?comment[s]?/.exec(linkComments.textContent)[2];
+    if (commentNum) {
+      linkInfo.state.commentCount = parseInt(commentNum);
+    } else {
+      linkInfo.state.commentCount = 0;
+    }
+    
+    var linkSave             = doc.getElementById("save_"+linkInfo.id+"_a");
+    var linkUnsave           = doc.getElementById("unsave_"+linkInfo.id+"_a");
+    
+    if (linkSave != null) {
+      // If there's a save link
+      // Whether it's clicked
+      linkInfo.isSaved = (linkSave.style.display == "none");
+    } else if (linkUnsave != null) {
+      // If there's an unsave link (assumption)
+      // Whether it's not clicked
+      linkInfo.isSaved = (linkUnsave.style.display != "none");
+    } else {
+      // No save or unsave link present -- this shouldn't happen, as far as I know.
+      debug_log(linkInfo.id, "Unexpected save link absence.");
+    }
+    
+    // You'd think the link was hidden, the user couldn't have clicked on it
+    // But they could find it in their hidden links list.
+    var linkHide             = doc.getElementById("hide_"+linkInfo.id+"_a");
+    var linkUnhide           = doc.getElementById("unsave_"+linkInfo.id+"_a");
+    
+    if (linkHide != null) {
+      linkInfo.isHidden = false;
+    } else if (linkUnhide != null) {
+      linkInfo.isHidden = true;
+    } else {
+      // No hide or unhide link present -- this shouldn't happen, as far as I know.
+      debug_log(linkInfo.id, "Unexpected hide link absence.");
+    }
+  } catch (e) {
+    debug_log(linkInfo.id, "Caught exception while reading data from DOM: " + e.toString());
   }
   
   // Add the information we collected to the watch list  
@@ -267,18 +276,38 @@ Socialite.watchLink = function(href, linkInfo) {
 
 Socialite.linkStartLoad = function(win, isLoading) {
   var href = win.location.href;
+  var currentTab = this.tabBrowser.selectedTab;
+  var browser = this.tabBrowser.getBrowserForDocument(win.document);
+  var notificationBox = this.tabBrowser.getNotificationBox(browser);
 
   if (href in this.linksWatched) {
+    // This is a watched link. Create a notification box and initialize.
     var linkInfo = this.linksWatched[href];
-    var browser = this.tabBrowser.getBrowserForDocument(win.document);
     
     debug_log(linkInfo.id, "Started loading");
+    
+    this.tabInfo[this.tabBrowser.tabContainer.selectedIndex] = linkInfo;
   
     linkInfo.updateUIState()
     this.redditUpdateLinkInfo(linkInfo);
   
     // Show the banner, without allowing actions yet
     this.showNotificationBox(browser, linkInfo, isLoading);
+  } else {
+    // Handle persistence changes, if any.
+    var linkInfo = this.tabInfo[this.tabBrowser.tabContainer.selectedIndex];
+
+    if (linkInfo) {
+      for (var field in linkInfo) {
+        debug_log("hmm", field + " " + linkInfo[field]);
+      }
+      linkInfo.ui.persistence -= 1;
+      debug_log(linkInfo.id, "Decremented persistence, new value: " + linkInfo.ui.persistence);
+      if (linkInfo.ui.persistence == 0) {
+        notificationBox.removeNotification(linkInfo.notification);
+        debug_log(linkInfo.id, "Removed notification");
+      }
+    }
   }
 }
 
@@ -346,7 +375,7 @@ Socialite.showNotificationBox = function(browser, linkInfo, isNewPage) {
       debug_log(linkInfo.id, "Notification box already exists");
       
       if (isNewPage && (SocialitePrefs.getIntPref("persistmode") == 1)) {
-        n.persistence = SocialitePrefs.getIntPref("persistlength");
+        linkInfo.ui.persistence = SocialitePrefs.getIntPref("persistlength");
         debug_log(linkInfo.id, "Reset notification persistence count");
       }
       
@@ -483,15 +512,17 @@ Socialite.showNotificationBox = function(browser, linkInfo, isNewPage) {
   
   this.updateButtons(linkInfo);
 
-  // Persistence
+  // Persist the notification indefinitely -- we'll take care of it ourself, based on clicks instead of page changes.
+  notification.persistence = -1;
+  
   var persistMode = SocialitePrefs.getIntPref("persistmode");
   if (persistMode == 0) {
-    notification.persistence = 0;
+    linkInfo.ui.persistence = 1;
   } else if (persistMode == 1) {
-    notification.persistence = SocialitePrefs.getIntPref("persistlength");
+    linkInfo.ui.persistence = SocialitePrefs.getIntPref("persistlength")+1;
   } else if (persistMode == 2) {
-    notification.persistence = -1;
-  }   
+    linkInfo.ui.persistence = -1;
+  }
   
   debug_log(linkInfo.id, "Notification box created");
   

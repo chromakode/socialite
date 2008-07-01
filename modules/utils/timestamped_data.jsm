@@ -41,10 +41,10 @@ TimestampedData.prototype.getTimestamp = function(name) {
 }
 
 TimestampedData.prototype.copy = function(data, omit) {
-  for (var i=0; i<data.length; i++) {
+  for (var i=0; i<data.fields.length; i++) {
     var field = data.fields[i];
     if ((field in this) &&
-        (omit && !(field in omit)) {  
+        !(omit && !(omit.indexOf(field) == -1))) {  
       this[field] = data[field];
     }
   }

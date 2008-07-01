@@ -13,8 +13,8 @@
 <!ENTITY showgroup.caption        "Info Bar Fields">
 <!ENTITY showlink.label           "Show reddit link">
 <!ENTITY showlink.accesskey       "l">
-<!ENTITY showscore.label       "Show score">
-<!ENTITY showscore.accesskey   "o">
+<!ENTITY showscore.label          "Show score">
+<!ENTITY showscore.accesskey      "o">
 <!ENTITY showcomments.label       "Show comments button">
 <!ENTITY showcomments.accesskey   "c">
 <!ENTITY showsave.label           "Show save/unsave button">
