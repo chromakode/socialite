@@ -1,5 +1,5 @@
 .socialite-sitelink {
-  border-right: #BBB solid 1px;
+  border-right: #BBB solid 1px !important;
   padding-right: 10px;
   margin-right: 5px;
 }
