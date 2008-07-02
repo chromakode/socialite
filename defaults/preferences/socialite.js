@@ -8,7 +8,7 @@ pref("extensions.socialite.showlink", true);
 pref("extensions.socialite.showscore", true);
 pref("extensions.socialite.showsection", true);
 pref("extensions.socialite.showcomments", true);
-pref("extensions.socialite.showsave", false);
+pref("extensions.socialite.showsave", true);
 pref("extensions.socialite.showhide", false);
 pref("extensions.socialite.showrandom", false);
 // See http://kb.mozillazine.org/Localize_extension_descriptions
