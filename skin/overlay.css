@@ -15,6 +15,14 @@
   margin-right: 4px;
 }
 
+.socialite-section {
+  color: #969696;
+}
+
+.socialite-section:hover {
+  text-decoration: underline;
+}
+
 .socialite-liked {
   color: #FF8B60;
 }

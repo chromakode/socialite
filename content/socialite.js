@@ -6,14 +6,15 @@
  // + Button preferences
  // - Login detection/button
  // + Display score
- // - Display subreddit
+ // + Display subreddit
  // + Persistence Options
  // + Better error handling/retry
  // - Submit link command
  // - Make roll-in an option
  // - Unsuccessful action queue
  // - Option of working indicator (throbber)
- // - Autoclose bar based on link clicks, not persistence
+ // - Autoclose bar based on link clicks, not persistence (or handle redirects)
+ // ---- Or TLD changes/path changes
  
  // Outstanding issues:
  // + Raw images seem to not be handled by DOMContentLoaded
@@ -27,7 +28,7 @@
  // - m.reddit.com support (Pickegnome)
  // - Handle RSS readers
  // - Disable on fullscreen
- // - Open tabs in background?
+ // x Open tabs in background?
 
 REDDIT_LIKE_INACTIVE_IMAGE = "chrome://socialite/content/reddit_aupgray.png"
 REDDIT_LIKE_ACTIVE_IMAGE = "chrome://socialite/content/reddit_aupmod.png"
@@ -195,70 +196,73 @@ Socialite.linkClicked = function(e) {
     //
     // Get some "preloaded" information from the page while we can.
     //
-    var linkLike             = doc.getElementById("up_"+linkInfo.id);
-    var linkLikeActive       = /upmod/.test(linkLike.className);
+    var linkLike              = doc.getElementById("up_"+linkInfo.fullname);
+    var linkLikeActive        = /upmod/.test(linkLike.className);
     
-    var linkDislike          = doc.getElementById("down_"+linkInfo.id);
-    var linkDislikeActive    = /downmod/.test(linkDislike.className);
+    var linkDislike           = doc.getElementById("down_"+linkInfo.fullname);
+    var linkDislikeActive     = /downmod/.test(linkDislike.className);
 
     if (linkLikeActive) {
-      linkInfo.state.isLiked = true;
+      linkInfo.state.isLiked  = true;
     } else if (linkDislikeActive) {
-      linkInfo.state.isLiked = false;
+      linkInfo.state.isLiked  = false;
     } else {
-      linkInfo.state.isLiked = null;
+      linkInfo.state.isLiked  = null;
     }
     
-    var scoreSpan            = doc.getElementById("score_"+linkInfo.id)
+    var scoreSpan             = doc.getElementById("score_"+linkInfo.fullname)
     if (scoreSpan) {
-      linkInfo.state.score   = scoreSpan.textContent;
+      linkInfo.state.score    = scoreSpan.textContent;
+    }
+    
+    var linkSubreddit          = doc.getElementById("subreddit_"+linkInfo.fullname)
+    if (linkSubreddit) {
+      linkInfo.state.section   = linkSubreddit.textContent;
     }
 
-    var linkComments         = doc.getElementById("comment_"+linkInfo.id);
-    linkInfo.commentURL      = linkComments.href;
-    
-    var commentNum           = /((\d+)\s)?comment[s]?/.exec(linkComments.textContent)[2];
+    var linkComments           = doc.getElementById("comment_"+linkInfo.fullname);
+    var commentNum             = /((\d+)\s)?comment[s]?/.exec(linkComments.textContent)[2];
     if (commentNum) {
       linkInfo.state.commentCount = parseInt(commentNum);
     } else {
       linkInfo.state.commentCount = 0;
     }
     
-    var linkSave             = doc.getElementById("save_"+linkInfo.id+"_a");
-    var linkUnsave           = doc.getElementById("unsave_"+linkInfo.id+"_a");
+    var linkSave               = doc.getElementById("save_"+linkInfo.fullname+"_a");
+    var linkUnsave             = doc.getElementById("unsave_"+linkInfo.fullname+"_a");
     
     if (linkSave != null) {
       // If there's a save link
       // Whether it's clicked
-      linkInfo.isSaved = (linkSave.style.display == "none");
+      linkInfo.state.isSaved = (linkSave.style.display == "none");
     } else if (linkUnsave != null) {
       // If there's an unsave link (assumption)
       // Whether it's not clicked
-      linkInfo.isSaved = (linkUnsave.style.display != "none");
+      linkInfo.state.isSaved = (linkUnsave.style.display != "none");
     } else {
       // No save or unsave link present -- this shouldn't happen, as far as I know.
-      debug_log(linkInfo.id, "Unexpected save link absence.");
+      debug_log(linkInfo.fullname, "Unexpected save link absence.");
     }
     
     // You'd think the link was hidden, the user couldn't have clicked on it
     // But they could find it in their hidden links list.
-    var linkHide             = doc.getElementById("hide_"+linkInfo.id+"_a");
-    var linkUnhide           = doc.getElementById("unsave_"+linkInfo.id+"_a");
+    var linkHide             = doc.getElementById("hide_"+linkInfo.fullname+"_a");
+    var linkUnhide           = doc.getElementById("unsave_"+linkInfo.fullname+"_a");
     
     if (linkHide != null) {
-      linkInfo.isHidden = false;
+      linkInfo.state.isHidden = false;
     } else if (linkUnhide != null) {
-      linkInfo.isHidden = true;
+      linkInfo.state.isHidden = true;
     } else {
       // No hide or unhide link present -- this shouldn't happen, as far as I know.
-      debug_log(linkInfo.id, "Unexpected hide link absence.");
+      debug_log(linkInfo.fullname, "Unexpected hide link absence.");
     }
   } catch (e) {
-    debug_log(linkInfo.id, "Caught exception while reading data from DOM: " + e.toString());
+    debug_log(linkInfo.fullname, "Caught exception while reading data from DOM: " + e.toString());
   }
   
   // Add the information we collected to the watch list  
-  debug_log(linkInfo.id, "Clicked");
+  debug_log(linkInfo.fullname, "Clicked");
   this.watchLink(link.href, linkInfo);
 };
 
@@ -283,7 +287,7 @@ Socialite.linkStartLoad = function(win, isLoading) {
     // This is a watched link. Create a notification box and initialize.
     var linkInfo = this.linksWatched[href];
     
-    debug_log(linkInfo.id, "Started loading");
+    debug_log(linkInfo.fullname, "Started loading");
     
     this.tabInfo[this.tabBrowser.tabContainer.selectedIndex] = linkInfo;
   
@@ -303,7 +307,7 @@ Socialite.redditUpdateLinkInfo = function(linkInfo, omit) {
         linkInfo.updateUIState(omit);
         this.updateButtons(linkInfo);
       } else {
-        debug_log(linkInfo.id, "UI changed since update request, not updating UI");
+        debug_log(linkInfo.fullname, "UI changed since update request, not updating UI");
       }
     }),
     hitchThis(this, function failure(r, action) {
@@ -327,7 +331,7 @@ Socialite.failureNotification = function(linkInfo, r, action) {
   
   var linkID;
   if (linkInfo) {
-    linkID = linkInfo.id;
+    linkID = linkInfo.fullname;
   } else {
     linkID = "unknown";
   }
@@ -348,7 +352,7 @@ Socialite.failureNotification = function(linkInfo, r, action) {
   
 Socialite.showNotificationBox = function(browser, linkInfo, isNewPage) {
   var notificationBox = this.tabBrowser.getNotificationBox(browser);
-  var notificationName = "socialite-header"+"-"+linkInfo.id;
+  var notificationName = "socialite-header"+"-"+linkInfo.fullname;
   
   var toRemove = null;    
   var curNotifications = notificationBox.allNotifications;
@@ -356,18 +360,18 @@ Socialite.showNotificationBox = function(browser, linkInfo, isNewPage) {
     var n = curNotifications.item(i);
     
     if (n.value == notificationName) {
-      debug_log(linkInfo.id, "Notification box already exists");
+      debug_log(linkInfo.fullname, "Notification box already exists");
       
       if (isNewPage && (SocialitePrefs.getIntPref("persistmode") == 1)) {
         notification.persistence = SocialitePrefs.getIntPref("persistlength");
-        debug_log(linkInfo.id, "Reset notification persistence count");
+        debug_log(linkInfo.fullname, "Reset notification persistence count");
       }
       
       return;
     }
     
     if (n.value.match(/^socialite-header/)) {
-      debug_log(linkInfo.id, "Old notification found, queued to remove.");
+      debug_log(linkInfo.fullname, "Old notification found, queued to remove.");
       toRemove = n;
     }
   }
@@ -385,17 +389,13 @@ Socialite.showNotificationBox = function(browser, linkInfo, isNewPage) {
     notificationBox.removeNotification(toRemove);
   }
   
-  // Ahoy! Commence the XUL hackage!
-  // Let's make this notification a bit cooler.
-  
-  // XXX is this an okay approach? (compatibility, is there a better way, etc)
-  
   var details = notification.boxObject.firstChild.getElementsByAttribute("anonid", "details")[0];
   var messageImage = document.getAnonymousElementByAttribute(notification, "anonid", "messageImage");
   var messageText = document.getAnonymousElementByAttribute(notification, "anonid", "messageText");
   
   var customHBox = document.createElement("hbox");
   customHBox.setAttribute("align", "center");
+  customHBox.setAttribute("pack", "start");
   customHBox.setAttribute("flex", "1");
   
   // Bye bye, annoying XBL bindings
@@ -407,7 +407,7 @@ Socialite.showNotificationBox = function(browser, linkInfo, isNewPage) {
   siteBox.appendChild(messageImage);
   
   var siteLink = document.createElement("label");
-  siteLink.setAttribute("id", "socialite_site_link_"+linkInfo.id);
+  siteLink.setAttribute("fullname", "socialite_site_link_"+linkInfo.fullname);
   siteLink.setAttribute("value", "reddit");
   siteLink.setAttribute("class", "text-link socialite-sitelink");
   siteLink.setAttribute("hidden", !SocialitePrefs.getBoolPref("showlink"));
@@ -417,7 +417,7 @@ Socialite.showNotificationBox = function(browser, linkInfo, isNewPage) {
   customHBox.appendChild(siteBox);
   
   var labelScore = document.createElement("label");
-  labelScore.setAttribute("id", "socialite_score_"+linkInfo.id);
+  labelScore.setAttribute("fullname", "socialite_score_"+linkInfo.fullname);
   labelScore.setAttribute("hidden", !SocialitePrefs.getBoolPref("showscore"));
   // FIXME tooltip here with ups and downs
   linkInfo.ui.labelScore = labelScore;
@@ -425,24 +425,30 @@ Socialite.showNotificationBox = function(browser, linkInfo, isNewPage) {
 
   // Slight hack to fix description vertical centering
   // XXX Does this look good on all platforms?
-  messageText.setAttribute("id", "socialite_title_"+linkInfo.id);
+  messageText.setAttribute("fullname", "socialite_title_"+linkInfo.fullname);
   messageText.setAttribute("class", "messageText socialite-title");
+  messageText.setAttribute("flex", "1");
   customHBox.appendChild(messageText);
 
-  // Slight hack to fix description vertical centering
-  // XXX Does this look good on all platforms?
-  messageText.setAttribute("id", "socialite_title_"+linkInfo.id);
-  messageText.setAttribute("class", "messageText socialite-title");
-  customHBox.appendChild(messageText);
+  var labelSection = document.createElement("label");
+  labelSection.setAttribute("fullname", "socialite_section_"+linkInfo.fullname);
+  labelSection.setAttribute("class", "socialite-section");
+  labelSection.setAttribute("hidden", !SocialitePrefs.getBoolPref("showsection"));
+  labelSection.addEventListener("click", hitchHandler(this, "sectionClicked", linkInfo), false);
+  linkInfo.ui.labelSection = labelSection;
+  customHBox.appendChild(labelSection);
   
   var spacer = document.createElement("spacer");
-  spacer.setAttribute("flex", "1");
+  
+  // FIXME: Take up all available space. I know of no better way.
+  spacer.setAttribute("flex", "9999");
+  
   customHBox.appendChild(spacer);
   
   // XUL hackage done.    
   
   var buttonLike = document.createElement("button");
-  buttonLike.setAttribute("id", "socialite_mod_up_"+linkInfo.id);
+  buttonLike.setAttribute("fullname", "socialite_mod_up_"+linkInfo.fullname);
   buttonLike.setAttribute("type", "checkbox");
   buttonLike.setAttribute("label", this.strings.getString("likeit"));
   buttonLike.setAttribute("accesskey", this.strings.getString("likeit.accesskey"));
@@ -453,7 +459,7 @@ Socialite.showNotificationBox = function(browser, linkInfo, isNewPage) {
   linkInfo.ui.buttonLike = buttonLike;
   
   var buttonDislike = document.createElement("button");
-  buttonDislike.setAttribute("id", "socialite_mod_down_"+linkInfo.id);
+  buttonDislike.setAttribute("fullname", "socialite_mod_down_"+linkInfo.fullname);
   buttonDislike.setAttribute("type", "checkbox");
   buttonDislike.setAttribute("label", this.strings.getString("dislikeit"));
   buttonDislike.setAttribute("accesskey", this.strings.getString("dislikeit.accesskey"));
@@ -464,7 +470,7 @@ Socialite.showNotificationBox = function(browser, linkInfo, isNewPage) {
   linkInfo.ui.buttonDislike = buttonDislike;
   
   var buttonComments = document.createElement("button");
-  buttonComments.setAttribute("id", "socialite_comments_"+linkInfo.id);
+  buttonComments.setAttribute("fullname", "socialite_comments_"+linkInfo.fullname);
   buttonComments.setAttribute("accesskey", this.strings.getString("comments.accesskey"));
   buttonComments.setAttribute("hidden", !SocialitePrefs.getBoolPref("showcomments"));
   buttonComments.addEventListener("click", hitchHandler(this, "buttonCommentsClicked", linkInfo), false);
@@ -472,21 +478,21 @@ Socialite.showNotificationBox = function(browser, linkInfo, isNewPage) {
   linkInfo.ui.buttonComments = buttonComments;
   
   var buttonSave = document.createElement("button");
-  buttonSave.setAttribute("id", "socialite_save_"+linkInfo.id);
+  buttonSave.setAttribute("fullname", "socialite_save_"+linkInfo.fullname);
   buttonSave.setAttribute("hidden", !SocialitePrefs.getBoolPref("showsave"));
   buttonSave.addEventListener("click", hitchHandler(this, "buttonSaveClicked", linkInfo), false);
   customHBox.appendChild(buttonSave);
   linkInfo.ui.buttonSave = buttonSave;
   
   var buttonHide = document.createElement("button");
-  buttonHide.setAttribute("id", "socialite_hide_"+linkInfo.id);
+  buttonHide.setAttribute("fullname", "socialite_hide_"+linkInfo.fullname);
   buttonHide.setAttribute("hidden", !SocialitePrefs.getBoolPref("showhide"));
   buttonHide.addEventListener("click", hitchHandler(this, "buttonHideClicked", linkInfo), false);
   customHBox.appendChild(buttonHide);
   linkInfo.ui.buttonHide = buttonHide;
   
   var buttonRandom = document.createElement("button");
-  buttonRandom.setAttribute("id", "socialite_random_"+linkInfo.id);
+  buttonRandom.setAttribute("fullname", "socialite_random_"+linkInfo.fullname);
   buttonRandom.setAttribute("label", this.strings.getString("random"));
   buttonRandom.setAttribute("accesskey", this.strings.getString("random.accesskey"));
   buttonRandom.setAttribute("hidden", !SocialitePrefs.getBoolPref("showrandom"));
@@ -495,20 +501,17 @@ Socialite.showNotificationBox = function(browser, linkInfo, isNewPage) {
   linkInfo.ui.buttonRandom = buttonRandom;
   
   this.updateButtons(linkInfo);
-
-  // Persist the notification indefinitely -- we'll take care of it ourself, based on clicks instead of page changes.
-  notification.persistence = -1;
   
   var persistMode = SocialitePrefs.getIntPref("persistmode");
   if (persistMode == 0) {
-    notification.persistence = 1;
+    notification.persistence = 0;
   } else if (persistMode == 1) {
-    notification.persistence = SocialitePrefs.getIntPref("persistlength")+1;
+    notification.persistence = SocialitePrefs.getIntPref("persistlength");
   } else if (persistMode == 2) {
     notification.persistence = -1;
   }
   
-  debug_log(linkInfo.id, "Notification box created");
+  debug_log(linkInfo.fullname, "Notification box created");
   
   linkInfo.notification = notification;
 };
@@ -531,6 +534,29 @@ Socialite.updateLikeButtons = function(ui, isLiked) {
   }
 };
 
+Socialite.updateScoreLabel = function(ui, score, isLiked) {
+  ui.labelScore.setAttribute("value", score);
+  if (isLiked == true) {
+    ui.labelScore.setAttribute("class", "socialite-score socialite-liked");
+  } else if (isLiked == false) {
+    ui.labelScore.setAttribute("class", "socialite-score socialite-disliked");  
+  } else {
+    ui.labelScore.setAttribute("class", "socialite-score");  
+  }
+}
+
+Socialite.updateSectionLabel = function(ui, section) {
+  if (section) {
+    ui.labelSection.setAttribute("value", "["+section+"]");
+  } else {
+    ui.labelSection.setAttribute("value", "");
+  }
+}
+
+Socialite.updateCommentsButton = function(ui, commentCount) {
+  ui.buttonComments.setAttribute("label", this.strings.getFormattedString("comments", [commentCount.toString()]));
+}
+
 Socialite.updateSaveButton = function(ui, isSaved) {
   if (isSaved) {
     ui.buttonSave.setAttribute("label", this.strings.getString("unsave"));
@@ -551,21 +577,6 @@ Socialite.updateHideButton = function(ui, isHidden) {
   }
 }
 
-Socialite.updateScoreLabel = function(ui, score, isLiked) {
-  ui.labelScore.setAttribute("value", score);
-  if (isLiked == true) {
-    ui.labelScore.setAttribute("class", "socialite-score socialite-liked");
-  } else if (isLiked == false) {
-    ui.labelScore.setAttribute("class", "socialite-score socialite-disliked");  
-  } else {
-    ui.labelScore.setAttribute("class", "socialite-score");  
-  }
-}
-
-Socialite.updateCommentsButton = function(ui, commentCount) {
-  ui.buttonComments.setAttribute("label", this.strings.getFormattedString("comments", [commentCount.toString()]));
-}
-
 Socialite.updateButtons = function(linkInfo) {
   if (linkInfo.modActive) {
     linkInfo.ui.buttonLike.setAttribute("disabled", false);
@@ -579,12 +590,17 @@ Socialite.updateButtons = function(linkInfo) {
   
   this.updateLikeButtons(linkInfo.ui, linkInfo.uiState.isLiked);
   this.updateScoreLabel(linkInfo.ui, linkInfo.uiState.score, linkInfo.uiState.isLiked);
+  this.updateSectionLabel(linkInfo.ui, linkInfo.uiState.subreddit);
   this.updateCommentsButton(linkInfo.ui, linkInfo.uiState.commentCount);
   this.updateSaveButton(linkInfo.ui, linkInfo.uiState.isSaved);
   this.updateHideButton(linkInfo.ui, linkInfo.uiState.isHidden);
   
-  debug_log(linkInfo.id, "Updated UI");
+  debug_log(linkInfo.fullname, "Updated UI");
 }
+
+Socialite.siteLinkClicked = function(e) {
+  openUILink("http://www.reddit.com", e);
+};
 
 Socialite.buttonLikeClicked = function(linkInfo, e) {
   // We'll update the score locally, without using live data, since this is typically cached on reddit. In general, it makes more sense if there is a visible change in the score, even though we're not being totally accurate!
@@ -613,7 +629,7 @@ Socialite.buttonLikeClicked = function(linkInfo, e) {
     )
   );    
     
-  submit.perform(this.redditModHash, linkInfo.id, linkInfo.uiState.isLiked);
+  submit.perform(this.redditModHash, linkInfo.fullname, linkInfo.uiState.isLiked);
 };
 
 Socialite.buttonDislikeClicked = function(linkInfo, e) {
@@ -642,11 +658,15 @@ Socialite.buttonDislikeClicked = function(linkInfo, e) {
     )
   );
     
-  submit.perform(this.redditModHash, linkInfo.id, linkInfo.uiState.isLiked);
+  submit.perform(this.redditModHash, linkInfo.fullname, linkInfo.uiState.isLiked);
+};
+
+Socialite.sectionClicked = function(linkInfo, e) {
+  openUILink("http://www.reddit.com/r/"+linkInfo.state.subreddit+"/", e);
 };
 
 Socialite.buttonCommentsClicked = function(linkInfo, e) {
-  openUILink(linkInfo.commentURL, e);
+  openUILink("http://www.reddit.com/info/"+linkInfo.getID()+"/comments/", e);
 };
 
 Socialite.buttonSaveClicked = function(linkInfo, e) {
@@ -661,7 +681,7 @@ Socialite.buttonSaveClicked = function(linkInfo, e) {
         hitchHandler(this, "revertUIState", linkInfo, ["isSaved"]),
         hitchHandler(this, "actionFailureHandler", linkInfo)
       )
-    )).perform(this.redditModHash, linkInfo.id);
+    )).perform(this.redditModHash, linkInfo.fullname);
         
   } else {
   
@@ -674,7 +694,7 @@ Socialite.buttonSaveClicked = function(linkInfo, e) {
         hitchHandler(this, "revertUIState", linkInfo, ["isSaved"]),
         hitchHandler(this, "actionFailureHandler", linkInfo)
       )
-    )).perform(this.redditModHash, linkInfo.id);
+    )).perform(this.redditModHash, linkInfo.fullname);
   }
 };
 
@@ -690,7 +710,7 @@ Socialite.buttonHideClicked = function(linkInfo, e) {
         hitchHandler(this, "revertUIState", linkInfo, ["isHidden"]),
         hitchHandler(this, "actionFailureHandler", linkInfo)
       )
-    )).perform(this.redditModHash, linkInfo.id);
+    )).perform(this.redditModHash, linkInfo.fullname);
         
   } else {
   
@@ -703,7 +723,7 @@ Socialite.buttonHideClicked = function(linkInfo, e) {
         hitchHandler(this, "revertUIState", linkInfo, ["isHidden"]),
         hitchHandler(this, "actionFailureHandler", linkInfo)
       )
-    )).perform(this.redditModHash, linkInfo.id);
+    )).perform(this.redditModHash, linkInfo.fullname);
   }
 };
 
@@ -718,11 +738,6 @@ Socialite.buttonRandomClicked = function(e) {
     },
     hitchHandler(this, "failureNotification", null))
   ).perform();
-};
-
-
-Socialite.siteLinkClicked = function(e) {
-  openUILink("http://www.reddit.com", e);
 };
 
 // ---

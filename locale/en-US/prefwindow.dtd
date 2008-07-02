@@ -15,6 +15,8 @@
 <!ENTITY showlink.accesskey       "l">
 <!ENTITY showscore.label          "Show score">
 <!ENTITY showscore.accesskey      "o">
+<!ENTITY showsection.label        "Show subreddit">
+<!ENTITY showsection.accesskey    "u">
 <!ENTITY showcomments.label       "Show comments button">
 <!ENTITY showcomments.accesskey   "c">
 <!ENTITY showsave.label           "Show save/unsave button">

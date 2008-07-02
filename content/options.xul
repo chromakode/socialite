@@ -8,6 +8,7 @@
       <preference id="persistlength" name="extensions.socialite.persistlength" type="int"/>
       <preference id="showlink" name="extensions.socialite.showlink" type="bool"/>
       <preference id="showscore" name="extensions.socialite.showscore" type="bool"/>
+      <preference id="showsection" name="extensions.socialite.showsection" type="bool"/>
       <preference id="showcomments" name="extensions.socialite.showcomments" type="bool"/>
       <preference id="showsave" name="extensions.socialite.showsave" type="bool"/>
       <preference id="showhide" name="extensions.socialite.showhide" type="bool"/>
@@ -29,6 +30,7 @@
     <groupbox flex="1">      <caption label="&showgroup.caption;"/>
       <checkbox id="showlink_pref" preference="showlink" label="&showlink.label;" accesskey="&showlink.accesskey;"/>
       <checkbox id="showscore_pref" preference="showscore" label="&showscore.label;" accesskey="&showscore.accesskey;"/>
+      <checkbox id="showsection_pref" preference="showsection" label="&showsection.label;" accesskey="&showsection.accesskey;"/>
       <checkbox id="showcomments_pref" preference="showcomments" label="&showcomments.label;" accesskey="&showcomments.accesskey;"/>
       <checkbox id="showsave_pref" preference="showsave" label="&showsave.label;" accesskey="&showsave.accesskey;"/>
       <checkbox id="showhide_pref" preference="showhide" label="&showhide.label;" accesskey="&showhide.accesskey;"/>

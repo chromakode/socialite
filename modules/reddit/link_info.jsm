@@ -14,6 +14,9 @@ function LinkInfoState() {
   TimestampedData.apply(this);
   this.addField("isLiked");
   this.addField("score");
+  this.addField("likeCount");
+  this.addField("dislikeCount");
+  this.addField("subreddit");
   this.addField("commentCount");
   this.addField("isSaved");
   this.addField("isHidden");
@@ -32,9 +35,9 @@ function LinkInfoFromJSON(json) {
   return linkInfo;
 }
 
-function LinkInfo(url, id, title) {
+function LinkInfo(url, fullname, title) {
   this.url = url;
-  this.id = id;
+  this.fullname = fullname;
   this.title = title;
   
   this.modActive = true;
@@ -45,6 +48,16 @@ function LinkInfo(url, id, title) {
   this.ui = {};
 }
 
+const fullnameRegex = /(\w+)_(\w+)/;
+
+LinkInfo.prototype.getID = function() {
+  return fullnameRegex.exec(this.fullname)[2];
+}
+
+LinkInfo.prototype.getKind = function() {
+  return fullnameRegex.exec(this.fullname)[1];
+}
+
 LinkInfo.prototype.update = function(successCallback, failureCallback) {
   var act = Action("LinkInfo.update", hitchThis(this, function(action) {
     var infoCall = new reddit.info(
@@ -53,7 +66,7 @@ LinkInfo.prototype.update = function(successCallback, failureCallback) {
           this.updateFromJSON(json);
           action.success(r, json);
         } else {
-          debug_log(linkInfo.id, "State updated since update request, not updating state");
+          debug_log(linkInfo.fullname, "State updated since update request, not updating state");
         }
       }),
       function fail(r) {
@@ -72,13 +85,17 @@ LinkInfo.prototype.updateFromJSON = function(json) {
   
   this.state.isLiked      = linkData.likes;
   this.state.score        = linkData.score;
+  this.state.likeCount    = linkData.ups;
+  this.state.dislikeCount = linkData.downs;
+  this.state.subreddit    = linkData.subreddit;
   this.state.commentCount = linkData.num_comments;
   this.state.isSaved      = linkData.saved;
   this.state.isHidden     = linkData.hidden;
   
-  debug_log(this.id, "Updated from JSON info: "                    +
+  debug_log(this.fullname, "Updated from JSON info: "                    +
                      "liked: "    + this.state.isLiked + ", "      +
                      "score: "    + this.state.score + ", "        +
+                     "subreddit: "+ this.state.subreddit + ", "    +
                      "comments: " + this.state.commentCount + ", " +
                      "saved: "    + this.state.isSaved + ", "      +
                      "hidden: "   + this.state.isHidden            );
@@ -89,16 +106,16 @@ LinkInfo.prototype.updateUIState = function(omit) {
 }
 
 LinkInfo.prototype.revertUIState = function(properties, timestamp) {
-  debug_log(this.id, "Reverting UI state properties: [" + properties.toString() + "]");
+  debug_log(this.fullname, "Reverting UI state properties: [" + properties.toString() + "]");
   for (var i=0; i<properties.length; i++) {
     var prop = properties[i];
     
     // If the uiState hasn't been updated since the timestamp, revert it.
     if ((timestamp == null) || (timestamp >= this.uiState.getTimestamp(prop))) {
-      debug_log(this.id, "Reverting UI state property " + prop + " from " + this.uiState[prop] + " to " + this.state[prop]);
+      debug_log(this.fullname, "Reverting UI state property " + prop + " from " + this.uiState[prop] + " to " + this.state[prop]);
       this.uiState[prop] = this.state[prop];
     } else {
-      debug_log(this.id, "UI state property " + prop + " modified since revert timestamp, skipping revert.");
+      debug_log(this.fullname, "UI state property " + prop + " modified since revert timestamp, skipping revert.");
     }
   }
 }
