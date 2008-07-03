@@ -30,6 +30,8 @@
  // - Disable on fullscreen
  // x Open tabs in background?
 
+XULNS = "http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul";
+
 REDDIT_LIKE_INACTIVE_IMAGE = "chrome://socialite/content/reddit_aupgray.png"
 REDDIT_LIKE_ACTIVE_IMAGE = "chrome://socialite/content/reddit_aupmod.png"
 REDDIT_DISLIKE_INACTIVE_IMAGE = "chrome://socialite/content/reddit_adowngray.png"
@@ -392,6 +394,7 @@ Socialite.showNotificationBox = function(browser, linkInfo, isNewPage) {
   var details = notification.boxObject.firstChild.getElementsByAttribute("anonid", "details")[0];
   var messageImage = document.getAnonymousElementByAttribute(notification, "anonid", "messageImage");
   var messageText = document.getAnonymousElementByAttribute(notification, "anonid", "messageText");
+  var messageSpacer = details.getElementsByTagNameNS(XULNS, "spacer")[0];
   
   var customHBox = document.createElement("hbox");
   customHBox.setAttribute("align", "center");
@@ -399,7 +402,9 @@ Socialite.showNotificationBox = function(browser, linkInfo, isNewPage) {
   customHBox.setAttribute("flex", "1");
   
   // Bye bye, annoying XBL bindings
-  details.parentNode.replaceChild(customHBox, details);
+  details.replaceChild(customHBox, messageImage);
+  details.removeChild(messageText);
+  details.removeChild(messageSpacer);
   
   var siteBox = document.createElement("hbox");
   
@@ -407,7 +412,7 @@ Socialite.showNotificationBox = function(browser, linkInfo, isNewPage) {
   siteBox.appendChild(messageImage);
   
   var siteLink = document.createElement("label");
-  siteLink.setAttribute("fullname", "socialite_site_link_"+linkInfo.fullname);
+  siteLink.setAttribute("id", "socialite_site_link_"+linkInfo.fullname);
   siteLink.setAttribute("value", "reddit");
   siteLink.setAttribute("class", "text-link socialite-sitelink");
   siteLink.setAttribute("hidden", !SocialitePrefs.getBoolPref("showlink"));
@@ -417,21 +422,19 @@ Socialite.showNotificationBox = function(browser, linkInfo, isNewPage) {
   customHBox.appendChild(siteBox);
   
   var labelScore = document.createElement("label");
-  labelScore.setAttribute("fullname", "socialite_score_"+linkInfo.fullname);
+  labelScore.setAttribute("id", "socialite_score_"+linkInfo.fullname);
   labelScore.setAttribute("hidden", !SocialitePrefs.getBoolPref("showscore"));
   // FIXME tooltip here with ups and downs
   linkInfo.ui.labelScore = labelScore;
   customHBox.appendChild(labelScore);
 
-  // Slight hack to fix description vertical centering
-  // XXX Does this look good on all platforms?
-  messageText.setAttribute("fullname", "socialite_title_"+linkInfo.fullname);
+  messageText.setAttribute("id", "socialite_title_"+linkInfo.fullname);
   messageText.setAttribute("class", "messageText socialite-title");
   messageText.setAttribute("flex", "1");
   customHBox.appendChild(messageText);
 
   var labelSection = document.createElement("label");
-  labelSection.setAttribute("fullname", "socialite_section_"+linkInfo.fullname);
+  labelSection.setAttribute("id", "socialite_section_"+linkInfo.fullname);
   labelSection.setAttribute("class", "socialite-section");
   labelSection.setAttribute("hidden", !SocialitePrefs.getBoolPref("showsection"));
   labelSection.addEventListener("click", hitchHandler(this, "sectionClicked", linkInfo), false);
@@ -448,56 +451,56 @@ Socialite.showNotificationBox = function(browser, linkInfo, isNewPage) {
   // XUL hackage done.    
   
   var buttonLike = document.createElement("button");
-  buttonLike.setAttribute("fullname", "socialite_mod_up_"+linkInfo.fullname);
+  buttonLike.setAttribute("id", "socialite_mod_up_"+linkInfo.fullname);
   buttonLike.setAttribute("type", "checkbox");
   buttonLike.setAttribute("label", this.strings.getString("likeit"));
   buttonLike.setAttribute("accesskey", this.strings.getString("likeit.accesskey"));
   buttonLike.setAttribute("image", REDDIT_LIKE_INACTIVE_IMAGE);
   buttonLike.setAttribute("autoCheck", "false");
   buttonLike.addEventListener("click", hitchHandler(this, "buttonLikeClicked", linkInfo), false);
-  customHBox.appendChild(buttonLike);
+  notification.appendChild(buttonLike);
   linkInfo.ui.buttonLike = buttonLike;
   
   var buttonDislike = document.createElement("button");
-  buttonDislike.setAttribute("fullname", "socialite_mod_down_"+linkInfo.fullname);
+  buttonDislike.setAttribute("id", "socialite_mod_down_"+linkInfo.fullname);
   buttonDislike.setAttribute("type", "checkbox");
   buttonDislike.setAttribute("label", this.strings.getString("dislikeit"));
   buttonDislike.setAttribute("accesskey", this.strings.getString("dislikeit.accesskey"));
   buttonDislike.setAttribute("image", REDDIT_DISLIKE_INACTIVE_IMAGE);
   buttonDislike.setAttribute("autoCheck", "false");
-  customHBox.appendChild(buttonDislike);
+  notification.appendChild(buttonDislike);
   buttonDislike.addEventListener("click", hitchHandler(this, "buttonDislikeClicked", linkInfo), false);
   linkInfo.ui.buttonDislike = buttonDislike;
   
   var buttonComments = document.createElement("button");
-  buttonComments.setAttribute("fullname", "socialite_comments_"+linkInfo.fullname);
+  buttonComments.setAttribute("id", "socialite_comments_"+linkInfo.fullname);
   buttonComments.setAttribute("accesskey", this.strings.getString("comments.accesskey"));
   buttonComments.setAttribute("hidden", !SocialitePrefs.getBoolPref("showcomments"));
   buttonComments.addEventListener("click", hitchHandler(this, "buttonCommentsClicked", linkInfo), false);
-  customHBox.appendChild(buttonComments);
+  notification.appendChild(buttonComments);
   linkInfo.ui.buttonComments = buttonComments;
   
   var buttonSave = document.createElement("button");
-  buttonSave.setAttribute("fullname", "socialite_save_"+linkInfo.fullname);
+  buttonSave.setAttribute("id", "socialite_save_"+linkInfo.fullname);
   buttonSave.setAttribute("hidden", !SocialitePrefs.getBoolPref("showsave"));
   buttonSave.addEventListener("click", hitchHandler(this, "buttonSaveClicked", linkInfo), false);
-  customHBox.appendChild(buttonSave);
+  notification.appendChild(buttonSave);
   linkInfo.ui.buttonSave = buttonSave;
   
   var buttonHide = document.createElement("button");
-  buttonHide.setAttribute("fullname", "socialite_hide_"+linkInfo.fullname);
+  buttonHide.setAttribute("id", "socialite_hide_"+linkInfo.fullname);
   buttonHide.setAttribute("hidden", !SocialitePrefs.getBoolPref("showhide"));
   buttonHide.addEventListener("click", hitchHandler(this, "buttonHideClicked", linkInfo), false);
-  customHBox.appendChild(buttonHide);
+  notification.appendChild(buttonHide);
   linkInfo.ui.buttonHide = buttonHide;
   
   var buttonRandom = document.createElement("button");
-  buttonRandom.setAttribute("fullname", "socialite_random_"+linkInfo.fullname);
+  buttonRandom.setAttribute("id", "socialite_random_"+linkInfo.fullname);
   buttonRandom.setAttribute("label", this.strings.getString("random"));
   buttonRandom.setAttribute("accesskey", this.strings.getString("random.accesskey"));
   buttonRandom.setAttribute("hidden", !SocialitePrefs.getBoolPref("showrandom"));
   buttonRandom.addEventListener("click", hitchHandler(this, "buttonRandomClicked"), false);
-  customHBox.appendChild(buttonRandom);
+  notification.appendChild(buttonRandom);
   linkInfo.ui.buttonRandom = buttonRandom;
   
   this.updateButtons(linkInfo);
