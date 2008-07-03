@@ -4,7 +4,7 @@
   <Description about="urn:mozilla:install-manifest">
     <em:id>socialite@chromakode</em:id>
     <em:name>Socialite</em:name>
-    <em:version>1.0.11</em:version>
+    <em:version>1.0.11.1</em:version>
     <em:creator>Chromakode</em:creator>
     <em:description>Displays a social bookmarking toolbar above pages from reddit.com.</em:description>
     <em:iconURL>chrome://socialite/content/socialite.png</em:iconURL>
