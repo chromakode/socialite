@@ -15,6 +15,7 @@
  // - Option of working indicator (throbber)
  // - Autoclose bar based on link clicks, not persistence (or handle redirects)
  // ---- Or TLD changes/path changes
+ // - Hide links that have been hidden on original reddit pages open
  
  // Outstanding issues:
  // + Raw images seem to not be handled by DOMContentLoaded
@@ -627,7 +628,7 @@ Socialite.buttonLikeClicked = function(linkInfo, e) {
   var submit = new reddit.vote(
     hitchHandler(this, "redditUpdateLinkInfo", linkInfo, ["score"]),
     sequenceCalls(
-      hitchHandler(this, "revertUIState", linkInfo, ["isLiked"]),
+      hitchHandler(this, "revertUIState", linkInfo, ["isLiked", "score"]),
       hitchHandler(this, "actionFailureHandler", linkInfo)
     )
   );    
@@ -656,7 +657,7 @@ Socialite.buttonDislikeClicked = function(linkInfo, e) {
   var submit = new reddit.vote(
     hitchHandler(this, "redditUpdateLinkInfo", linkInfo, ["score"]),
     sequenceCalls(
-      hitchHandler(this, "revertUIState", linkInfo, ["isLiked"]),
+      hitchHandler(this, "revertUIState", linkInfo, ["isLiked", "score"]),
       hitchHandler(this, "actionFailureHandler", linkInfo)
     )
   );
