@@ -1,11 +1,7 @@
 .socialite-sitelink {
-  border-right: #BBB solid 1px !important;
-  padding-right: 10px;
-  margin-right: 5px;
 }
 
 .socialite-title {
-  /*margin-top: 2px;*/
 }
 
 .socialite-score {
@@ -14,6 +10,15 @@
   margin-left: 5px;
   margin-right: 4px;
 }
+
+.socialite-separator {
+  margin-left: 7px !important;
+  margin-right: 7px !important;
+  border: none !important;
+  border-left: 1px solid black !important;
+  opacity: 0.25;
+}
+
 
 .socialite-section {
   color: #969696;

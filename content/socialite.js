@@ -422,6 +422,13 @@ Socialite.showNotificationBox = function(browser, linkInfo, isNewPage) {
   siteBox.addEventListener("click", hitchHandler(this, "siteLinkClicked"), false);
   customHBox.appendChild(siteBox);
   
+  var separator = document.createElement("separator");
+  separator.setAttribute("width", "0px");
+  separator.setAttribute("height", "18px");
+  separator.setAttribute("orient", "vertical");
+  separator.setAttribute("class", "groove socialite-separator");
+  customHBox.appendChild(separator);
+  
   var labelScore = document.createElement("label");
   labelScore.setAttribute("id", "socialite_score_"+linkInfo.fullname);
   labelScore.setAttribute("hidden", !SocialitePrefs.getBoolPref("showscore"));
