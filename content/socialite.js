@@ -426,7 +426,7 @@ Socialite.showNotificationBox = function(browser, linkInfo, isNewPage) {
   separator.setAttribute("width", "0px");
   separator.setAttribute("height", "18px");
   separator.setAttribute("orient", "vertical");
-  separator.setAttribute("class", "groove socialite-separator");
+  separator.setAttribute("class", "socialite-separator");
   customHBox.appendChild(separator);
   
   var labelScore = document.createElement("label");
