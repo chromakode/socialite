@@ -1,0 +1,42 @@
+<?xml version="1.0"?>
+<bindings
+  xmlns="http://www.mozilla.org/xbl"
+  xmlns:xbl="http://www.mozilla.org/xbl"
+  xmlns:xul="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul">
+  
+  <binding id="scoretooltip"
+           extends="chrome://global/content/bindings/popup.xml#tooltip">
+
+    <content>
+      <xul:grid>
+        <xul:columns>
+          <xul:column flex="0"/>
+          <xul:column flex="1"/>
+        </xul:columns>
+
+        <xul:rows>
+          <xul:row align="center">
+            <xul:image src="chrome://socialite/content/reddit_aupmod.png"/>
+            <xul:label anonid="likeCount" xbl:inherits="value=likeCount"/>
+          </xul:row>
+          <xul:row align="center">
+            <xul:image src="chrome://socialite/content/reddit_adownmod.png"/>
+            <xul:label anonid="dislikeCount" xbl:inherits="value=dislikeCount"/>
+          </xul:row>
+        </xul:rows>
+      </xul:grid>
+    </content>
+
+    <implementation>
+      <field name="linkInfo"/>
+    </implementation>
+    
+    <handlers>
+      <handler event="popupshowing">
+        this.setAttribute("likeCount", this.linkInfo.uiState.likeCount);
+        this.setAttribute("dislikeCount", this.linkInfo.uiState.dislikeCount);
+      </handler>
+    </handlers>
+
+  </binding>
+</bindings>

@@ -425,7 +425,15 @@ Socialite.showNotificationBox = function(browser, linkInfo, isNewPage) {
   var labelScore = document.createElement("label");
   labelScore.setAttribute("id", "socialite_score_"+linkInfo.fullname);
   labelScore.setAttribute("hidden", !SocialitePrefs.getBoolPref("showscore"));
-  // FIXME tooltip here with ups and downs
+
+  var tooltip = document.createElement("tooltip");
+  var tooltipId = "socialite-score-tooltip-"+linkInfo.fullname;
+  tooltip.setAttribute("id", tooltipId);
+  tooltip.linkInfo = linkInfo;
+  tooltip.style.MozBinding = "url(chrome://socialite/content/score_tooltip.xml#scoretooltip)";
+  customHBox.appendChild(tooltip);
+  
+  labelScore.setAttribute("tooltip", tooltipId);
   linkInfo.ui.labelScore = labelScore;
   customHBox.appendChild(labelScore);
 
