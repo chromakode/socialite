@@ -1,7 +1,7 @@
 pref("extensions.socialite.debug", false);
 pref("extensions.socialite.debugInErrorConsole", false);
 
-pref("extensions.socialite.persistmode", 0);
+pref("extensions.socialite.persistmode", 2);
 
 pref("extensions.socialite.showlink", true);
 pref("extensions.socialite.showscore", true);
