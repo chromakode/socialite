@@ -184,7 +184,7 @@ Socialite.linkClicked = function(e) {
     
     var scoreSpan             = doc.getElementById("score_"+linkInfo.fullname)
     if (scoreSpan) {
-      linkInfo.state.score    = scoreSpan.textContent;
+      linkInfo.state.score    = parseInt(scoreSpan.textContent);
     }
     
     var linkSubreddit          = doc.getElementById("subreddit_"+linkInfo.fullname)
