@@ -10,6 +10,7 @@ RETRY_DELAY = 5000;
 
 Components.utils.import("resource://socialite/preferences.jsm");
 Components.utils.import("resource://socialite/debug.jsm");
+persistence = Components.utils.import("resource://socialite/persistence.jsm");
 Components.utils.import("resource://socialite/utils/action/action.jsm");
 Components.utils.import("resource://socialite/utils/action/sequence.jsm");
 Components.utils.import("resource://socialite/utils/hitch.jsm");
@@ -121,7 +122,8 @@ Socialite.tabOpened = function(e) {
 }
 
 Socialite.tabClosed = function(e) {
-  var browser = e.originalTarget.linkedBrowser;
+  var currentTab = this.tabBrowser.tabContainer.selectedIndex;
+  this.tabInfo[currentTab] = null;
   
   debug_log("main", "Tab closed: " + browser.contentWindow.location.href);
 }
@@ -251,6 +253,7 @@ Socialite.watchLink = function(href, linkInfo) {
 Socialite.linkStartLoad = function(win, isLoading) {
   var href = win.location.href;
   var browser = this.tabBrowser.getBrowserForDocument(win.document);
+  var currentTab = this.tabBrowser.tabContainer.selectedIndex;
   var notificationBox = this.tabBrowser.getNotificationBox(browser);
 
   if (href in this.linksWatched) {
@@ -259,13 +262,24 @@ Socialite.linkStartLoad = function(win, isLoading) {
     
     debug_log(linkInfo.fullname, "Started loading");
     
-    this.tabInfo[this.tabBrowser.tabContainer.selectedIndex] = linkInfo;
+    this.tabInfo[currentTab] = linkInfo;
   
     linkInfo.updateUIState()
     this.redditUpdateLinkInfo(linkInfo);
   
     // Show the banner, without allowing actions yet
     this.showNotificationBox(browser, linkInfo, isLoading);
+  } else {
+    // Handle persistence changes, if any.
+    var linkInfo = this.tabInfo[currentTab];
+
+    if (linkInfo && linkInfo.ui.notification) {
+      if (!persistence.onLocationChange(linkInfo.url, href)) {
+        notificationBox.removeNotification(linkInfo.ui.notification);
+        linkInfo.ui.notification = null;
+        debug_log(linkInfo.fullname, "Removed notification");
+      }
+    }
   }
 }
 
@@ -331,12 +345,6 @@ Socialite.showNotificationBox = function(browser, linkInfo, isNewPage) {
     
     if (n.value == notificationName) {
       debug_log(linkInfo.fullname, "Notification box already exists");
-      
-      if (isNewPage && (SocialitePrefs.getIntPref("persistmode") == 1)) {
-        notification.persistence = SocialitePrefs.getIntPref("persistlength");
-        debug_log(linkInfo.fullname, "Reset notification persistence count");
-      }
-      
       return;
     }
     
@@ -488,18 +496,12 @@ Socialite.showNotificationBox = function(browser, linkInfo, isNewPage) {
   
   this.updateButtons(linkInfo);
   
-  var persistMode = SocialitePrefs.getIntPref("persistmode");
-  if (persistMode == 0) {
-    notification.persistence = 0;
-  } else if (persistMode == 1) {
-    notification.persistence = SocialitePrefs.getIntPref("persistlength");
-  } else if (persistMode == 2) {
-    notification.persistence = -1;
-  }
+  // Make the notification immortal -- we'll handle closing it.
+  notification.persistence = -1;
   
   debug_log(linkInfo.fullname, "Notification box created");
   
-  linkInfo.notification = notification;
+  linkInfo.ui.notification = notification;
 };
 
 Socialite.updateLikeButtons = function(ui, isLiked) {

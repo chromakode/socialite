@@ -5,7 +5,6 @@
   <prefpane id="socialitePreferencesPane">
     <preferences>
       <preference id="persistmode" name="extensions.socialite.persistmode" type="int"/>
-      <preference id="persistlength" name="extensions.socialite.persistlength" type="int"/>
       <preference id="showlink" name="extensions.socialite.showlink" type="bool"/>
       <preference id="showscore" name="extensions.socialite.showscore" type="bool"/>
       <preference id="showsection" name="extensions.socialite.showsection" type="bool"/>
@@ -18,12 +17,9 @@
     <groupbox flex="1">      <caption label="&persistgroup.caption;"/>
       <radiogroup id="clrPrefs" preference="persistmode">
 				<radio id="donotpersist_pref" label="&donotpersist.label;" accesskey="&donotpersist.accesskey;" value="0" />
-				<hbox align="center">
-          <radio id="custompersist_pref" label="&custompersist1.label;" accesskey="&custompersist.accesskey;" value="1"/>
-          <textbox id="persistlength_pref" type="number" min="1" max="99" preference="persistlength" size="2"/>
-          <label value="&custompersist2.label;" flex="1" onclick="document.getElementById('custompersist_pref').click()"/>
-        </hbox>
-				<radio id="alwayspersist_pref" label="&alwayspersist.label;" accesskey="&alwayspersist.accesskey;" value="2"/>
+				<radio id="sitepersist_pref" label="&sitepersist.label;" accesskey="&sitepersist.accesskey;" value="1"/>
+        <radio id="sectionpersist_pref" label="&sectionpersist.label;" accesskey="&sectionpersist.accesskey;" value="2"/>
+				<radio id="alwayspersist_pref" label="&alwayspersist.label;" accesskey="&alwayspersist.accesskey;" value="3"/>
 			</radiogroup>
     </groupbox>
     

@@ -2,20 +2,21 @@
 
 <!ENTITY persistgroup.caption     "Info Bar Persistence">
 <!ENTITY donotpersist.label       "Info bar closes upon navigation to another page">
-<!ENTITY donotpersist.accesskey   "p">
-<!ENTITY custompersist1.label     "Retain info bar for">
-<!ENTITY custompersist2.label     "additional pages">
-<!ENTITY custompersist.accesskey  "n">
+<!ENTITY donotpersist.accesskey   "n">
+<!ENTITY sitepersist.label        "Retain info bar for the current site">
+<!ENTITY sitepersist.accesskey    "t">
+<!ENTITY sectionpersist.label     "Retain info bar over the current site section">
+<!ENTITY sectionpersist.accesskey "e">
 <!ENTITY alwayspersist.label      "Retain info bar indefinitely">
 <!ENTITY alwayspersist.accesskey  "i">
 
 
 <!ENTITY showgroup.caption        "Info Bar Fields">
-<!ENTITY showlink.label           "Show reddit link">
+<!ENTITY showlink.label           "Display reddit link">
 <!ENTITY showlink.accesskey       "l">
-<!ENTITY showscore.label          "Show score">
+<!ENTITY showscore.label          "Display score">
 <!ENTITY showscore.accesskey      "o">
-<!ENTITY showsection.label        "Show subreddit">
+<!ENTITY showsection.label        "Display subreddit">
 <!ENTITY showsection.accesskey    "u">
 <!ENTITY showcomments.label       "Show comments button">
 <!ENTITY showcomments.accesskey   "c">
