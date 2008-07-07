@@ -1,36 +1,3 @@
- // Todo:
- // = Modularize
- // ---- Watches
- // - Download list of current top links and auto-apply to pages
- // + Save button
- // + Button preferences
- // - Login detection/button
- // + Display score
- // + Display subreddit
- // + Persistence Options
- // + Better error handling/retry
- // - Submit link command
- // - Make roll-in an option
- // - Unsuccessful action queue
- // - Option of working indicator (throbber)
- // - Autoclose bar based on link clicks, not persistence (or handle redirects)
- // ---- Or TLD changes/path changes
- // - Hide links that have been hidden on original reddit pages open
- 
- // Outstanding issues:
- // + Raw images seem to not be handled by DOMContentLoaded
- // + Toolbar opening lag
- // + Open comments in new tab
- // + Popup blocker bar
- // + Preserve after back-forward
- // + Reopen bar
- // + Some links still not working
- // + Link title alignment off
- // - m.reddit.com support (Pickegnome)
- // - Handle RSS readers
- // - Disable on fullscreen
- // x Open tabs in background?
-
 XULNS = "http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul";
 
 REDDIT_LIKE_INACTIVE_IMAGE = "chrome://socialite/content/reddit_aupgray.png"
