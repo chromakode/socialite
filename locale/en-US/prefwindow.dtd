@@ -5,7 +5,7 @@
 <!ENTITY donotpersist.accesskey   "n">
 <!ENTITY sitepersist.label        "Retain info bar for the current site">
 <!ENTITY sitepersist.accesskey    "t">
-<!ENTITY sectionpersist.label     "Retain info bar over the current site section">
+<!ENTITY sectionpersist.label     "Retain info bar for the current site section">
 <!ENTITY sectionpersist.accesskey "e">
 <!ENTITY alwayspersist.label      "Retain info bar indefinitely">
 <!ENTITY alwayspersist.accesskey  "i">

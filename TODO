@@ -13,8 +13,9 @@
  // - Make roll-in an option
  // - Unsuccessful action queue
  // - Option of working indicator (throbber)
- // - Autoclose bar based on link clicks, not persistence (or handle redirects)
- // ---- Or TLD changes/path changes
+ // + Autoclose bar based on link clicks, not persistence (or handle redirects)
+ // +--- Or TLD changes/path changes
+ // ---- Reddit self post issue
  // - Hide links that have been hidden on original reddit pages open
  
  // Outstanding issues:
