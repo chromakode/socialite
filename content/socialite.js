@@ -122,6 +122,7 @@ Socialite.tabOpened = function(e) {
 }
 
 Socialite.tabClosed = function(e) {
+  var browser = e.originalTarget.linkedBrowser;
   var currentTab = this.tabBrowser.tabContainer.selectedIndex;
   this.tabInfo[currentTab] = null;
   

@@ -16,6 +16,12 @@ function dropPathLevels(path, levels) {
   if (path[path.length-1] == "/") {
     path = path.substring(0, path.length-1);
   }
+  
+  // Strip parameters
+  var paramPos = path.lastIndexOf("?");
+  if (paramPos != -1) {
+    path = path.substring(0, paramPos);
+  }
 
   for (var i=0; i<levels; i++) {
     var pos = path.lastIndexOf("/");
@@ -28,6 +34,10 @@ function dropPathLevels(path, levels) {
   }
   
   return path;
+}
+
+function startsWith(strTarget, strCheck) {
+  return strTarget.substring(0, strCheck.length) == strCheck;
 }
 
 function onLocationChange(oldURL, newURL) {
@@ -51,9 +61,8 @@ function onLocationChange(oldURL, newURL) {
     // We'll use a function instead of nsIURL.directory here because we don't care if the URL ends with a trailing slash or not -- we just want to leave out the last section.
   
     var oldDir = dropPathLevels(oldURI.path, 1);
-    var newDir = dropPathLevels(newURI.path, 1);
     
-    debug_log("Persistence", "Comparing hosts and directories: " + oldURI.host + ":" + oldDir + ", " + newURI.host + ":" + newDir);
-    return (oldURI.host == newURI.host) && (oldDir == newDir);
+    debug_log("Persistence", "Comparing hosts and directories: " + oldURI.host + ":" + oldDir + ", " + newURI.host + ":" + newURI.path);
+    return (oldURI.host == newURI.host) && startsWith(newURI.path, oldDir);
   }
 }
