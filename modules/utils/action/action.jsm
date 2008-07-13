@@ -81,3 +81,10 @@ ActionType.prototype.toFunction = function() {
   
   return doAction;
 }
+
+ActionType.prototype.chainTo = function(action) {
+  this.successCallback = function() {action.success.apply(action, arguments)}
+  this.failureCallback = function() {action.failure.apply(action, arguments)}
+  
+  return;
+}

@@ -3,12 +3,12 @@
 Components.utils.import("resource://socialite/debug.jsm");
 Components.utils.import("resource://socialite/utils/action/action.jsm");
 
-var EXPORTED_SYMBOLS = ["HttpRequestAction", "HttpGetAction", "HttpPostAction"];
+var EXPORTED_SYMBOLS = ["RequestAction", "GetAction", "PostAction"];
 
 STATUS_SUCCESS = 200;
 
-function HttpRequestAction(name, method, url, parameters, successCallback, failureCallback) {
-  var act = new _HttpRequestAction(successCallback, failureCallback);
+function RequestAction(method, url, parameters, successCallback, failureCallback) {
+  var act = new _HTTPRequestAction(successCallback, failureCallback);
   
   act.url = url;
   
@@ -18,7 +18,7 @@ function HttpRequestAction(name, method, url, parameters, successCallback, failu
        (method == "get" ) {
       act.method = method;
     } else {
-      throw "HttpRequestAction: invalid XMLHttpRequest method specified.";
+      throw "HTTPRequestAction: invalid XMLHttpRequest method specified.";
     }
   } else {
     // Default
@@ -36,12 +36,12 @@ function HttpRequestAction(name, method, url, parameters, successCallback, failu
   return act;
 }
 
-function HttpGetAction(name, url, parameters, successCallback, failureCallback) {
-  return HttpRequestAction("get", url, parameters, successCallback, failureCallback);
+function GetAction(url, parameters, successCallback, failureCallback) {
+  return RequestAction("get", url, parameters, successCallback, failureCallback);
 }
 
-function HttpPostAction(name, url, parameters, successCallback, failureCallback) {
-  return HttpRequestAction("post", url, parameters, successCallback, failureCallback);
+function PostAction(url, parameters, successCallback, failureCallback) {
+  return RequestAction("post", url, parameters, successCallback, failureCallback);
 }
 
 // Based on code from reddit.com javascript:
@@ -57,14 +57,12 @@ function make_get_params(obj) {
   return res.join("&");
 }
 
-var _HttpRequestAction = Action("httpRequest", function(action) {
-  var onReadyStateChange = function(r) {
-    if (r.target.readyState == STATUS_READY) {
-      if (r.status == STATUS_SUCCESS) {
-        action.success(r);
-      } else {
-        action.failure(r);
-      }
+var _HTTPRequestAction = Action("httpRequest", function(action) {
+  var onLoad = function(r) {
+    if (r.status == STATUS_SUCCESS) {
+      action.success(r);
+    } else {
+      action.failure(r);
     }
   };
   
@@ -74,12 +72,12 @@ var _HttpRequestAction = Action("httpRequest", function(action) {
     var target = url + "?" + get_params;
     debug_log("httpRequest", "GET request to " + target);
     req.open("get", target, true);
-    req.onreadystatechange = onReadyStateChange;
+    req.onload = onLoad;
     req.send(null);
   } else if (method == "post") {
     req.open("post", url, true);
     req.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
-    req.onreadystatechange = onReadyStateChange;
+    req.onload = onLoad;
     debug_log("httpRequest", "POST to " + url + " (sent: " + get_params +  ")");
     req.send(get_params);
   }
