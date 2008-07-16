@@ -11,11 +11,15 @@ RETRY_DELAY = 5000;
 Components.utils.import("resource://socialite/preferences.jsm");
 Components.utils.import("resource://socialite/debug.jsm");
 persistence = Components.utils.import("resource://socialite/persistence.jsm");
+
 Components.utils.import("resource://socialite/utils/action/action.jsm");
 Components.utils.import("resource://socialite/utils/action/sequence.jsm");
 Components.utils.import("resource://socialite/utils/hitch.jsm");
 Components.utils.import("resource://socialite/utils/oneshot.jsm");
-reddit = Components.utils.import("resource://socialite/reddit/reddit.jsm");
+
+Components.utils.import("resource://socialite/reddit/reddit.jsm");
+Components.utils.import("resource://socialite/reddit/redditAPI.jsm");
+Components.utils.import("resource://socialite/reddit/bookmarkletAPI.jsm");
 Components.utils.import("resource://socialite/reddit/link_info.jsm");
 
 var alertsService = Components.classes["@mozilla.org/alerts-service;1"]
@@ -23,7 +27,6 @@ var alertsService = Components.classes["@mozilla.org/alerts-service;1"]
 
 var sessionStore  = Components.classes["@mozilla.org/browser/sessionstore;1"]
                     .getService(Components.interfaces.nsISessionStore);
-
 
 // ---
 
@@ -79,8 +82,8 @@ Socialite.onLoad = function() {
   this.linksWatchedQueue = [];
   this.linksWatchedLimit = 100;
   
-  // Authentication hash
-  this.redditModHash = null;
+  this.reddit = new Reddit("reddit", "reddit.com");
+  (new this.reddit.authenticate()).perform();
   
   this.tabBrowser.addEventListener("DOMContentLoaded", hitchHandler(this, "contentLoad"), false);
   
@@ -148,7 +151,7 @@ Socialite.contentLoad = function(e) {
       debug_log("main", "Added click handlers to " + res.snapshotLength + " links on " + win.location.href);
       
       // Snarf the authentication hash using wrappedJSObject
-      this.redditModHash = win.wrappedJSObject.modhash
+      this.reddit.auth.snarfModHash(win.wrappedJSObject.modhash);
     }
   }
 };
@@ -164,7 +167,7 @@ Socialite.linkClicked = function(e) {
     var linkID    = link.id.slice(6);
     var linkTitle = link.textContent;
     
-    var linkInfo = new LinkInfo(linkURL, linkID, linkTitle);
+    var linkInfo = new LinkInfo(this.reddit, linkURL, linkID, linkTitle);
     
     //
     // Get some "preloaded" information from the page while we can.
@@ -610,7 +613,7 @@ Socialite.buttonLikeClicked = function(linkInfo, e) {
   
   // Submit the vote, and then update state.
   // (proceeding after each AJAX call completes)
-  var submit = new reddit.vote(
+  var submit = new this.reddit.API.vote(
     hitchHandler(this, "redditUpdateLinkInfo", linkInfo, ["score"]),
     sequenceCalls(
       hitchHandler(this, "revertUIState", linkInfo, ["isLiked", "score"]),
@@ -618,7 +621,7 @@ Socialite.buttonLikeClicked = function(linkInfo, e) {
     )
   );    
     
-  submit.perform(this.redditModHash, linkInfo.fullname, linkInfo.uiState.isLiked);
+  submit.perform(linkInfo.fullname, linkInfo.uiState.isLiked);
 };
 
 Socialite.buttonDislikeClicked = function(linkInfo, e) {
@@ -639,15 +642,15 @@ Socialite.buttonDislikeClicked = function(linkInfo, e) {
   
   // Submit the vote, and then update state.
   // (proceeding after the AJAX call completes)
-  var submit = new reddit.vote(
+  var submit = new this.reddit.API.vote(
     hitchHandler(this, "redditUpdateLinkInfo", linkInfo, ["score"]),
     sequenceCalls(
       hitchHandler(this, "revertUIState", linkInfo, ["isLiked", "score"]),
       hitchHandler(this, "actionFailureHandler", linkInfo)
     )
   );
-    
-  submit.perform(this.redditModHash, linkInfo.fullname, linkInfo.uiState.isLiked);
+  
+  submit.perform(linkInfo.fullname, linkInfo.uiState.isLiked);
 };
 
 Socialite.sectionClicked = function(linkInfo, e) {
@@ -664,26 +667,26 @@ Socialite.buttonSaveClicked = function(linkInfo, e) {
     linkInfo.uiState.isSaved = false;
     this.updateSaveButton(linkInfo.ui, linkInfo.uiState.isSaved);
 
-    (new reddit.unsave(
+    (new this.reddit.API.unsave(
       hitchHandler(this, "redditUpdateLinkInfo", linkInfo),
       sequenceCalls(
         hitchHandler(this, "revertUIState", linkInfo, ["isSaved"]),
         hitchHandler(this, "actionFailureHandler", linkInfo)
       )
-    )).perform(this.redditModHash, linkInfo.fullname);
+    )).perform(linkInfo.fullname);
         
   } else {
   
     linkInfo.uiState.isSaved = true;
     this.updateSaveButton(linkInfo.ui, linkInfo.uiState.isSaved);
 
-    (new reddit.save(
+    (new this.reddit.API.save(
       hitchHandler(this, "redditUpdateLinkInfo", linkInfo),
       sequenceCalls(
         hitchHandler(this, "revertUIState", linkInfo, ["isSaved"]),
         hitchHandler(this, "actionFailureHandler", linkInfo)
       )
-    )).perform(this.redditModHash, linkInfo.fullname);
+    )).perform(linkInfo.fullname);
   }
 };
 
@@ -693,33 +696,33 @@ Socialite.buttonHideClicked = function(linkInfo, e) {
     linkInfo.uiState.isHidden = false;
     this.updateHideButton(linkInfo.ui, linkInfo.uiState.isHidden);
 
-    (new reddit.unhide(
+    (new redditAPI.unhide(
       hitchHandler(this, "redditUpdateLinkInfo", linkInfo),
       sequenceCalls(
         hitchHandler(this, "revertUIState", linkInfo, ["isHidden"]),
         hitchHandler(this, "actionFailureHandler", linkInfo)
       )
-    )).perform(this.redditModHash, linkInfo.fullname);
+    )).perform(linkInfo.fullname);
         
   } else {
   
     linkInfo.uiState.isHidden = true;
     this.updateHideButton(linkInfo.ui, linkInfo.uiState.isHidden);
 
-    (new reddit.hide(
+    (new this.reddit.API.hide(
       hitchHandler(this, "redditUpdateLinkInfo", linkInfo),
       sequenceCalls(
         hitchHandler(this, "revertUIState", linkInfo, ["isHidden"]),
         hitchHandler(this, "actionFailureHandler", linkInfo)
       )
-    )).perform(this.redditModHash, linkInfo.fullname);
+    )).perform(linkInfo.fullname);
   }
 };
 
 Socialite.buttonRandomClicked = function(e) {
   var self = this;
 
-  (new reddit.randomrising(
+  (new this.reddit.API.randomrising(
     function (r, json) {
       var linkInfo = LinkInfoFromJSON(json);
       self.watchLink(linkInfo.url, linkInfo);

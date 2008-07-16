@@ -4,7 +4,7 @@ Components.utils.import("resource://socialite/debug.jsm");
 Components.utils.import("resource://socialite/utils/hitch.jsm");
 Components.utils.import("resource://socialite/utils/timestamped_data.jsm");
 Components.utils.import("resource://socialite/utils/action/action.jsm");
-reddit = Components.utils.import("resource://socialite/reddit/reddit.jsm");
+Components.utils.import("resource://socialite/reddit/reddit.jsm");
 
 var EXPORTED_SYMBOLS = ["LinkInfo", "LinkInfoFromJSON"]
 
@@ -35,7 +35,8 @@ function LinkInfoFromJSON(json) {
   return linkInfo;
 }
 
-function LinkInfo(url, fullname, title) {
+function LinkInfo(reddit, url, fullname, title) {
+  this.reddit = reddit;
   this.url = url;
   this.fullname = fullname;
   this.title = title;
@@ -60,16 +61,16 @@ LinkInfo.prototype.getKind = function() {
 
 LinkInfo.prototype.update = function(successCallback, failureCallback) {
   var act = Action("LinkInfo.update", hitchThis(this, function(action) {
-    var infoCall = new reddit.info(
+    var infoCall = new this.reddit.API.info(
       hitchThis(this, function success(r, json) {
         if (action.startTime >= this.state.lastUpdated) {
           this.updateFromJSON(json);
           action.success(r, json);
         } else {
-          debug_log(linkInfo.fullname, "State updated since update request, not updating state");
+          debug_log(this.fullname, "State updated since update request, not updating state");
         }
       }),
-      function fail(r) {
+      function failure(r) {
         action.failure(r);
       }
     );

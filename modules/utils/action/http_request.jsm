@@ -14,8 +14,8 @@ function RequestAction(method, url, parameters, successCallback, failureCallback
   
   if (method) {
     method = method.toLowerCase()
-    if (method == "post") ||
-       (method == "get" ) {
+    if ((method == "post") ||
+       (method == "get" )) {
       act.method = method;
     } else {
       throw "HTTPRequestAction: invalid XMLHttpRequest method specified.";
@@ -37,11 +37,11 @@ function RequestAction(method, url, parameters, successCallback, failureCallback
 }
 
 function GetAction(url, parameters, successCallback, failureCallback) {
-  return RequestAction("get", url, parameters, successCallback, failureCallback);
+  return new RequestAction("get", url, parameters, successCallback, failureCallback);
 }
 
 function PostAction(url, parameters, successCallback, failureCallback) {
-  return RequestAction("post", url, parameters, successCallback, failureCallback);
+  return new RequestAction("post", url, parameters, successCallback, failureCallback);
 }
 
 // Based on code from reddit.com javascript:
@@ -58,27 +58,28 @@ function make_get_params(obj) {
 }
 
 var _HTTPRequestAction = Action("httpRequest", function(action) {
-  var onLoad = function(r) {
-    if (r.status == STATUS_SUCCESS) {
-      action.success(r);
+  var onLoad = function(e) {
+    var request = e.target;
+    if (request.status == STATUS_SUCCESS) {
+      action.success(request);
     } else {
-      action.failure(r);
+      action.failure(request);
     }
   };
   
-  var get_params = make_get_params(parameters);
+  var formattedParams = make_get_params(action.parameters);
   
-  if (method == "get") {
-    var target = url + "?" + get_params;
+  if (action.method == "get") {
+    var target = action.url + "?" + formattedParams;
     debug_log("httpRequest", "GET request to " + target);
-    req.open("get", target, true);
-    req.onload = onLoad;
-    req.send(null);
-  } else if (method == "post") {
-    req.open("post", url, true);
-    req.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
-    req.onload = onLoad;
-    debug_log("httpRequest", "POST to " + url + " (sent: " + get_params +  ")");
-    req.send(get_params);
+    action.request.open("get", target, true);
+    action.request.onload = onLoad;
+    action.request.send(null);
+  } else if (action.method == "post") {
+    action.request.open("post", action.url, true);
+    action.request.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+    action.request.onload = onLoad;
+    debug_log("httpRequest", "POST to " + action.url + " (sent: " + formattedParams +  ")");
+    action.request.send(formattedParams);
   }
 });

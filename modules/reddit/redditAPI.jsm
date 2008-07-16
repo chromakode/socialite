@@ -3,6 +3,7 @@
 Components.utils.import("resource://socialite/debug.jsm");
 Components.utils.import("resource://socialite/utils/action/action.jsm");
 http = Components.utils.import("resource://socialite/utils/action/http_request.jsm");
+Components.utils.import("resource://socialite/utils/hitch.jsm");
 Components.utils.import("resource://socialite/utils/quantizer.jsm");
 
 var nativeJSON = Components.classes["@mozilla.org/dom/json;1"]
@@ -10,30 +11,33 @@ var nativeJSON = Components.classes["@mozilla.org/dom/json;1"]
 
 var EXPORTED_SYMBOLS = ["RedditAPI"];
 
+QUANTIZE_TIME = 1000;
+
 var REDDIT_API_PATH = "/api/";
 function APIURL(site, op) {
-  return "http://" + site + BOOKMARKLET_API_PATH + op;
+  // Vote calls will 404 without the 'www.'
+  return "http://www." + site + REDDIT_API_PATH + op;
 }
 
-var sameURL = function(func1, arg1, func2, arg2) {
+function sameURL(func1, arg1, func2, arg2) {
   var url1 = arg1[0];
   var url2 = arg2[0];
   
   return (url1 == url2);
-};
+}
 
-var sameLinkID = function(func1, arg1, func2, arg2) {
+function sameLinkID(func1, arg1, func2, arg2) {
   var linkID1 = arg1[0];
   var linkID2 = arg2[0];
   
   return (linkID1 == linkID2);
-};
+}
 
 function RedditAPI(reddit) {
   this.reddit = reddit;
   
   this.infoQuantizer = new Quantizer("reddit.info.quantizer", QUANTIZE_TIME, sameURL);
-  this.info = Action("reddit.info", this.infoQuantizer.quantize(function(url, action) {
+  this.info = Action("reddit.info", this.infoQuantizer.quantize(hitchThis(this, function(url, action) {
     debug_log("reddit", "Making ajax info call");
     
     var params = {
@@ -49,12 +53,12 @@ function RedditAPI(reddit) {
       function success(r) {
         var json = nativeJSON.decode(r.responseText);
         action.success(r, json);
-      }
+      },
       function failure(r) { action.failure(); }
     ).perform();
-  }));
+  })));
   
-  this.randomrising = Action("reddit.randomrising", function(action) {
+  this.randomrising = Action("reddit.randomrising", hitchThis(this, function(action) {
     debug_log("reddit", "Making ajax randomrising call");
     
     var params = {
@@ -62,19 +66,19 @@ function RedditAPI(reddit) {
     };
       
     var act = http.GetAction(
-      "http://www.reddit.com/randomrising.json"),
+      "http://www.reddit.com/randomrising.json",
       params,
       
       function success(r) {
         var json = nativeJSON.decode(r.responseText);
         action.success(r, json);
-      }
+      },
       function failure(r) { action.failure(); }
     ).perform();
-  });
+  }));
 
   this.voteQuantizer = new Quantizer("reddit.vote.quantizer", QUANTIZE_TIME, sameLinkID);
-  this.vote = Action("reddit.vote", this.voteQuantizer.quantize(function(linkID, isLiked, action) {
+  this.vote = Action("reddit.vote", this.voteQuantizer.quantize(hitchThis(this, function(linkID, isLiked, action) {
     debug_log("reddit", "Making ajax vote call");
     
     var dir;
@@ -86,75 +90,68 @@ function RedditAPI(reddit) {
       dir = 0;
     }
     
-    var params   = {
+    var params = {
       id:    linkID,
-      uh:    modHash,
       dir:   dir,
     };
-    params = this.reddit.auth.authParams(params);
+    params = this.reddit.auth.authModHash(params);
     
     var act = http.PostAction(APIURL(this.reddit.auth.site, "vote"), params);
-    act.chainTo(this);
+    act.chainTo(action);
     act.perform();
-  }));
+  })));
   
   this.saveQuantizer = new Quantizer("reddit.save.quantizer", QUANTIZE_TIME, sameLinkID);
-  this.save = Action("reddit.save", this.saveQuantizer.quantize(function(linkID, action) {
+  this.save = Action("reddit.save", this.saveQuantizer.quantize(hitchThis(this, function(linkID, action) {
     debug_log("reddit", "Making ajax save call");
     
-    var params   = {
+    var params = {
       id:    linkID,
-      uh:    modHash,
     };
-    params = this.reddit.auth.authParams(params);
+    params = this.reddit.auth.authModHash(params);
     
     var act = http.PostAction(APIURL(this.reddit.auth.site, "save"), params);
-    act.chainTo(this);
+    act.chainTo(action);
     act.perform();
-  }));
+  })));
 
   this.unsave = Action("reddit.unsave", this.saveQuantizer.quantize(function(linkID, action) {
     debug_log("reddit", "Making ajax unsave call");
     
-    var params   = {
+    var params = {
       id:    linkID,
-      uh:    modHash,
     };
-    params = this.reddit.auth.authParams(params);
+    params = this.reddit.auth.authModHash(params);
     
     var act = http.PostAction(APIURL(this.reddit.auth.site, "unsave"), params);
-    act.chainTo(this);
+    act.chainTo(action);
     act.perform();
   }));
 
   this.hideQuantizer = new Quantizer("reddit.hide.quantizer", QUANTIZE_TIME, sameLinkID);
-  this.hide = Action("reddit.hide", this.hideQuantizer.quantize(function(linkID, action) {
+  this.hide = Action("reddit.hide", this.hideQuantizer.quantize(hitchThis(this, function(linkID, action) {
     debug_log("reddit", "Making ajax hide call");
     
-    var params   = {
+    var params = {
       id:    linkID,
-      uh:    modHash,
     };
-    
-    params = this.reddit.auth.authParams(params);
+    params = this.reddit.auth.authModHash(params);
     
     var act = http.PostAction(APIURL(this.reddit.auth.site, "hide"), params);
-    act.chainTo(this);
+    act.chainTo(action);
     act.perform();
-  }));
+  })));
 
-  this.unhide = Action("reddit.unhide", this.hideQuantizer.quantize(function(linkID, action) {
+  this.unhide = Action("reddit.unhide", this.hideQuantizer.quantize(hitchThis(this, function(linkID, action) {
     debug_log("reddit", "Making ajax unhide call");
     
-    var params   = {
+    var params = {
       id:    linkID,
-      uh:    modHash,
     };
-    
-    params = this.reddit.auth.authParams(params);
+    params = this.reddit.auth.authModHash(params);
     
     var act = http.PostAction(APIURL(this.reddit.auth.site, "unhide"), params);
-    act.chainTo(this);
+    act.chainTo(action);
     act.perform();
-  }));
+  })));
 }
