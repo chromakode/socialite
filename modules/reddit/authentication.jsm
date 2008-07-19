@@ -18,8 +18,9 @@ PASSWORD_REALM_PRE = "Socialite authentication for ";
 
 // ---
 
-function RedditAuth(site, userHash) {
+function RedditAuth(site, username, userHash) {
   this.site = site;
+  this.username = username;
   this.userHash = userHash;
   this.modHash = null;
 }
@@ -30,7 +31,6 @@ RedditAuth.prototype.authParams = function(params) {
 }
 
 RedditAuth.prototype.snarfModHash = function(modHash) {
-    debug_log("reddit_auth", "Snarfed: " + modHash);
   this.modHash = modHash;
 }
 
@@ -54,7 +54,7 @@ var getAuthHash = Action("reddit_auth.getAuthHash", function(site, action) {
     act.perform(site);
   } else {
     var login = logins[0];
-    var rAuth = new RedditAuth(site, login.password);
+    var rAuth = new RedditAuth(site, login.username, login.password);
     action.success(rAuth);
   }
 });
@@ -68,20 +68,23 @@ var refreshAuthHash = Action("reddit_auth.refreshAuthHash", function(site, actio
     
     function success(r) {
       var uh = extractUserHash(r.responseXML);
-        
+      var username = extractUsername(r.responseXML); 
+       
       // Save the userHash we retrieved
       var uhLoginInfo = new nsLoginInfo(
         PASSWORD_HOSTNAME,
         null,
         PASSWORD_REALM_PRE + site,
-        "", uh,
+        username, uh,
         "", ""
       );
       
       // Remove any existing logins
       var logins = loginManager.findLogins({}, PASSWORD_HOSTNAME, null, PASSWORD_REALM_PRE + site);
       for (var i = 0; i < logins.length; i++) {
-        loginManager.removeLogin(logins[i]);
+        if (logins[1].username == username) {
+          loginManager.removeLogin(logins[i]);
+        }
       }
       
       // Add the new login
@@ -97,24 +100,40 @@ var refreshAuthHash = Action("reddit_auth.refreshAuthHash", function(site, actio
   act.perform();
 });
 
-function extractUserHash(document) {
-  // A bit elaborate, but this is currently the best way to do things.
-  // By getting the information from the bookmarklets page itself, we are hopefully more safe from unassociated page changes as reddit may alter their hashing system...
-  
+function evalXHTML_XPath(document, xpath) {
   var XPathResult = Components.interfaces.nsIDOMXPathResult;
   const XHTMLResolver = function(prefix) {
     if (prefix=="xhtml") {return "http://www.w3.org/1999/xhtml"}
   }
   
+  return document.evaluate(xpath, document, XHTMLResolver, XPathResult.UNORDERED_NODE_ITERATOR_TYPE, null);
+}
+
+function extractUserHash(document) {
+  // A bit elaborate, but this is currently the best way to do things.
+  // By getting the information from the bookmarklets page itself, we are hopefully more safe from unassociated page changes as reddit may alter their hashing system...
+  
   // Get the first "like" button
   try {
-    var results = document.evaluate("//xhtml:a/xhtml:img[@alt='like']/..", document, XHTMLResolver, XPathResult.UNORDERED_NODE_ITERATOR_TYPE, null);
+    var results = evalXHTML_XPath(document, "//xhtml:a/xhtml:img[@alt='like']/..");
     var likeButton = results.iterateNext();
     const getUserHash = /uh=(\w*)/;
     
     return likeButton.href.match(getUserHash)[1];
   } catch (e)  {
     debug_log("reddit_auth", "Unable to parse bookmarklets page for user hash: " + e.toString());
+    return null;
+  }
+}
+
+function extractUsername(document) {
+  // Get the username
+  try {
+    var results = evalXHTML_XPath(document, "//xhtml:span[@class='user']/xhtml:a");
+    var usernameLink = results.iterateNext();
+    return usernameLink.textContent;
+  } catch (e)  {
+    debug_log("reddit_auth", "Unable to parse bookmarklets page for username: " + e.toString());
     return null;
   }
 }
