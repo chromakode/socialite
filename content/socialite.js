@@ -151,6 +151,8 @@ Socialite.contentLoad = function(e) {
       debug_log("main", "Added click handlers to " + res.snapshotLength + " links on " + win.location.href);
       
       // Snarf the authentication hash using wrappedJSObject
+      // This should be safe, since Firefox 3 uses a XPCSafeJSObjectWrapper
+      // See http://developer.mozilla.org/en/docs/XPConnect_wrappers#XPCSafeJSObjectWrapper
       this.reddit.auth.snarfModHash(win.wrappedJSObject.modhash);
     }
   }
