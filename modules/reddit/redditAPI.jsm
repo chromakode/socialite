@@ -1,6 +1,6 @@
 // High-level reddit commands
 
-Components.utils.import("resource://socialite/debug.jsm");
+logger = Components.utils.import("resource://socialite/utils/log.jsm");
 Components.utils.import("resource://socialite/utils/action/action.jsm");
 http = Components.utils.import("resource://socialite/utils/action/http_request.jsm");
 Components.utils.import("resource://socialite/utils/hitch.jsm");
@@ -38,7 +38,7 @@ function RedditAPI(reddit) {
   
   this.infoQuantizer = new Quantizer("reddit.info.quantizer", QUANTIZE_TIME, sameURL);
   this.info = Action("reddit.info", this.infoQuantizer.quantize(hitchThis(this, function(url, action) {
-    debug_log("reddit", "Making ajax info call");
+    logger.log("reddit", "Making ajax info call");
     
     var params = {
       url:    url,
@@ -59,7 +59,7 @@ function RedditAPI(reddit) {
   })));
   
   this.randomrising = Action("reddit.randomrising", hitchThis(this, function(action) {
-    debug_log("reddit", "Making ajax randomrising call");
+    logger.log("reddit", "Making ajax randomrising call");
     
     var params = {
       limit: 1,
@@ -79,7 +79,7 @@ function RedditAPI(reddit) {
 
   this.voteQuantizer = new Quantizer("reddit.vote.quantizer", QUANTIZE_TIME, sameLinkID);
   this.vote = Action("reddit.vote", this.voteQuantizer.quantize(hitchThis(this, function(linkID, isLiked, action) {
-    debug_log("reddit", "Making ajax vote call");
+    logger.log("reddit", "Making ajax vote call");
     
     var dir;
     if (isLiked == true) {
@@ -103,7 +103,7 @@ function RedditAPI(reddit) {
   
   this.saveQuantizer = new Quantizer("reddit.save.quantizer", QUANTIZE_TIME, sameLinkID);
   this.save = Action("reddit.save", this.saveQuantizer.quantize(hitchThis(this, function(linkID, action) {
-    debug_log("reddit", "Making ajax save call");
+    logger.log("reddit", "Making ajax save call");
     
     var params = {
       id:    linkID,
@@ -116,7 +116,7 @@ function RedditAPI(reddit) {
   })));
 
   this.unsave = Action("reddit.unsave", this.saveQuantizer.quantize(function(linkID, action) {
-    debug_log("reddit", "Making ajax unsave call");
+    logger.log("reddit", "Making ajax unsave call");
     
     var params = {
       id:    linkID,
@@ -130,7 +130,7 @@ function RedditAPI(reddit) {
 
   this.hideQuantizer = new Quantizer("reddit.hide.quantizer", QUANTIZE_TIME, sameLinkID);
   this.hide = Action("reddit.hide", this.hideQuantizer.quantize(hitchThis(this, function(linkID, action) {
-    debug_log("reddit", "Making ajax hide call");
+    logger.log("reddit", "Making ajax hide call");
     
     var params = {
       id:    linkID,
@@ -143,7 +143,7 @@ function RedditAPI(reddit) {
   })));
 
   this.unhide = Action("reddit.unhide", this.hideQuantizer.quantize(hitchThis(this, function(linkID, action) {
-    debug_log("reddit", "Making ajax unhide call");
+    logger.log("reddit", "Making ajax unhide call");
     
     var params = {
       id:    linkID,

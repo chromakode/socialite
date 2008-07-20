@@ -1,5 +1,5 @@
 Components.utils.import("resource://socialite/preferences.jsm");
-Components.utils.import("resource://socialite/debug.jsm");
+logger = Components.utils.import("resource://socialite/utils/log.jsm");
 
 var IOService = Components.classes["@mozilla.org/network/io-service;1"]
                 .getService(Components.interfaces.nsIIOService);
@@ -54,7 +54,7 @@ function onLocationChange(oldURL, newURL) {
   var newURI = IOService.newURI(newURL, null, null)
                         
   if (persistMode == PERSIST_SITE) {
-    debug_log("Persistence", "Comparing hosts: " + oldURI.host + ", " + newURI.host);
+    logger.log("Persistence", "Comparing hosts: " + oldURI.host + ", " + newURI.host);
     return (oldURI.host == newURI.host);
     
   } else if (persistMode == PERSIST_SECTION) {
@@ -62,7 +62,7 @@ function onLocationChange(oldURL, newURL) {
   
     var oldDir = dropPathLevels(oldURI.path, 1);
     
-    debug_log("Persistence", "Comparing hosts and directories: " + oldURI.host + ":" + oldDir + ", " + newURI.host + ":" + newURI.path);
+    logger.log("Persistence", "Comparing hosts and directories: " + oldURI.host + ":" + oldDir + ", " + newURI.host + ":" + newURI.path);
     return (oldURI.host == newURI.host) && startsWith(newURI.path, oldDir);
   }
 }

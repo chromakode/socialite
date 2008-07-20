@@ -1,4 +1,4 @@
-Components.utils.import("resource://socialite/debug.jsm");
+logger = Components.utils.import("resource://socialite/utils/log.jsm");
 Components.utils.import("resource://socialite/utils/action/action.jsm");
 Components.utils.import("resource://socialite/utils/hitch.jsm");
 Components.utils.import("resource://socialite/reddit/authentication.jsm");

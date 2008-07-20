@@ -9,7 +9,12 @@ RETRY_COUNT = 3;
 RETRY_DELAY = 5000;
 
 Components.utils.import("resource://socialite/preferences.jsm");
-Components.utils.import("resource://socialite/debug.jsm");
+logger = Components.utils.import("resource://socialite/utils/log.jsm");
+logger.init("Socialite", {
+  enabled:    SocialitePrefs.getBoolPref("debug"),
+  useConsole: SocialitePrefs.getBoolPref("debugInErrorConsole"),
+});
+
 persistence = Components.utils.import("resource://socialite/persistence.jsm");
 
 Components.utils.import("resource://socialite/utils/action/action.jsm");
@@ -27,7 +32,6 @@ var alertsService = Components.classes["@mozilla.org/alerts-service;1"]
 
 var sessionStore  = Components.classes["@mozilla.org/browser/sessionstore;1"]
                     .getService(Components.interfaces.nsISessionStore);
-
 // ---
 
 const STATE_START = Components.interfaces.nsIWebProgressListener.STATE_START;
@@ -48,7 +52,7 @@ var SocialiteProgressListener =
     var window = aProgress.DOMWindow;
     
     if (window == window.top) {
-      debug_log("SocialiteProgressListener", "onLocationChange (loading): " + aProgress.DOMWindow.location.href);
+      logger.log("SocialiteProgressListener", "onLocationChange (loading): " + aProgress.DOMWindow.location.href);
       Socialite.linkStartLoad(window, aProgress.isLoadingDocument);
     }
   },
@@ -98,13 +102,13 @@ Socialite.onLoad = function() {
 };
 
 Socialite.setupProgressListener = function(browser) {
-  debug_log("main", "Progress listener added.");
+  logger.log("main", "Progress listener added.");
   
   browser.addProgressListener(SocialiteProgressListener,  Components.interfaces.nsIWebProgress.NOTIFY_ALL);
 };
 
 Socialite.unsetProgressListener = function(browser) {
-  debug_log("main", "Progress listener removed.");
+  logger.log("main", "Progress listener removed.");
     
   browser.removeProgressListener(SocialiteProgressListener);
 };
@@ -119,7 +123,7 @@ Socialite.tabOpened = function(e) {
   var browser = e.originalTarget.linkedBrowser;
   var win = browser.contentWindow;
   
-  debug_log("main", "Tab opened: " + win.location.href);
+  logger.log("main", "Tab opened: " + win.location.href);
   
   this.linkStartLoad(win);
 }
@@ -129,7 +133,7 @@ Socialite.tabClosed = function(e) {
   var currentTab = this.tabBrowser.tabContainer.selectedIndex;
   this.tabInfo[currentTab] = null;
   
-  debug_log("main", "Tab closed: " + browser.contentWindow.location.href);
+  logger.log("main", "Tab closed: " + browser.contentWindow.location.href);
 }
 
 Socialite.contentLoad = function(e) {
@@ -148,7 +152,7 @@ Socialite.contentLoad = function(e) {
         //siteLink.style.color = "red";
       }
       
-      debug_log("main", "Added click handlers to " + res.snapshotLength + " links on " + win.location.href);
+      logger.log("main", "Added click handlers to " + res.snapshotLength + " links on " + win.location.href);
       
       // Snarf the authentication hash using wrappedJSObject
       // This should be safe, since Firefox 3 uses a XPCSafeJSObjectWrapper
@@ -219,7 +223,7 @@ Socialite.linkClicked = function(e) {
       linkInfo.state.isSaved = (linkUnsave.style.display != "none");
     } else {
       // No save or unsave link present -- this shouldn't happen, as far as I know.
-      debug_log(linkInfo.fullname, "Unexpected save link absence.");
+      logger.log(linkInfo.fullname, "Unexpected save link absence.");
     }
     
     // You'd think the link was hidden, the user couldn't have clicked on it
@@ -233,14 +237,14 @@ Socialite.linkClicked = function(e) {
       linkInfo.state.isHidden = true;
     } else {
       // No hide or unhide link present -- this shouldn't happen, as far as I know.
-      debug_log(linkInfo.fullname, "Unexpected hide link absence.");
+      logger.log(linkInfo.fullname, "Unexpected hide link absence.");
     }
   } catch (e) {
-    debug_log(linkInfo.fullname, "Caught exception while reading data from DOM: " + e.toString());
+    logger.log(linkInfo.fullname, "Caught exception while reading data from DOM: " + e.toString());
   }
   
   // Add the information we collected to the watch list  
-  debug_log(linkInfo.fullname, "Clicked");
+  logger.log(linkInfo.fullname, "Clicked");
   this.watchLink(link.href, linkInfo);
 };
 
@@ -253,7 +257,7 @@ Socialite.watchLink = function(href, linkInfo) {
   this.linksWatched[href] = linkInfo;
   this.linksWatchedQueue.push(href);
   
-  debug_log("main", "Watching: " + href);
+  logger.log("main", "Watching: " + href);
 }
 
 Socialite.linkStartLoad = function(win, isLoading) {
@@ -266,7 +270,7 @@ Socialite.linkStartLoad = function(win, isLoading) {
     // This is a watched link. Create a notification box and initialize.
     var linkInfo = this.linksWatched[href];
     
-    debug_log(linkInfo.fullname, "Started loading");
+    logger.log(linkInfo.fullname, "Started loading");
     
     this.tabInfo[currentTab] = linkInfo;
   
@@ -283,7 +287,7 @@ Socialite.linkStartLoad = function(win, isLoading) {
       if (!persistence.onLocationChange(linkInfo.url, href)) {
         notificationBox.removeNotification(linkInfo.ui.notification);
         linkInfo.ui.notification = null;
-        debug_log(linkInfo.fullname, "Removed notification");
+        logger.log(linkInfo.fullname, "Removed notification");
       }
     }
   }
@@ -297,7 +301,7 @@ Socialite.redditUpdateLinkInfo = function(linkInfo, omit) {
         linkInfo.updateUIState(omit);
         this.updateButtons(linkInfo);
       } else {
-        debug_log(linkInfo.fullname, "UI changed since update request, not updating UI");
+        logger.log(linkInfo.fullname, "UI changed since update request, not updating UI");
       }
     }),
     hitchThis(this, function failure(r, action) {
@@ -325,7 +329,7 @@ Socialite.failureNotification = function(linkInfo, r, action) {
   } else {
     linkID = "unknown";
   }
-  debug_log(linkID, "Failure occurred, action: " + action.name + ", status: " + r.status);
+  logger.log(linkID, "Failure occurred, action: " + action.name + ", status: " + r.status);
   
   if (r.status != 200) {
     text = "Unexpected HTTP status " + r.status + " recieved (" + action.name + ")";
@@ -350,12 +354,12 @@ Socialite.showNotificationBox = function(browser, linkInfo, isNewPage) {
     var n = curNotifications.item(i);
     
     if (n.value == notificationName) {
-      debug_log(linkInfo.fullname, "Notification box already exists");
+      logger.log(linkInfo.fullname, "Notification box already exists");
       return;
     }
     
     if (n.value.match(/^socialite-header/)) {
-      debug_log(linkInfo.fullname, "Old notification found, queued to remove.");
+      logger.log(linkInfo.fullname, "Old notification found, queued to remove.");
       toRemove = n;
     }
   }
@@ -505,7 +509,7 @@ Socialite.showNotificationBox = function(browser, linkInfo, isNewPage) {
   // Make the notification immortal -- we'll handle closing it.
   notification.persistence = -1;
   
-  debug_log(linkInfo.fullname, "Notification box created");
+  logger.log(linkInfo.fullname, "Notification box created");
   
   linkInfo.ui.notification = notification;
 };
@@ -589,7 +593,7 @@ Socialite.updateButtons = function(linkInfo) {
   this.updateSaveButton(linkInfo.ui, linkInfo.uiState.isSaved);
   this.updateHideButton(linkInfo.ui, linkInfo.uiState.isHidden);
   
-  debug_log(linkInfo.fullname, "Updated UI");
+  logger.log(linkInfo.fullname, "Updated UI");
 }
 
 Socialite.siteLinkClicked = function(e) {
