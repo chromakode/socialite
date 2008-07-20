@@ -1,6 +1,6 @@
 // Object-oriented action handler glue
 
-Components.utils.import("resource://socialite/debug.jsm");
+logger = Components.utils.import("resource://socialite/utils/log.jsm");
 
 var EXPORTED_SYMBOLS = ["Action", "ActionType"];
 
@@ -25,7 +25,7 @@ _MakeAction = function(successCallback, failureCallback) {
 function ActionType() {}
 
 ActionType.prototype.perform = function() {
-  debug_log("action", "Performing " + this.name + " action");
+  logger.log("action", "Performing " + this.name + " action");
 
   this.startTime = Date.now();
   
@@ -63,12 +63,12 @@ ActionType.prototype.doCallback = function(callback, args) {
 }
 
 ActionType.prototype.success = function() {
-  debug_log("action", this.name + " succeeded");
+  logger.log("action", this.name + " succeeded");
   return this.doCallback(this.successCallback, arguments);
 }
 
 ActionType.prototype.failure = function() {
-  debug_log("action", this.name + " failed");
+  logger.log("action", this.name + " failed");
   return this.doCallback(this.failureCallback, arguments);
 }
 

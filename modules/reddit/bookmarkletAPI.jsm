@@ -1,6 +1,6 @@
 // High-level reddit bookmarklet commands
 
-Components.utils.import("resource://socialite/debug.jsm");
+logger = Components.utils.import("resource://socialite/utils/log.jsm");
 Components.utils.import("resource://socialite/utils/action/action.jsm");
 http = Components.utils.import("resource://socialite/utils/action/http_request.jsm");
 Components.utils.import("resource://socialite/utils/hitch.jsm");
@@ -25,7 +25,7 @@ function sameURL(func1, arg1, func2, arg2) {
 // Make a template since all bookmarklet calls are similar
 function bookmarkletAction(self, op, quantizer) {
   var func = hitchThis(self, function(url, action) {
-    debug_log("reddit", "Making ajax bookmarklet " + op + " call");
+    logger.log("reddit", "Making ajax bookmarklet " + op + " call");
     
     var params = {
       u: url,

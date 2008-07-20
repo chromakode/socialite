@@ -1,6 +1,6 @@
 // Abstracts the general form of an XMLHttpRequest handler into an action.
 
-Components.utils.import("resource://socialite/debug.jsm");
+logger = Components.utils.import("resource://socialite/utils/log.jsm");
 Components.utils.import("resource://socialite/utils/action/action.jsm");
 
 var EXPORTED_SYMBOLS = ["RequestAction", "GetAction", "PostAction"];
@@ -71,7 +71,7 @@ var _HTTPRequestAction = Action("httpRequest", function(action) {
   
   if (action.method == "get") {
     var target = action.url + "?" + formattedParams;
-    debug_log("httpRequest", "GET request to " + target);
+    logger.log("httpRequest", "GET request to " + target);
     action.request.open("get", target, true);
     action.request.onload = onLoad;
     action.request.send(null);
@@ -79,7 +79,7 @@ var _HTTPRequestAction = Action("httpRequest", function(action) {
     action.request.open("post", action.url, true);
     action.request.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
     action.request.onload = onLoad;
-    debug_log("httpRequest", "POST to " + action.url + " (sent: " + formattedParams +  ")");
+    logger.log("httpRequest", "POST to " + action.url + " (sent: " + formattedParams +  ")");
     action.request.send(formattedParams);
   }
 });

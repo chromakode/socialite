@@ -1,6 +1,6 @@
 // A failure callback to retry an action a set number of times
 
-Components.utils.import("resource://socialite/debug.jsm");
+logger = Components.utils.import("resource://socialite/utils/log.jsm");
 
 var EXPORTED_SYMBOLS = ["sequenceCalls"];
 

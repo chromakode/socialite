@@ -5,7 +5,7 @@ var nsLoginInfo = new Components.Constructor("@mozilla.org/login-manager/loginIn
                                              Components.interfaces.nsILoginInfo,
                                              "init");
 
-Components.utils.import("resource://socialite/debug.jsm");
+logger = Components.utils.import("resource://socialite/utils/log.jsm");
 Components.utils.import("resource://socialite/utils/action/action.jsm");
 http = Components.utils.import("resource://socialite/utils/action/http_request.jsm");
 
@@ -44,7 +44,7 @@ RedditAuth.prototype.authModHash = function(params) {
 // ---
 
 var getAuthHash = Action("reddit_auth.getAuthHash", function(site, action) {
-  debug_log("reddit_auth", "Making authenticate call");
+  logger.log("reddit_auth", "Making authenticate call");
   
   var logins = loginManager.findLogins({}, PASSWORD_HOSTNAME, null, PASSWORD_REALM_PRE + site);
   if (logins.length == 0) {
@@ -60,7 +60,7 @@ var getAuthHash = Action("reddit_auth.getAuthHash", function(site, action) {
 });
 
 var refreshAuthHash = Action("reddit_auth.refreshAuthHash", function(site, action) {
-  debug_log("reddit_auth", "Getting new user hash");
+  logger.log("reddit_auth", "Getting new user hash");
   
   var act = http.GetAction(
     "http://" + site + "/bookmarklets/",
@@ -121,7 +121,7 @@ function extractUserHash(document) {
     
     return likeButton.href.match(getUserHash)[1];
   } catch (e)  {
-    debug_log("reddit_auth", "Unable to parse bookmarklets page for user hash: " + e.toString());
+    logger.log("reddit_auth", "Unable to parse bookmarklets page for user hash: " + e.toString());
     return null;
   }
 }
@@ -133,7 +133,7 @@ function extractUsername(document) {
     var usernameLink = results.iterateNext();
     return usernameLink.textContent;
   } catch (e)  {
-    debug_log("reddit_auth", "Unable to parse bookmarklets page for username: " + e.toString());
+    logger.log("reddit_auth", "Unable to parse bookmarklets page for username: " + e.toString());
     return null;
   }
 }

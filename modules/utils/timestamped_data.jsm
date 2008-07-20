@@ -1,6 +1,6 @@
 // An class that contains a collection of properties, with timestamps for when they were last 
 
-Components.utils.import("resource://socialite/debug.jsm");
+logger = Components.utils.import("resource://socialite/utils/log.jsm");
 Components.utils.import("resource://socialite/utils/hitch.jsm");
 
 var EXPORTED_SYMBOLS = ["TimestampedData"];

@@ -1,6 +1,6 @@
 // A failure callback to retry an action a set number of times
 
-Components.utils.import("resource://socialite/debug.jsm");
+logger = Components.utils.import("resource://socialite/utils/log.jsm");
 Components.utils.import("resource://socialite/utils/action/action.jsm");
 Components.utils.import("resource://socialite/utils/hitch.jsm");
 
@@ -25,7 +25,7 @@ var _RetryAction = Action("retry", function() {
   if (!retryAction.count) {
     retryAction.failure.apply(retryAction, arguments);
   } else {
-    debug_log(retryAction.name, action.name + " has failed, retrying (" + retryAction.count + " retrys left)");
+    logger.log(retryAction.name, action.name + " has failed, retrying (" + retryAction.count + " retrys left)");
     
     var args = arguments;
     var doRetry = function() {
@@ -37,13 +37,13 @@ var _RetryAction = Action("retry", function() {
         // Perform the action again.
         action.perform.apply(action, action.lastArgs);
       } else {
-        debug_log(retryAction.name, "Retry callback has signalled to stop retrying; retry aborted");
+        logger.log(retryAction.name, "Retry callback has signalled to stop retrying; retry aborted");
         retryAction.failure.apply(retryAction, arguments);
       }
     };
     
     if (retryAction.delay) {      
-      debug_log(retryAction.name, "Waiting " + retryAction.delay + " milliseconds");
+      logger.log(retryAction.name, "Waiting " + retryAction.delay + " milliseconds");
       retryAction.timer.initWithCallback(
         doRetry,
         retryAction.delay,

@@ -1,6 +1,6 @@
 // An class that wraps functions and ensures that it only calls them once the function has not been performed for an interval (a form of flood control).
 
-Components.utils.import("resource://socialite/debug.jsm");
+logger = Components.utils.import("resource://socialite/utils/log.jsm");
 
 var EXPORTED_SYMBOLS = ["Quantizer"];
 
@@ -31,7 +31,7 @@ Quantizer.prototype.quantize = function(func) {
 
 // Called when an function is called
 Quantizer.prototype.callQuantized = function(func, thisArg, args) {
-  debug_log(this.name, "Received call request.");
+  logger.log(this.name, "Received call request.");
 
   // Scan for an existing equivalent call, and replace it.
   for (var i=0; i<this.waitingSet.length; i++) {
@@ -73,7 +73,7 @@ Quantizer.prototype.callQuantized = function(func, thisArg, args) {
 
 // Called when the timer ticks
 Quantizer.prototype.performCall = function(entry) {
-  debug_log(this.name, "Performing call");
+  logger.log(this.name, "Performing call");
 
   // Call the function
   entry.func.apply(entry.thisArg, entry.args);
@@ -93,7 +93,7 @@ Quantizer.prototype.tick = function() {
         this.performCall(entry);
       } 
     } else {
-      debug_log(this.name, "Delaying call");
+      logger.log(this.name, "Delaying call");
       // Reset the flag
       entry.wasCalled = false;
     }
