@@ -5,9 +5,6 @@ REDDIT_LIKE_ACTIVE_IMAGE = "chrome://socialite/content/reddit_aupmod.png"
 REDDIT_DISLIKE_INACTIVE_IMAGE = "chrome://socialite/content/reddit_adowngray.png"
 REDDIT_DISLIKE_ACTIVE_IMAGE = "chrome://socialite/content/reddit_adownmod.png"
 
-RETRY_COUNT = 3;
-RETRY_DELAY = 5000;
-
 Components.utils.import("resource://socialite/preferences.jsm");
 logger = Components.utils.import("resource://socialite/utils/log.jsm");
 logger.init("Socialite", {
@@ -25,7 +22,7 @@ Components.utils.import("resource://socialite/utils/oneshot.jsm");
 Components.utils.import("resource://socialite/reddit/reddit.jsm");
 Components.utils.import("resource://socialite/reddit/redditAPI.jsm");
 Components.utils.import("resource://socialite/reddit/bookmarkletAPI.jsm");
-Components.utils.import("resource://socialite/reddit/link_info.jsm");
+Components.utils.import("resource://socialite/reddit/linkInfo.jsm");
 
 var alertsService = Components.classes["@mozilla.org/alerts-service;1"]
                     .getService(Components.interfaces.nsIAlertsService);
@@ -78,13 +75,8 @@ Socialite.onLoad = function() {
   
   this.tabBrowser = document.getElementById("content");
   this.appContent = document.getElementById("appcontent");
-  
-  this.linksWatched = {};
+ 
   this.tabInfo = [];
-  
-  // FIFO queue for removing old watched links
-  this.linksWatchedQueue = [];
-  this.linksWatchedLimit = 100;
   
   this.reddit = new Reddit("reddit", "reddit.com");
   (new this.reddit.authenticate()).perform();
@@ -144,121 +136,10 @@ Socialite.contentLoad = function(e) {
     
     if (win.location.hostname.match(/reddit\.com$/) && win == win.top) {
       // Iterate over each article link and register event listener
-      var res = doc.evaluate('//a[@class="title loggedin"]', doc.documentElement, null, XPathResult.UNORDERED_NODE_SNAPSHOT_TYPE, null );
       
-      for (var i=0; i < res.snapshotLength; i++) {
-        var siteLink = res.snapshotItem(i);
-        siteLink.addEventListener("mouseup", hitchHandler(this, "linkClicked"), false);
-        //siteLink.style.color = "red";
-      }
-      
-      logger.log("main", "Added click handlers to " + res.snapshotLength + " links on " + win.location.href);
-      
-      // Snarf the authentication hash using wrappedJSObject
-      // This should be safe, since Firefox 3 uses a XPCSafeJSObjectWrapper
-      // See http://developer.mozilla.org/en/docs/XPConnect_wrappers#XPCSafeJSObjectWrapper
-      this.reddit.auth.snarfModHash(win.wrappedJSObject.modhash);
     }
   }
 };
-
-Socialite.linkClicked = function(e) {
-  var link = e.target;
-  var doc = link.ownerDocument;
-  var browser = this.tabBrowser.getBrowserForDocument(doc);
-  
-  try {
-    // Remove title_ from title_XX_XXXXX
-    var linkURL   = link.href;
-    var linkID    = link.id.slice(6);
-    var linkTitle = link.textContent;
-    
-    var linkInfo = new LinkInfo(this.reddit, linkURL, linkID, linkTitle);
-    
-    //
-    // Get some "preloaded" information from the page while we can.
-    //
-    var linkLike              = doc.getElementById("up_"+linkInfo.fullname);
-    var linkLikeActive        = /upmod/.test(linkLike.className);
-    
-    var linkDislike           = doc.getElementById("down_"+linkInfo.fullname);
-    var linkDislikeActive     = /downmod/.test(linkDislike.className);
-
-    if (linkLikeActive) {
-      linkInfo.state.isLiked  = true;
-    } else if (linkDislikeActive) {
-      linkInfo.state.isLiked  = false;
-    } else {
-      linkInfo.state.isLiked  = null;
-    }
-    
-    var scoreSpan             = doc.getElementById("score_"+linkInfo.fullname)
-    if (scoreSpan) {
-      linkInfo.state.score    = parseInt(scoreSpan.textContent);
-    }
-    
-    var linkSubreddit          = doc.getElementById("subreddit_"+linkInfo.fullname)
-    if (linkSubreddit) {
-      linkInfo.state.section   = linkSubreddit.textContent;
-    }
-
-    var linkComments           = doc.getElementById("comment_"+linkInfo.fullname);
-    var commentNum             = /((\d+)\s)?comment[s]?/.exec(linkComments.textContent)[2];
-    if (commentNum) {
-      linkInfo.state.commentCount = parseInt(commentNum);
-    } else {
-      linkInfo.state.commentCount = 0;
-    }
-    
-    var linkSave               = doc.getElementById("save_"+linkInfo.fullname+"_a");
-    var linkUnsave             = doc.getElementById("unsave_"+linkInfo.fullname+"_a");
-    
-    if (linkSave != null) {
-      // If there's a save link
-      // Whether it's clicked
-      linkInfo.state.isSaved = (linkSave.style.display == "none");
-    } else if (linkUnsave != null) {
-      // If there's an unsave link (assumption)
-      // Whether it's not clicked
-      linkInfo.state.isSaved = (linkUnsave.style.display != "none");
-    } else {
-      // No save or unsave link present -- this shouldn't happen, as far as I know.
-      logger.log(linkInfo.fullname, "Unexpected save link absence.");
-    }
-    
-    // You'd think the link was hidden, the user couldn't have clicked on it
-    // But they could find it in their hidden links list.
-    var linkHide             = doc.getElementById("hide_"+linkInfo.fullname+"_a");
-    var linkUnhide           = doc.getElementById("unsave_"+linkInfo.fullname+"_a");
-    
-    if (linkHide != null) {
-      linkInfo.state.isHidden = false;
-    } else if (linkUnhide != null) {
-      linkInfo.state.isHidden = true;
-    } else {
-      // No hide or unhide link present -- this shouldn't happen, as far as I know.
-      logger.log(linkInfo.fullname, "Unexpected hide link absence.");
-    }
-  } catch (e) {
-    logger.log(linkInfo.fullname, "Caught exception while reading data from DOM: " + e.toString());
-  }
-  
-  // Add the information we collected to the watch list  
-  logger.log(linkInfo.fullname, "Clicked");
-  this.watchLink(link.href, linkInfo);
-};
-
-Socialite.watchLink = function(href, linkInfo) {
-  if (this.linksWatchedQueue.length == this.linksWatchedLimit) {
-    // Stop watching the oldest link
-    delete this.linksWatched[this.linksWatchedQueue.shift()];
-  }
-
-  this.linksWatched[href] = linkInfo;
-  this.linksWatchedQueue.push(href);
-  
-  logger.log("main", "Watching: " + href);
-}
 
 Socialite.linkStartLoad = function(win, isLoading) {
   var href = win.location.href;
