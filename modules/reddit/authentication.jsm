@@ -7,7 +7,7 @@ var nsLoginInfo = new Components.Constructor("@mozilla.org/login-manager/loginIn
 
 logger = Components.utils.import("resource://socialite/utils/log.jsm");
 Components.utils.import("resource://socialite/utils/action/action.jsm");
-http = Components.utils.import("resource://socialite/utils/action/http_request.jsm");
+http = Components.utils.import("resource://socialite/utils/action/httpRequest.jsm");
 
 var EXPORTED_SYMBOLS = ["getAuthHash", "refreshAuthHash", "RedditAuth"];
 

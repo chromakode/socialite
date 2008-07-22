@@ -2,7 +2,7 @@
 
 logger = Components.utils.import("resource://socialite/utils/log.jsm");
 Components.utils.import("resource://socialite/utils/hitch.jsm");
-Components.utils.import("resource://socialite/utils/timestamped_data.jsm");
+Components.utils.import("resource://socialite/utils/timestampedData.jsm");
 Components.utils.import("resource://socialite/utils/action/action.jsm");
 Components.utils.import("resource://socialite/reddit/reddit.jsm");
 
