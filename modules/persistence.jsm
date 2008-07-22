@@ -1,5 +1,6 @@
 Components.utils.import("resource://socialite/preferences.jsm");
 logger = Components.utils.import("resource://socialite/utils/log.jsm");
+Components.utils.import("resource://socialite/utils/strUtils.jsm");
 
 var IOService = Components.classes["@mozilla.org/network/io-service;1"]
                 .getService(Components.interfaces.nsIIOService);
@@ -36,10 +37,6 @@ function dropPathLevels(path, levels) {
   return path;
 }
 
-function startsWith(strTarget, strCheck) {
-  return strTarget.substring(0, strCheck.length) == strCheck;
-}
-
 function onLocationChange(oldURL, newURL) {
   var persistMode = SocialitePrefs.getIntPref("persistmode");
   
@@ -63,6 +60,6 @@ function onLocationChange(oldURL, newURL) {
     var oldDir = dropPathLevels(oldURI.path, 1);
     
     logger.log("Persistence", "Comparing hosts and directories: " + oldURI.host + ":" + oldDir + ", " + newURI.host + ":" + newURI.path);
-    return (oldURI.host == newURI.host) && startsWith(newURI.path, oldDir);
+    return (oldURI.host == newURI.host) && newURI.path.startsWith(oldDir);
   }
 }
