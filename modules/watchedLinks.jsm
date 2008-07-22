@@ -19,5 +19,17 @@ WatchedLinks.prototype.watchLink = function(href, linkInfo) {
   this.watches[href] = linkInfo;
   this.watchedQueue.push(href);
   
-  logger.log("main", "Watching: " + href);
+  logger.log("WatchedLinks", "Watching: " + href);
+}
+
+WatchedLinks.prototype.isWatched = function(href) {
+  return (href in this.watches)
+}
+
+WatchedLinks.prototype.getLinkInfo = function(href) {
+  if (this.isWatched(href)) {
+    return this.watches[href];
+  } else {
+    return null;
+  }
 }
