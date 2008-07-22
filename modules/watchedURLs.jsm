@@ -1,8 +1,8 @@
 logger = Components.utils.import("resource://socialite/utils/log.jsm");
 
-var EXPORTED_SYMBOLS = ["WatchedLinks"];
+var EXPORTED_SYMBOLS = ["WatchedURLs"];
 
-function WatchedLinks(limit) {
+function WatchedURLs(limit) {
   this.watches = {};
   
   // FIFO queue for removing old watched links
@@ -19,7 +19,7 @@ WatchedLinks.prototype.watchLink = function(href, linkInfo) {
   this.watches[href] = linkInfo;
   this.watchedQueue.push(href);
   
-  logger.log("WatchedLinks", "Watching: " + href);
+  logger.log("WatchedURLs", "Watching: " + href);
 }
 
 WatchedLinks.prototype.isWatched = function(href) {
