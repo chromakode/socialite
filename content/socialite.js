@@ -5,9 +5,6 @@ REDDIT_LIKE_ACTIVE_IMAGE = "chrome://socialite/content/reddit_aupmod.png"
 REDDIT_DISLIKE_INACTIVE_IMAGE = "chrome://socialite/content/reddit_adowngray.png"
 REDDIT_DISLIKE_ACTIVE_IMAGE = "chrome://socialite/content/reddit_adownmod.png"
 
-RETRY_COUNT = 3;
-RETRY_DELAY = 5000;
-
 Components.utils.import("resource://socialite/preferences.jsm");
 logger = Components.utils.import("resource://socialite/utils/log.jsm");
 logger.init("Socialite", {
@@ -25,7 +22,7 @@ Components.utils.import("resource://socialite/utils/oneshot.jsm");
 Components.utils.import("resource://socialite/reddit/reddit.jsm");
 Components.utils.import("resource://socialite/reddit/redditAPI.jsm");
 Components.utils.import("resource://socialite/reddit/bookmarkletAPI.jsm");
-Components.utils.import("resource://socialite/reddit/link_info.jsm");
+Components.utils.import("resource://socialite/reddit/linkInfo.jsm");
 
 var alertsService = Components.classes["@mozilla.org/alerts-service;1"]
                     .getService(Components.interfaces.nsIAlertsService);
@@ -78,13 +75,8 @@ Socialite.onLoad = function() {
   
   this.tabBrowser = document.getElementById("content");
   this.appContent = document.getElementById("appcontent");
-  
-  this.linksWatched = {};
+ 
   this.tabInfo = [];
-  
-  // FIFO queue for removing old watched links
-  this.linksWatchedQueue = [];
-  this.linksWatchedLimit = 100;
   
   this.reddit = new Reddit("reddit", "reddit.com");
   (new this.reddit.authenticate()).perform();
@@ -144,7 +136,6 @@ Socialite.contentLoad = function(e) {
     
     if (win.location.hostname.match(/reddit\.com$/) && win == win.top) {
       // Iterate over each article link and register event listener
-      var res = doc.evaluate('//a[@class="title loggedin"]', doc.documentElement, null, XPathResult.UNORDERED_NODE_SNAPSHOT_TYPE, null );
       
       for (var i=0; i < res.snapshotLength; i++) {
         var siteLink = res.snapshotItem(i);
