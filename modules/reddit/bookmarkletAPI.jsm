@@ -2,7 +2,7 @@
 
 logger = Components.utils.import("resource://socialite/utils/log.jsm");
 Components.utils.import("resource://socialite/utils/action/action.jsm");
-http = Components.utils.import("resource://socialite/utils/action/http_request.jsm");
+http = Components.utils.import("resource://socialite/utils/action/httpRequest.jsm");
 Components.utils.import("resource://socialite/utils/hitch.jsm");
 Components.utils.import("resource://socialite/utils/quantizer.jsm");
 
