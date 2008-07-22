@@ -7,7 +7,7 @@ function SocialiteSite() {
   this.collection = null;
 }
 
-SocialiteSite.prototype.onAddoCollection = function(collection) {
+SocialiteSite.prototype.onAddToCollection = function(collection) {
   this.collection = collection;
 }
 SocialiteSite.prototype.onRemoveFromCollection = logger.makeStubFunction("SocialiteSite", "onRemovedFromCollection");
