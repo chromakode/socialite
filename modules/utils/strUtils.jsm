@@ -1,9 +1,9 @@
 var EXPORTED_SYMBOLS = ["String.prototype.startsWith", "String.prototype.endsWith"];
 
-function String.prototype.startsWith(strTarget, strCheck) {
+String.prototype.startsWith = function(strCheck) {
   return this.substring(0, strCheck.length) == strCheck;
 }
 
-function String.prototype.endsWith(strTarget, strCheck) {
+String.prototype.endsWith = function(strCheck) {
   return this.lastIndexOf(strCheck) == (this.length - strCheck.length)
 }

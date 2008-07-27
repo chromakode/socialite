@@ -4,31 +4,42 @@ var EXPORTED_SYMBOLS = ["WatchedURLs"];
 
 function WatchedURLs(limit) {
   this.watches = {};
-  
-  // FIFO queue for removing old watched links
-  this.watchedQueue = [];
-  this.watchedLimit = limit;
 }
 
-WatchedLinks.prototype.watchLink = function(href, linkInfo) {
-  if (this.watchedLimit && (this.watchedQueue.length == this.watchedLimit)) {
-    // Stop watching the oldest link
-    delete this.watches[this.watchedQueue.shift()];
+WatchedURLs.prototype.watch = function(href, linkInfo) {
+  if (!(href in this.watches)) {
+    this.watches[href] = [];
   }
+  this.watches[href].push(linkInfo);
 
-  this.watches[href] = linkInfo;
-  this.watchedQueue.push(href);
-  
   logger.log("WatchedURLs", "Watching: " + href);
 }
 
-WatchedLinks.prototype.isWatched = function(href) {
-  return (href in this.watches)
+WatchedURLs.prototype.isWatched = function(href) {
+  return (href in this.watches && 
+          this.watches[href] != []);
 }
 
-WatchedLinks.prototype.getLinkInfo = function(href) {
-  if (this.isWatched(href)) {
+WatchedURLs.prototype.getLinkInfoList = function(href) {
+  if (href in this.watches) {
     return this.watches[href];
+  } else {
+    return null;
+  }
+}
+
+WatchedURLs.prototype.getLinkInfo = function(site, href) {
+  if (this.isWatched(href)) {
+    // Search for a linkInfo instance with the appropriate site 
+    var linkInfos = this.watches[href];
+    for (var i=0; i<linkInfos; i++) {
+      if (linkInfos[i].site = site) {
+        return linkInfos[i];
+      }
+    }
+    
+    // None were found
+    return null;
   } else {
     return null;
   }
