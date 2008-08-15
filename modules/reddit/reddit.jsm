@@ -4,7 +4,7 @@ Components.utils.import("resource://socialite/utils/hitch.jsm");
 Components.utils.import("resource://socialite/reddit/authentication.jsm");
 Components.utils.import("resource://socialite/reddit/redditAPI.jsm");
 Components.utils.import("resource://socialite/reddit/bookmarkletAPI.jsm");
-Components.utils.import("resource://socialite/reddit/linkInfo.jsm");
+Components.utils.import("resource://socialite/reddit/redditLinkInfo.jsm");
 
 var EXPORTED_SYMBOLS = ["Reddit"];
 
@@ -21,7 +21,7 @@ function Reddit(sitename, siteurl) {
   this.API = new RedditAPI(this);
   this.bookmarkletAPI = new BookmarkletAPI(this);
   
-  this.authenticate = Action("reddit.authenticate", hitchThis(this, function(action) {
+  /*this.authenticate = Action("reddit.authenticate", hitchThis(this, function(action) {
     (new getAuthHash(
       hitchThis(this, function success(auth) {
         this.auth = auth;
@@ -29,18 +29,21 @@ function Reddit(sitename, siteurl) {
       }),
       function failure() { action.failure(); }
     )).perform(this.site);
-  }));
+  }));*/
 }
 
 Reddit.prototype.initialize = function() {
-  (new this.authenticate()).perform();
+  /*(new this.authenticate()).perform();*/
 }
 
 Reddit.prototype.createBarContent = function(document, linkInfo) {
-  
+  var barContent = document.createElement("hbox");
+  barContent.style.MozBinding = "url(chrome://socialite/content/reddit/redditBar.xml#redditbar)";
+  barContent.linkInfo = linkInfo;
+  return barContent;
 }
 
-Reddit.prototype.onPageFinishLoad = function(doc, win) {
+Reddit.prototype.onSitePageLoad = function(doc, win) {
   // Iterate over each article link and register event listener
   var res = doc.evaluate('//a[@class="title loggedin"]', doc.documentElement, null, XPathResult.UNORDERED_NODE_SNAPSHOT_TYPE, null );
    
@@ -71,7 +74,8 @@ Reddit.prototype.linkClicked = function(e) {
     var linkTitle = link.textContent;
     
     // Create the linkInfo object
-    var linkInfo = new LinkInfo(this, linkURL, linkID, linkTitle);
+    var linkInfo = new RedditLinkInfo(this, linkURL, linkID);
+    linkInfo.state.title = linkTitle;
     
     //
     // Get some "preloaded" information from the page while we can.
@@ -144,14 +148,6 @@ Reddit.prototype.linkClicked = function(e) {
   // Add the information we collected to the watch list  
   logger.log(linkInfo.fullname, "Clicked");
   this.parent.watchedURLs.watch(link.href, linkInfo);
-};
-
-Reddit.prototype.onWatchedPageStartLoad = function() {
-    logger.log(linkInfo.fullname, "Started loading");
-    linkInfo.updateUIState()
-    this.redditUpdateLinkInfo(linkInfo);
-    
-    this.parent.showBar()
 }
 
 /*

@@ -1,7 +1,6 @@
 // Contains information about a particular link.
 
 logger = Components.utils.import("resource://socialite/utils/log.jsm");
-Components.utils.import("resource://socialite/utils/hitch.jsm");
 Components.utils.import("resource://socialite/utils/timestampedData.jsm");
 Components.utils.import("resource://socialite/utils/action/action.jsm");
 
@@ -11,6 +10,7 @@ var EXPORTED_SYMBOLS = ["LinkInfo", "LinkInfo"]
 
 function LinkInfoState() {
   TimestampedData.apply(this);
+  this.addField("title");
 }
 
 LinkInfoState.prototype = new TimestampedData;
@@ -22,14 +22,9 @@ function LinkInfo(site, url) {
   this.url = url;
   
   this.state = new LinkInfoState();
-  this.uiState = new LinkInfoState();
 }
 
 LinkInfo.prototype.update = logger.makeStubFunction("LinkInfo", "update");
-
-LinkInfo.prototype.updateUIState = function(omit) {
-  this.uiState.copy(this.state, omit);
-}
 
 LinkInfo.prototype.revertUIState = function(properties, timestamp) {
   logger.log(this.fullname, "Reverting UI state properties: [" + properties.toString() + "]");

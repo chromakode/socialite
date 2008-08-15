@@ -8,7 +8,6 @@ logger.init("Socialite", {
 });
 
 persistence = Components.utils.import("resource://socialite/persistence.jsm");
-Components.utils.import("resource://socialite/socialiteBar.jsm");
 
 Components.utils.import("resource://socialite/utils/action/action.jsm");
 Components.utils.import("resource://socialite/utils/action/sequence.jsm");
@@ -138,25 +137,27 @@ Socialite.linkStartLoad = function(win, isLoading) {
   var currentTab = this.tabBrowser.tabContainer.selectedIndex;
   var notificationBox = this.tabBrowser.getNotificationBox(browser);
 
-  if (this.sites.watchedURLs.isWatched(href)) {
-    // This is a watched link. Create a notification box and initialize.
-    var bar = this.createNotificationBar(notificationBox);
-
-    // Populate the bar
-    this.sites.watchedURLs.getWatcherInfoList(href).forEach(function(linkInfo, index, array) {
-      bar.appendChild(linkInfo.site.createBarContent(document, linkInfo));
-    });
-    
-    this.tabBars[currentTab] = bar;
-  } else {
-    // Handle persistence changes, if any.
-    var bar = this.tabBars[currentTab];
+  if (isLoading) {
+    if (this.sites.watchedURLs.isWatched(href)) {
+      // This is a watched link. Create a notification box and initialize.
+      var bar = this.createNotificationBar(notificationBox);
   
-    if (bar) {
-      if (!persistence.onLocationChange(bar.linkInfo.url, href)) {
-        notificationBox.removeNotification(bar);
-        this.tabBars[currentTab] = null;
-        logger.log(linkInfo.fullname, "Removed notification");
+      // Populate the bar
+      this.sites.watchedURLs.getWatcherInfoList(href).forEach(function(linkInfo, index, array) {
+        bar.addSiteContent(linkInfo.site.createBarContent(document, linkInfo));
+      });
+      
+      this.tabBars[currentTab] = bar;
+    } else {
+      // Handle persistence changes, if any.
+      var bar = this.tabBars[currentTab];
+    
+      if (bar) {
+        if (!persistence.onLocationChange(bar.linkInfo.url, href)) {
+          notificationBox.removeNotification(bar);
+          this.tabBars[currentTab] = null;
+          logger.log(linkInfo.fullname, "Removed notification");
+        }
       }
     }
   }

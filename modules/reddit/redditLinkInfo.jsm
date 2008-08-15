@@ -1,16 +1,16 @@
-// Contains information about a particular link.
+// Contains information about a particular reddit link.
 
 logger = Components.utils.import("resource://socialite/utils/log.jsm");
-Components.utils.import("resource://socialite/utils/hitch.jsm");
 Components.utils.import("resource://socialite/utils/timestampedData.jsm");
+Components.utils.import("resource://socialite/utils/hitch.jsm");
 Components.utils.import("resource://socialite/utils/action/action.jsm");
 Components.utils.import("resource://socialite/reddit/reddit.jsm");
 
-var EXPORTED_SYMBOLS = ["LinkInfo", "LinkInfoFromJSON"]
+var EXPORTED_SYMBOLS = ["RedditLinkInfo", "RedditLinkInfoFromJSON"];
 
 // ---
 
-function LinkInfoState() {
+function RedditLinkInfoState() {
   TimestampedData.apply(this);
   this.addField("isLiked");
   this.addField("score");
@@ -22,11 +22,11 @@ function LinkInfoState() {
   this.addField("isHidden");
 }
 
-LinkInfoState.prototype = new TimestampedData;
+RedditLinkInfoState.prototype = new TimestampedData;
 
 // ---
 
-function LinkInfoFromJSON(json) {
+function RedditLinkInfoFromJSON(json) {
   var linkData = json.data.children[0].data;
   var linkInfo = new LinkInfo(linkData.url, linkData.name, linkData.title);
   
@@ -35,33 +35,27 @@ function LinkInfoFromJSON(json) {
   return linkInfo;
 }
 
-function LinkInfo(reddit, url, fullname, title) {
-  this.reddit = reddit;
-  this.url = url;
-  this.fullname = fullname;
-  this.title = title;
+function RedditLinkInfo(redditsite, url, fullname) {
+  this.prototype = new LinkInfo(redditsite, url);
   
-  this.modActive = true;
+  this.fullname = fullname;
   
   this.state = new LinkInfoState();
-  this.uiState = new LinkInfoState();
-  
-  this.ui = {};
 }
 
 const fullnameRegex = /(\w+)_(\w+)/;
 
-LinkInfo.prototype.getID = function() {
+RedditLinkInfo.prototype.getID = function() {
   return fullnameRegex.exec(this.fullname)[2];
 }
 
-LinkInfo.prototype.getKind = function() {
+RedditLinkInfo.prototype.getKind = function() {
   return fullnameRegex.exec(this.fullname)[1];
 }
 
-LinkInfo.prototype.update = function(successCallback, failureCallback) {
-  var act = Action("LinkInfo.update", hitchThis(this, function(action) {
-    var infoCall = new this.reddit.API.info(
+RedditLinkInfo.prototype.update = function(successCallback, failureCallback) {
+  var act = Action("RedditLinkInfo.update", hitchThis(this, function(action) {
+    var infoCall = new this.site.API.info(
       hitchThis(this, function success(r, json) {
         if (action.startTime >= this.state.lastUpdated) {
           this.updateFromJSON(json);
@@ -81,7 +75,7 @@ LinkInfo.prototype.update = function(successCallback, failureCallback) {
   return (new act(successCallback, failureCallback));
 }
 
-LinkInfo.prototype.updateFromJSON = function(json) {
+RedditLinkInfo.prototype.updateFromJSON = function(json) {
   var linkData = json.data.children[0].data;
   
   this.state.isLiked      = linkData.likes;
@@ -93,30 +87,11 @@ LinkInfo.prototype.updateFromJSON = function(json) {
   this.state.isSaved      = linkData.saved;
   this.state.isHidden     = linkData.hidden;
   
-  logger.log(this.fullname, "Updated from JSON info: "                    +
+  logger.log(this.fullname, "Updated from JSON info: " +
                      "liked: "    + this.state.isLiked + ", "      +
                      "score: "    + this.state.score + ", "        +
                      "subreddit: "+ this.state.subreddit + ", "    +
                      "comments: " + this.state.commentCount + ", " +
                      "saved: "    + this.state.isSaved + ", "      +
                      "hidden: "   + this.state.isHidden            );
-}
-
-LinkInfo.prototype.updateUIState = function(omit) {
-  this.uiState.copy(this.state, omit);
-}
-
-LinkInfo.prototype.revertUIState = function(properties, timestamp) {
-  logger.log(this.fullname, "Reverting UI state properties: [" + properties.toString() + "]");
-  for (var i=0; i<properties.length; i++) {
-    var prop = properties[i];
-    
-    // If the uiState hasn't been updated since the timestamp, revert it.
-    if ((timestamp == null) || (timestamp >= this.uiState.getTimestamp(prop))) {
-      logger.log(this.fullname, "Reverting UI state property " + prop + " from " + this.uiState[prop] + " to " + this.state[prop]);
-      this.uiState[prop] = this.state[prop];
-    } else {
-      logger.log(this.fullname, "UI state property " + prop + " modified since revert timestamp, skipping revert.");
-    }
-  }
 }

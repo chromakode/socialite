@@ -18,7 +18,7 @@ SocialiteSite.prototype.onRemoveFromCollection = function(collection) {
   this.parent = null;
 }
 
-SocialiteSite.prototype.onSitePageFinishLoad = logger.makeStubFunction("SocialiteSite", "onSitePageFinishLoad");
+SocialiteSite.prototype.onSitePageLoad = logger.makeStubFunction("SocialiteSite", "onSitePageLoad");
 
 SocialiteSite.prototype.setupBarContent = logger.makeStubFunction("SocialiteSite", "setupBarContent");
 
@@ -54,7 +54,7 @@ SiteCollection.prototype.initialize() {
 SiteCollection.prototype.onContentLoad(doc, win) {
   this.sites.forEach(function(site, index, array) {
     if (doc.location.hostname.endsWith(site.hostname)) {
-      site.onSitePageFinishLoad(doc, win);
+      site.onSitePageLoad(doc, win);
     }
   });
 }
