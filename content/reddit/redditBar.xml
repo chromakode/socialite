@@ -1,0 +1,23 @@
+<?xml version="1.0"?>
+<!DOCTYPE reddit SYSTEM "chrome://socialite/locale/reddit.dtd">
+<bindings xmlns="http://www.mozilla.org/xbl" xmlns:xbl="http://www.mozilla.org/xbl"
+	xmlns:xul="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul">
+
+	<binding id="redditbarcontent" extends="chrome://socialite/content/socialiteBar.xml#socialitebarcontent">
+		<content>
+			<xul:hbox anonid="container" flex="1" align="center">
+				<xul:description anonid="title" flex="1"/>
+				<xul:label anonid="subreddit" class="subreddit"/>
+				<xul:spacer flex="9999"/>
+				<xul:button anonid="like" type="checkbox" label="&like.label;" accesskey="&like.accesskey;" autoCheck="false"/>
+				<xul:button anonid="dislike" type="checkbox" label="&dislike.label;" accesskey="&dislike.accesskey;" autoCheck="false"/>
+				<xul:button anonid="comments" label="&comments.label;" accesskey="&comments.accesskey;"/>
+				<xul:button anonid="hide" label="&hide.label;" accesskey="&hide.accesskey;"/>
+				<xul:button anonid="random" label="&random.label;" accesskey="&random.accesskey;"/>
+				<children/>
+			</xul:hbox>
+		</content>
+		
+	</binding>
+	
+</bindings>

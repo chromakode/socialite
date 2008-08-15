@@ -1,0 +1,43 @@
+<?xml version="1.0"?>
+<bindings xmlns="http://www.mozilla.org/xbl" xmlns:xbl="http://www.mozilla.org/xbl"
+	xmlns:xul="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul">
+	
+	<binding id="socialitebar" extends="chrome://global/content/bindings/notification.xml#notification">
+		<content>
+			<xul:hbox anonid="container" flex="1" align="center">
+				<xul:hbox anonid="siteBox" flex="1" align="center">
+					<xul:image anonid="siteImage"/>
+					<xul:label anonid="siteLink" class="text-link"/>
+				</xul:hbox>
+				<xul:separator width="0px" height="18px" orient="vertical" class="socialite-separator"/>
+				<xul:deck anonid="contentDeck" align="center">
+					<children/>
+				</xul:deck>
+			</xul:hbox>
+		</content>
+	</binding>
+
+	<binding id="socialitebarcontent">
+		<content>
+			<xul:hbox anonid="container" flex="1" align="center">
+				<xul:description anonid="title" flex="1"/>
+				<xul:spacer flex="1"/>
+				<children/>
+			</xul:hbox>
+		</content>
+		
+		<implementation>
+      <field name="linkInfo"></field>
+      
+      <method name="update">
+        <body>
+          <![CDATA[
+
+          ]]>
+        </body>
+      </method>
+		</implementation>
+		
+	</binding>
+	
+</bindings>

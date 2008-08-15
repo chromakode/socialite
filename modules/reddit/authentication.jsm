@@ -1,6 +1,6 @@
 var loginManager = Components.classes["@mozilla.org/login-manager;1"]
                       .getService(Components.interfaces.nsILoginManager)
-                                
+                        
 var nsLoginInfo = new Components.Constructor("@mozilla.org/login-manager/loginInfo;1",
                                              Components.interfaces.nsILoginInfo,
                                              "init");

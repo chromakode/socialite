@@ -8,9 +8,14 @@ Components.utils.import("resource://socialite/reddit/linkInfo.jsm");
 
 var EXPORTED_SYMBOLS = ["Reddit"];
 
-function Reddit(sitename, hostname) {
+REDDIT_LIKE_INACTIVE_IMAGE = "chrome://socialite/content/reddit/upgray.png"
+REDDIT_LIKE_ACTIVE_IMAGE = "chrome://socialite/content/reddit/upmod.png"
+REDDIT_DISLIKE_INACTIVE_IMAGE = "chrome://socialite/content/reddit/downgray.png"
+REDDIT_DISLIKE_ACTIVE_IMAGE = "chrome://socialite/content/reddit/downmod.png"
+
+function Reddit(sitename, siteurl) {
   this.sitename = sitename;
-  this.hostname = hostname;
+  this.siteurl = siteurl;
   
   this.auth = null;
   this.API = new RedditAPI(this);
@@ -29,6 +34,10 @@ function Reddit(sitename, hostname) {
 
 Reddit.prototype.initialize = function() {
   (new this.authenticate()).perform();
+}
+
+Reddit.prototype.createBarContent = function(document, linkInfo) {
+  
 }
 
 Reddit.prototype.onPageFinishLoad = function(doc, win) {
@@ -141,6 +150,8 @@ Reddit.prototype.onWatchedPageStartLoad = function() {
     logger.log(linkInfo.fullname, "Started loading");
     linkInfo.updateUIState()
     this.redditUpdateLinkInfo(linkInfo);
+    
+    this.parent.showBar()
 }
 
 /*

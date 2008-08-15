@@ -20,26 +20,9 @@ WatchedURLs.prototype.isWatched = function(href) {
           this.watches[href] != []);
 }
 
-WatchedURLs.prototype.getLinkInfoList = function(href) {
+WatchedURLs.prototype.getWatcherInfoList = function(href) {
   if (href in this.watches) {
     return this.watches[href];
-  } else {
-    return null;
-  }
-}
-
-WatchedURLs.prototype.getLinkInfo = function(site, href) {
-  if (this.isWatched(href)) {
-    // Search for a linkInfo instance with the appropriate site 
-    var linkInfos = this.watches[href];
-    for (var i=0; i<linkInfos; i++) {
-      if (linkInfos[i].site = site) {
-        return linkInfos[i];
-      }
-    }
-    
-    // None were found
-    return null;
   } else {
     return null;
   }

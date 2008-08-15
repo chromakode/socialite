@@ -4,8 +4,7 @@
   xmlns:xbl="http://www.mozilla.org/xbl"
   xmlns:xul="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul">
   
-  <binding id="scoretooltip"
-           extends="chrome://global/content/bindings/popup.xml#tooltip">
+  <binding id="scoretooltip" extends="chrome://global/content/bindings/popup.xml#tooltip">
 
     <content>
       <xul:grid>

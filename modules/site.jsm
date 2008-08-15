@@ -7,6 +7,8 @@ var EXPORTED_SYMBOLS = ["SocialiteSite"];
 
 function SocialiteSite() {
   this.parent = null;
+  this.sitename = null;
+  this.siteurl = null;
 }
 
 SocialiteSite.prototype.onAddToCollection = function(collection) {
@@ -16,9 +18,9 @@ SocialiteSite.prototype.onRemoveFromCollection = function(collection) {
   this.parent = null;
 }
 
-SocialiteSite.prototype.onPageFinishLoad = logger.makeStubFunction("SocialiteSite", "onPageFinishLoad");
+SocialiteSite.prototype.onSitePageFinishLoad = logger.makeStubFunction("SocialiteSite", "onSitePageFinishLoad");
 
-Reddit.prototype.onWatchedPageStartLoad = logger.makeStubFunction("SocialiteSite", "onWatchedPageStartLoad");
+SocialiteSite.prototype.setupBarContent = logger.makeStubFunction("SocialiteSite", "setupBarContent");
 
 // ---
 
@@ -30,7 +32,7 @@ function SiteCollection(socialite) {
 
 SiteCollection.prototype.addSite(site) {
   this.sites.push(site);
-  site.collection.onAddedToCollection(this);
+  site.onAddedToCollection(this);
 }
 
 SiteCollection.prototype.removeSite(site) {
@@ -43,11 +45,6 @@ SiteCollection.prototype.removeSite(site) {
   site.onRemovedFromCollection(this);
 }
 
-SiteCollection.prototype.createBar(site) {
-  // FIXME
-}
-
-
 SiteCollection.prototype.initialize() {
   this.sites.forEach(function(site, index, array) {
     site.initialize();
@@ -57,18 +54,7 @@ SiteCollection.prototype.initialize() {
 SiteCollection.prototype.onContentLoad(doc, win) {
   this.sites.forEach(function(site, index, array) {
     if (doc.location.hostname.endsWith(site.hostname)) {
-      site.onPageFinishLoad(doc, win);
+      site.onSitePageFinishLoad(doc, win);
     }
   });
-}
-
-SiteCollection.prototype.onPageStartLoad(doc, win) {
-  var href = doc.location.href;
-  if (this.watchedURLs.isWatched(href)) {
-    // Trigger callbacks on sites that are watching this href
-    var linkInfos = this.watchedURLs.getLinkInfoList(href);
-    for (var i=0; i<linkInfos; i++) {
-      linkInfos[i].site.onWatchedPageStartLoad(doc, win);
-    }
-  }
 }

@@ -1,18 +1,14 @@
 XULNS = "http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul";
 
-REDDIT_LIKE_INACTIVE_IMAGE = "chrome://socialite/content/reddit_aupgray.png"
-REDDIT_LIKE_ACTIVE_IMAGE = "chrome://socialite/content/reddit_aupmod.png"
-REDDIT_DISLIKE_INACTIVE_IMAGE = "chrome://socialite/content/reddit_adowngray.png"
-REDDIT_DISLIKE_ACTIVE_IMAGE = "chrome://socialite/content/reddit_adownmod.png"
-
 Components.utils.import("resource://socialite/preferences.jsm");
 logger = Components.utils.import("resource://socialite/utils/log.jsm");
 logger.init("Socialite", {
   enabled:    SocialitePrefs.getBoolPref("debug"),
-  useConsole: SocialitePrefs.getBoolPref("debugInErrorConsole"),
+  useConsole: SocialitePrefs.getBoolPref("debugInErrorConsole")
 });
 
 persistence = Components.utils.import("resource://socialite/persistence.jsm");
+Components.utils.import("resource://socialite/socialiteBar.jsm");
 
 Components.utils.import("resource://socialite/utils/action/action.jsm");
 Components.utils.import("resource://socialite/utils/action/sequence.jsm");
@@ -56,7 +52,7 @@ var SocialiteProgressListener =
   
   onProgressChange: function() {return 0;},
   onStatusChange: function() {return 0;},
-  onSecurityChange: function() {return 0;},
+  onSecurityChange: function() {return 0;}
 }
 
 // ---
@@ -66,7 +62,7 @@ var Socialite = new Object();
 Socialite.init = function() {
   window.addEventListener("load", hitchHandler(this, "onLoad"), false);
   window.addEventListener("unload", hitchHandler(this, "onUnload"), false);
-};
+}
 
 Socialite.onLoad = function() {
   // initialization code
@@ -75,7 +71,7 @@ Socialite.onLoad = function() {
   this.tabBrowser = document.getElementById("content");
   this.appContent = document.getElementById("appcontent");
  
-  this.tabInfo = [];
+  this.tabBars = [];
 
   this.sites = new SiteCollection(this);
   this.sites.initialize();
@@ -120,7 +116,7 @@ Socialite.tabOpened = function(e) {
 Socialite.tabClosed = function(e) {
   var browser = e.originalTarget.linkedBrowser;
   var currentTab = this.tabBrowser.tabContainer.selectedIndex;
-  this.tabInfo[currentTab] = null;
+  this.tabBars[currentTab] = null;
   
   logger.log("main", "Tab closed: " + browser.contentWindow.location.href);
 }
@@ -137,11 +133,6 @@ Socialite.contentLoad = function(e) {
 };
 
 Socialite.linkStartLoad = function(win, isLoading) {
-  this.sites.onPageStartLoad(win.document, win);
-
-
-
-
   var href = win.location.href;
   var browser = this.tabBrowser.getBrowserForDocument(win.document);
   var currentTab = this.tabBrowser.tabContainer.selectedIndex;
@@ -149,26 +140,47 @@ Socialite.linkStartLoad = function(win, isLoading) {
 
   if (this.sites.watchedURLs.isWatched(href)) {
     // This is a watched link. Create a notification box and initialize.
-    var linkInfo = this.sites.watchedURLs.get
-    this.tabInfo[currentTab] = linkInfo;
-    
-    this.sites.onWatchedPageStartLoad(win, win.document);
-    
-    // Show the banner, without allowing actions yet
-    this.showNotificationBox(browser, linkInfo, isLoading);
-  } else {
-  
-  
-  // Handle persistence changes, if any.
-  var linkInfo = this.tabInfo[currentTab];
+    var bar = this.createNotificationBar(notificationBox);
 
-  if (linkInfo && linkInfo.ui.notification) {
-    if (!persistence.onLocationChange(linkInfo.url, href)) {
-      notificationBox.removeNotification(linkInfo.ui.notification);
-      linkInfo.ui.notification = null;
-      logger.log(linkInfo.fullname, "Removed notification");
+    // Populate the bar
+    this.sites.watchedURLs.getWatcherInfoList(href).forEach(function(linkInfo, index, array) {
+      bar.appendChild(linkInfo.site.createBarContent(document, linkInfo));
+    });
+    
+    this.tabBars[currentTab] = bar;
+  } else {
+    // Handle persistence changes, if any.
+    var bar = this.tabBars[currentTab];
+  
+    if (bar) {
+      if (!persistence.onLocationChange(bar.linkInfo.url, href)) {
+        notificationBox.removeNotification(bar);
+        this.tabBars[currentTab] = null;
+        logger.log(linkInfo.fullname, "Removed notification");
+      }
     }
   }
+}
+
+Socialite.createNotificationBar = function(notificationBox) {
+  var notificationName = "socialite-header";
+
+  var notification = notificationBox.appendNotification(
+    "",
+    notificationName,
+    "",
+    notificationBox.PRIORITY_INFO_MEDIUM,
+    []
+  );
+  
+  // Replace the binding of the notification with our custom notification
+  notification.style.MozBinding = "url(chrome://socialite/content/socialiteBar.xml#socialitebar)";
+  
+  // Make the notification immortal -- we'll handle closing it.
+  this.notification.persistence = -1;
+  
+  logger.log("Socialite", "Notification box created");
+  return bar;
 }
 
 Socialite.redditUpdateLinkInfo = function(linkInfo, omit) {
@@ -221,10 +233,6 @@ Socialite.failureNotification = function(linkInfo, r, action) {
     text, 
     null, null, null, "socialite-failure");
 }
-  
-Socialite.showNotificationBox = function(browser, linkInfo, isNewPage) {
-  
-};
 
 // ---
 
