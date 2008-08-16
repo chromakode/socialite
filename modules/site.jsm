@@ -1,9 +1,9 @@
 logger = Components.utils.import("resource://socialite/utils/log.jsm");
 Components.utils.import("resource://socialite/utils/strUtils.jsm");
-Components.utils.import("resource://socialite/watchedURLS.jsm");
+Components.utils.import("resource://socialite/watchedURLs.jsm");
 
 
-var EXPORTED_SYMBOLS = ["SocialiteSite"];
+var EXPORTED_SYMBOLS = ["SocialiteSite", "SiteCollection"];
 
 function SocialiteSite() {
   this.parent = null;
@@ -30,30 +30,30 @@ function SiteCollection(socialite) {
   this.watchedURLs = new WatchedURLs();
 }
 
-SiteCollection.prototype.addSite(site) {
+SiteCollection.prototype.addSite = function(site) {
   this.sites.push(site);
-  site.onAddedToCollection(this);
+  site.onAddToCollection(this);
 }
 
-SiteCollection.prototype.removeSite(site) {
+SiteCollection.prototype.removeSite = function(site) {
   for (var i=1; i<this.sites.length; i++) {
     if (this.sites[i] == site) {
       this.sites.splice(i, 1);
       break;
     }
   }
-  site.onRemovedFromCollection(this);
+  site.onRemoveFromCollection(this);
 }
 
-SiteCollection.prototype.initialize() {
+SiteCollection.prototype.initialize = function() {
   this.sites.forEach(function(site, index, array) {
     site.initialize();
   });
 }
 
-SiteCollection.prototype.onContentLoad(doc, win) {
+SiteCollection.prototype.onContentLoad = function(doc, win) {
   this.sites.forEach(function(site, index, array) {
-    if (doc.location.hostname.endsWith(site.hostname)) {
+    if (strEndsWith(doc.location.hostname, site.siteurl)) {
       site.onSitePageLoad(doc, win);
     }
   });

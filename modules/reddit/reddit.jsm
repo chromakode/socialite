@@ -1,4 +1,5 @@
 logger = Components.utils.import("resource://socialite/utils/log.jsm");
+Components.utils.import("resource://socialite/site.jsm");
 Components.utils.import("resource://socialite/utils/action/action.jsm");
 Components.utils.import("resource://socialite/utils/hitch.jsm");
 Components.utils.import("resource://socialite/reddit/authentication.jsm");
@@ -6,14 +7,16 @@ Components.utils.import("resource://socialite/reddit/redditAPI.jsm");
 Components.utils.import("resource://socialite/reddit/bookmarkletAPI.jsm");
 Components.utils.import("resource://socialite/reddit/redditLinkInfo.jsm");
 
-var EXPORTED_SYMBOLS = ["Reddit"];
+var EXPORTED_SYMBOLS = ["RedditSite"];
+
+var XPathResult = Components.interfaces.nsIDOMXPathResult;
 
 REDDIT_LIKE_INACTIVE_IMAGE = "chrome://socialite/content/reddit/upgray.png"
 REDDIT_LIKE_ACTIVE_IMAGE = "chrome://socialite/content/reddit/upmod.png"
 REDDIT_DISLIKE_INACTIVE_IMAGE = "chrome://socialite/content/reddit/downgray.png"
 REDDIT_DISLIKE_ACTIVE_IMAGE = "chrome://socialite/content/reddit/downmod.png"
 
-function Reddit(sitename, siteurl) {
+function RedditSite(sitename, siteurl) {
   this.sitename = sitename;
   this.siteurl = siteurl;
   
@@ -21,29 +24,39 @@ function Reddit(sitename, siteurl) {
   this.API = new RedditAPI(this);
   this.bookmarkletAPI = new BookmarkletAPI(this);
   
-  /*this.authenticate = Action("reddit.authenticate", hitchThis(this, function(action) {
+  this.authenticate = Action("reddit.authenticate", hitchThis(this, function(action) {
     (new getAuthHash(
       hitchThis(this, function success(auth) {
         this.auth = auth;
         action.success(auth);
       }),
       function failure() { action.failure(); }
-    )).perform(this.site);
-  }));*/
+    )).perform(this.siteurl);
+  }));
 }
 
-Reddit.prototype.initialize = function() {
-  /*(new this.authenticate()).perform();*/
+RedditSite.prototype = new SocialiteSite();
+
+RedditSite.prototype.initialize = function() {
+  (new this.authenticate()).perform();
 }
 
-Reddit.prototype.createBarContent = function(document, linkInfo) {
+RedditSite.prototype.createBarContent = function(document, linkInfo) {
   var barContent = document.createElement("hbox");
-  barContent.style.MozBinding = "url(chrome://socialite/content/reddit/redditBar.xml#redditbar)";
+  
+  // FIXME: Necessary for synchronous binding?
+  //document.loadBindingDocument("chrome://socialite/content/reddit/redditBar.xml");
+  
+  document.addBinding(barContent, "chrome://socialite/content/reddit/redditBar.xml#redditbarcontent");
   barContent.linkInfo = linkInfo;
+  
+  barContent.updateState();
+  barContent.update();
+  
   return barContent;
 }
 
-Reddit.prototype.onSitePageLoad = function(doc, win) {
+RedditSite.prototype.onSitePageLoad = function(doc, win) {
   // Iterate over each article link and register event listener
   var res = doc.evaluate('//a[@class="title loggedin"]', doc.documentElement, null, XPathResult.UNORDERED_NODE_SNAPSHOT_TYPE, null );
    
@@ -63,7 +76,7 @@ Reddit.prototype.onSitePageLoad = function(doc, win) {
   this.auth.snarfModHash(win.wrappedJSObject.modhash);
 }
 
-Reddit.prototype.linkClicked = function(e) {
+RedditSite.prototype.linkClicked = function(e) {
   var link = e.target;
   var doc = link.ownerDocument;
   

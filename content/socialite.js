@@ -8,6 +8,7 @@ logger.init("Socialite", {
 });
 
 persistence = Components.utils.import("resource://socialite/persistence.jsm");
+Components.utils.import("resource://socialite/site.jsm");
 
 Components.utils.import("resource://socialite/utils/action/action.jsm");
 Components.utils.import("resource://socialite/utils/action/sequence.jsm");
@@ -17,7 +18,6 @@ Components.utils.import("resource://socialite/utils/oneshot.jsm");
 Components.utils.import("resource://socialite/reddit/reddit.jsm");
 Components.utils.import("resource://socialite/reddit/redditAPI.jsm");
 Components.utils.import("resource://socialite/reddit/bookmarkletAPI.jsm");
-Components.utils.import("resource://socialite/reddit/linkInfo.jsm");
 
 var alertsService = Components.classes["@mozilla.org/alerts-service;1"]
                     .getService(Components.interfaces.nsIAlertsService);
@@ -74,6 +74,10 @@ Socialite.onLoad = function() {
 
   this.sites = new SiteCollection(this);
   this.sites.initialize();
+  
+  var reddit = new RedditSite("reddit", "reddit.com");
+  reddit.initialize();
+  this.sites.addSite(reddit);
   
   this.tabBrowser.addEventListener("DOMContentLoaded", hitchHandler(this, "contentLoad"), false);
   
@@ -141,7 +145,7 @@ Socialite.linkStartLoad = function(win, isLoading) {
     if (this.sites.watchedURLs.isWatched(href)) {
       // This is a watched link. Create a notification box and initialize.
       var bar = this.createNotificationBar(notificationBox);
-  
+      
       // Populate the bar
       this.sites.watchedURLs.getWatcherInfoList(href).forEach(function(linkInfo, index, array) {
         bar.addSiteContent(linkInfo.site.createBarContent(document, linkInfo));
@@ -174,14 +178,17 @@ Socialite.createNotificationBar = function(notificationBox) {
     []
   );
   
-  // Replace the binding of the notification with our custom notification
-  notification.style.MozBinding = "url(chrome://socialite/content/socialiteBar.xml#socialitebar)";
+  // FIXME: Necessary for synchronous binding? 
+  //document.loadBindingDocument("chrome://socialite/content/socialiteBar.xml");
   
+  // Replace the binding of the notification with our custom notification
+  document.addBinding(notification, "chrome://socialite/content/socialiteBar.xml#socialitebar");
+
   // Make the notification immortal -- we'll handle closing it.
-  this.notification.persistence = -1;
+  notification.persistence = -1;
   
   logger.log("Socialite", "Notification box created");
-  return bar;
+  return notification;
 }
 
 Socialite.redditUpdateLinkInfo = function(linkInfo, omit) {

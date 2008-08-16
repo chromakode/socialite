@@ -4,7 +4,6 @@ logger = Components.utils.import("resource://socialite/utils/log.jsm");
 Components.utils.import("resource://socialite/utils/timestampedData.jsm");
 Components.utils.import("resource://socialite/utils/hitch.jsm");
 Components.utils.import("resource://socialite/utils/action/action.jsm");
-Components.utils.import("resource://socialite/reddit/reddit.jsm");
 
 var EXPORTED_SYMBOLS = ["RedditLinkInfo", "RedditLinkInfoFromJSON"];
 
@@ -12,6 +11,7 @@ var EXPORTED_SYMBOLS = ["RedditLinkInfo", "RedditLinkInfoFromJSON"];
 
 function RedditLinkInfoState() {
   TimestampedData.apply(this);
+  this.addField("title");
   this.addField("isLiked");
   this.addField("score");
   this.addField("likeCount");
@@ -28,7 +28,7 @@ RedditLinkInfoState.prototype = new TimestampedData;
 
 function RedditLinkInfoFromJSON(json) {
   var linkData = json.data.children[0].data;
-  var linkInfo = new LinkInfo(linkData.url, linkData.name, linkData.title);
+  var linkInfo = new RedditLinkInfo(linkData.url, linkData.name, linkData.title);
   
   linkInfo.updateFromJSON(json);
   
@@ -36,13 +36,13 @@ function RedditLinkInfoFromJSON(json) {
 }
 
 function RedditLinkInfo(redditsite, url, fullname) {
-  this.prototype = new LinkInfo(redditsite, url);
-  
+  this.site = redditsite;
+  this.url = url;
   this.fullname = fullname;
   
-  this.state = new LinkInfoState();
+  this.state = new RedditLinkInfoState();
 }
-
+/*
 const fullnameRegex = /(\w+)_(\w+)/;
 
 RedditLinkInfo.prototype.getID = function() {
@@ -78,6 +78,7 @@ RedditLinkInfo.prototype.update = function(successCallback, failureCallback) {
 RedditLinkInfo.prototype.updateFromJSON = function(json) {
   var linkData = json.data.children[0].data;
   
+  this.state.title        = linkData.title;
   this.state.isLiked      = linkData.likes;
   this.state.score        = linkData.score;
   this.state.likeCount    = linkData.ups;
@@ -95,3 +96,4 @@ RedditLinkInfo.prototype.updateFromJSON = function(json) {
                      "saved: "    + this.state.isSaved + ", "      +
                      "hidden: "   + this.state.isHidden            );
 }
+*/

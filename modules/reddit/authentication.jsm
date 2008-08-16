@@ -1,5 +1,5 @@
 var loginManager = Components.classes["@mozilla.org/login-manager;1"]
-                      .getService(Components.interfaces.nsILoginManager)
+                   .getService(Components.interfaces.nsILoginManager)
                         
 var nsLoginInfo = new Components.Constructor("@mozilla.org/login-manager/loginInfo;1",
                                              Components.interfaces.nsILoginInfo,
@@ -18,8 +18,8 @@ PASSWORD_REALM_PRE = "Socialite authentication for ";
 
 // ---
 
-function RedditAuth(site, username, userHash) {
-  this.site = site;
+function RedditAuth(siteURL, username, userHash) {
+  this.siteURL = siteURL;
   this.username = username;
   this.userHash = userHash;
   this.modHash = null;
@@ -43,27 +43,27 @@ RedditAuth.prototype.authModHash = function(params) {
 
 // ---
 
-var getAuthHash = Action("reddit_auth.getAuthHash", function(site, action) {
+var getAuthHash = Action("reddit_auth.getAuthHash", function(siteURL, action) {
   logger.log("reddit_auth", "Making authenticate call");
   
-  var logins = loginManager.findLogins({}, PASSWORD_HOSTNAME, null, PASSWORD_REALM_PRE + site);
+  var logins = loginManager.findLogins({}, PASSWORD_HOSTNAME, null, PASSWORD_REALM_PRE + siteURL);
   if (logins.length == 0) {
     // No stored hash... time to get one
     var act = new refreshAuthHash();
     act.chainTo(action);
-    act.perform(site);
+    act.perform(siteURL);
   } else {
     var login = logins[0];
-    var rAuth = new RedditAuth(site, login.username, login.password);
+    var rAuth = new RedditAuth(siteURL, login.username, login.password);
     action.success(rAuth);
   }
 });
 
-var refreshAuthHash = Action("reddit_auth.refreshAuthHash", function(site, action) {
+var refreshAuthHash = Action("reddit_auth.refreshAuthHash", function(siteURL, action) {
   logger.log("reddit_auth", "Getting new user hash");
   
   var act = http.GetAction(
-    "http://" + site + "/bookmarklets/",
+    "http://" + siteURL + "/bookmarklets/",
     null,
     
     function success(r) {
@@ -74,13 +74,13 @@ var refreshAuthHash = Action("reddit_auth.refreshAuthHash", function(site, actio
       var uhLoginInfo = new nsLoginInfo(
         PASSWORD_HOSTNAME,
         null,
-        PASSWORD_REALM_PRE + site,
+        PASSWORD_REALM_PRE + siteURL,
         username, uh,
         "", ""
       );
       
       // Remove any existing logins
-      var logins = loginManager.findLogins({}, PASSWORD_HOSTNAME, null, PASSWORD_REALM_PRE + site);
+      var logins = loginManager.findLogins({}, PASSWORD_HOSTNAME, null, PASSWORD_REALM_PRE + siteURL);
       for (var i = 0; i < logins.length; i++) {
         if (logins[1].username == username) {
           loginManager.removeLogin(logins[i]);
@@ -90,7 +90,7 @@ var refreshAuthHash = Action("reddit_auth.refreshAuthHash", function(site, actio
       // Add the new login
       loginManager.addLogin(uhLoginInfo);
       
-      var rAuth = new RedditAuth(site, uh);
+      var rAuth = new RedditAuth(siteURL, uh);
       action.success(rAuth);
     },
     function failure(r) { action.failure(); }

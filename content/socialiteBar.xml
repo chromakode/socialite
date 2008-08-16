@@ -1,48 +1,53 @@
 <?xml version="1.0"?>
+<!DOCTYPE notificationDTD SYSTEM "chrome://global/locale/notification.dtd">
 <bindings xmlns="http://www.mozilla.org/xbl" xmlns:xbl="http://www.mozilla.org/xbl"
 	xmlns:xul="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul">
 	
-	<binding id="socialitebar" extends="chrome://global/content/bindings/notification.xml#notification">
+	<binding id="socialitebar"
+		extends="chrome://global/content/bindings/notification.xml#notification">
 		<content>
-			<xul:hbox anonid="container" flex="1" align="center">
-				<xul:hbox anonid="siteBox" flex="1" align="center">
-					<xul:image anonid="siteImage"/>
-					<xul:label anonid="siteLink" class="text-link"/>
+			<xul:hbox class="notification-inner outset" flex="1"
+				xbl:inherits="type">
+				<xul:hbox anonid="details" flex="1" align="center">
+					<xul:hbox anonid="siteBox" align="center">
+						<xul:image anonid="siteImage"/>
+						<xul:label anonid="siteLink" class="text-link"/>
+					</xul:hbox>
+					<xul:separator width="0px" height="18px" orient="vertical"
+						class="socialite-separator"/>
+					<xul:deck anonid="contentDeck" flex="1" align="center">
+						<children/>
+					</xul:deck>
 				</xul:hbox>
-				<xul:separator width="0px" height="18px" orient="vertical" class="socialite-separator"/>
-				<xul:deck anonid="contentDeck" align="center">
-					<children/>
-				</xul:deck>
+				<xul:toolbarbutton ondblclick="event.stopPropagation();"
+					class="messageCloseButton tabbable" xbl:inherits="hidden=hideclose"
+					tooltiptext="&closeNotification.tooltip;" oncommand="document.getBindingParent(this).close();"/>
 			</xul:hbox>
 		</content>
 		
 		<implementation>
-			<field name="content"/>
-			
+			<field name="content">[]</field>
 			<method name="addSiteContent">
 				<parameter name="siteContent"/>
-        <body>
+				<body>
           <![CDATA[
           	this.content.push(siteContent);
 						this.appendChild(siteContent);
-						siteContent.update();
           ]]>
-        </body>
-      </method>
-      
-     	<method name="update">
-        <body>
+				</body>
+			</method>
+			<method name="update">
+				<body>
           <![CDATA[
           	this.content.forEach(function(siteContent, index, array) {
 					    siteContent.update();
 					  });
           ]]>
-        </body>
-      </method>
+				</body>
+			</method>
 		</implementation>
-		
 	</binding>
-
+	
 	<binding id="socialitebarcontent">
 		<content>
 			<xul:hbox anonid="container" flex="1" align="center">
@@ -53,20 +58,16 @@
 		</content>
 		
 		<implementation>
-      <field name="linkInfo"/>
-      <field name="uiState">
-      	new Components.utils.import("resource://socialite/linkInfo.jsm").LinkInfoState();      	
-      </field>
-      
-      <method name="update">
-        <body>
+			<field name="linkInfo"/>
+			<field name="uiState"/>
+			<method name="update">
+				<body>
           <![CDATA[
 						var title = document.getAnonymousElementByAttribute(this, "anonid", "title");
 						title.text = this.uiState.title;
           ]]>
-        </body>
-      </method>
-      
+				</body>
+			</method>
 			<method name="updateState">
 				<parameter name="omit"/>
 				<body>
@@ -75,7 +76,6 @@
           ]]>
 				</body>
 			</method>
-			
 			<method name="revertState">
 				<parameter name="properties"/>
 				<parameter name="timestamp"/>
@@ -94,7 +94,6 @@
           ]]>
 				</body>
 			</method>
-			
 		</implementation>
 	</binding>
 	
