@@ -11,11 +11,6 @@ var EXPORTED_SYMBOLS = ["RedditSite"];
 
 var XPathResult = Components.interfaces.nsIDOMXPathResult;
 
-REDDIT_LIKE_INACTIVE_IMAGE = "chrome://socialite/content/reddit/upgray.png"
-REDDIT_LIKE_ACTIVE_IMAGE = "chrome://socialite/content/reddit/upmod.png"
-REDDIT_DISLIKE_INACTIVE_IMAGE = "chrome://socialite/content/reddit/downgray.png"
-REDDIT_DISLIKE_ACTIVE_IMAGE = "chrome://socialite/content/reddit/downmod.png"
-
 function RedditSite(sitename, siteurl) {
   this.sitename = sitename;
   this.siteurl = siteurl;
@@ -45,13 +40,10 @@ RedditSite.prototype.createBarContent = function(document, linkInfo) {
   var barContent = document.createElement("hbox");
   
   // FIXME: Necessary for synchronous binding?
-  //document.loadBindingDocument("chrome://socialite/content/reddit/redditBar.xml");
+  document.loadBindingDocument("chrome://socialite/content/reddit/redditBar.xml");
   
-  document.addBinding(barContent, "chrome://socialite/content/reddit/redditBar.xml#redditbarcontent");
   barContent.linkInfo = linkInfo;
-  
-  barContent.updateState();
-  barContent.update();
+  barContent.style.MozBinding = "url(chrome://socialite/content/reddit/redditBar.xml#redditbarcontent)";
   
   return barContent;
 }

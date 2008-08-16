@@ -1,0 +1,14 @@
+.reddit-score {
+  font-weight: bold;
+  color: #969696;
+  margin-left: 5px;
+  margin-right: 4px;
+}
+
+.reddit-liked {
+  color: #FF8B60;
+}
+
+.reddit-disliked {
+  color: #9494FF;
+}

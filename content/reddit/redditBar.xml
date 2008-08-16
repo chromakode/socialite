@@ -5,29 +5,62 @@
 
 	<binding id="redditbarcontent" extends="chrome://socialite/content/socialiteBar.xml#socialitebarcontent">
 		<content>
-			<xul:label value="test" style="background-color: red"/>
 			<xul:hbox anonid="container" flex="1" align="center">
-				<xul:label value="test-inner" style="background-color: red"/>
+				<xul:label anonid="score" class="reddit-score"/>
 				<xul:description anonid="title" flex="1"/>
 				<xul:label anonid="subreddit" class="subreddit"/>
 				<xul:spacer flex="9999"/>
-				<xul:button anonid="like" type="checkbox" label="&like.label;" accesskey="&like.accesskey;" autoCheck="false"/>
-				<xul:button anonid="dislike" type="checkbox" label="&dislike.label;" accesskey="&dislike.accesskey;" autoCheck="false"/>
-				<xul:button anonid="comments" label="" accesskey="&comments.accesskey;"/>
-				<xul:button anonid="hide" label="&hide.label;" accesskey="&hide.accesskey;"/>
-				<xul:button anonid="random" label="&random.label;" accesskey="&random.accesskey;"/>
+				<xul:button anonid="buttonLike" type="checkbox" label="&like.label;" accesskey="&like.accesskey;" autoCheck="false"/>
+				<xul:button anonid="buttonDislike" type="checkbox" label="&dislike.label;" accesskey="&dislike.accesskey;" autoCheck="false"/>
+				<xul:button anonid="buttonComments" label="" accesskey="&comments.accesskey;"/>
+				<xul:button anonid="buttonHide" label="&hide.label;" accesskey="&hide.accesskey;"/>
+				<xul:button anonid="buttonRandom" label="&random.label;" accesskey="&random.accesskey;"/>
 				<children/>
 			</xul:hbox>
 		</content>
 		
+		<resources>
+			<stylesheet src="chrome://socialite/skin/reddit.css"/>
+		</resources>
+		
 		<implementation>
 			<field name="uiState">new (Components.utils.import("resource://socialite/reddit/redditLinkInfo.jsm").RedditLinkInfoState)()</field>
+
+			<constructor>
+				this.updateState();
+				this.update();
+			</constructor>
 
      	<method name="update">
         <body>
           <![CDATA[
+          	// Title
 						var title = document.getAnonymousElementByAttribute(this, "anonid", "title");
-						title.value = this.uiState.title;
+						title.textContent = this.uiState.title;
+						
+						// Like/Dislike buttons
+						var REDDIT_LIKE_INACTIVE_IMAGE = "chrome://socialite/content/reddit/upgray.png";
+						var REDDIT_LIKE_ACTIVE_IMAGE = "chrome://socialite/content/reddit/upmod.png";
+						var REDDIT_DISLIKE_INACTIVE_IMAGE = "chrome://socialite/content/reddit/downgray.png";
+						var REDDIT_DISLIKE_ACTIVE_IMAGE = "chrome://socialite/content/reddit/downmod.png";
+						
+						var buttonLike = document.getAnonymousElementByAttribute(this, "anonid", "buttonLike");
+						var buttonDislike = document.getAnonymousElementByAttribute(this, "anonid", "buttonDislike");
+						if (this.uiState.isLiked == true) {
+					    buttonLike.image = REDDIT_LIKE_ACTIVE_IMAGE;
+					    buttonLike.checked = true;
+					  } else {
+					    buttonLike.image = REDDIT_LIKE_INACTIVE_IMAGE;
+					    buttonLike.checked = false;
+					  }
+					  
+					  if (this.uiState.isLiked == false) {
+					    buttonDislike.image = REDDIT_DISLIKE_ACTIVE_IMAGE;
+					    buttonDislike.checked = true;
+					  } else {
+					    buttonDislike.image = REDDIT_DISLIKE_INACTIVE_IMAGE;
+					    buttonDislike.checked = false;
+					  }
           ]]>
         </body>
       </method>

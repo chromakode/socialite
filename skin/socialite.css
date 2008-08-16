@@ -5,13 +5,6 @@
   margin-bottom: 2px !important;
 }
 
-.socialite-score {
-  font-weight: bold;
-  color: #969696;
-  margin-left: 5px;
-  margin-right: 4px;
-}
-
 .socialite-separator {
   margin-left: 7px !important;
   margin-right: 7px !important;
@@ -29,10 +22,6 @@
   text-decoration: underline;
 }
 
-.socialite-liked {
-  color: #FF8B60;
-}
-
-.socialite-disliked {
-  color: #9494FF;
+notification[value="socialite-header"] {
+  -moz-binding: url(chrome://socialite/content/socialiteBar.xml#socialitebar);
 }

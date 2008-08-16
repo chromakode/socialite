@@ -19,6 +19,8 @@ Components.utils.import("resource://socialite/reddit/reddit.jsm");
 Components.utils.import("resource://socialite/reddit/redditAPI.jsm");
 Components.utils.import("resource://socialite/reddit/bookmarkletAPI.jsm");
 
+document.loadBindingDocument("chrome://socialite/content/reddit/redditBar.xml");
+
 var alertsService = Components.classes["@mozilla.org/alerts-service;1"]
                     .getService(Components.interfaces.nsIAlertsService);
 
@@ -178,11 +180,7 @@ Socialite.createNotificationBar = function(notificationBox) {
     []
   );
   
-  // FIXME: Necessary for synchronous binding? 
-  //document.loadBindingDocument("chrome://socialite/content/socialiteBar.xml");
-  
-  // Replace the binding of the notification with our custom notification
-  document.addBinding(notification, "chrome://socialite/content/socialiteBar.xml#socialitebar");
+  // Note: the notification XBL binding is changed by CSS
 
   // Make the notification immortal -- we'll handle closing it.
   notification.persistence = -1;
