@@ -13,15 +13,6 @@
   opacity: 0.25;
 }
 
-
-.socialite-section {
-  color: #969696;
-}
-
-.socialite-section:hover {
-  text-decoration: underline;
-}
-
 notification[value="socialite-header"] {
   -moz-binding: url(chrome://socialite/content/socialiteBar.xml#socialitebar);
 }

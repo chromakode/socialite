@@ -9,13 +9,12 @@
 			<xul:hbox class="notification-inner outset" flex="1"
 				xbl:inherits="type">
 				<xul:hbox anonid="details" flex="1" align="center">
-					<xul:hbox anonid="siteBox" align="center">
-						<xul:image anonid="siteImage"/>
-						<xul:label anonid="siteLink" class="text-link"/>
+					<xul:hbox anonid="boxSite" align="center">
+						<xul:image anonid="imageSite"/>
+						<xul:label anonid="labelSite" class="text-link"/>
 					</xul:hbox>
-					<xul:separator width="0px" height="18px" orient="vertical"
-						class="socialite-separator"/>
-					<xul:deck anonid="contentDeck" flex="1" align="center">
+					<xul:separator width="0px" height="18px" orient="vertical" class="socialite-separator"/>
+					<xul:deck anonid="deckContent" flex="1" align="center">
 						<children/>
 					</xul:deck>
 				</xul:hbox>
@@ -51,19 +50,24 @@
 	<binding id="socialitebarcontent">
 		<content>
 			<xul:hbox anonid="container" flex="1" align="center">
-				<xul:description anonid="title" flex="1"/>
+				<xul:description anonid="descriptionTitle" flex="1"/>
 				<xul:spacer flex="1"/>
 				<children/>
 			</xul:hbox>
 		</content>
 		
 		<implementation>
+			<constructor>
+				this.updateState();
+				this.update();
+			</constructor>
+		
 			<field name="linkInfo"/>
 			<field name="uiState"/>
 			<method name="update">
 				<body>
           <![CDATA[
-						var title = document.getAnonymousElementByAttribute(this, "anonid", "title");
+						var title = document.getAnonymousElementByAttribute(this, "anonid", "descriptionTitle");
 						title.text = this.uiState.title;
           ]]>
 				</body>

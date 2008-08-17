@@ -1,0 +1,16 @@
+<!ENTITY like.label "Like">
+<!ENTITY like.accesskey "k">
+<!ENTITY dislike.label "Dislike">
+<!ENTITY dislike.accesskey "l">
+<!ENTITY comments.label "comments">
+<!ENTITY comments.accesskey "c">
+<!ENTITY save.label "Save">
+<!ENTITY save.accesskey "S">
+<!ENTITY unsave.label "Unsave">
+<!ENTITY unsave.accesskey "U">
+<!ENTITY hide.label "Hide">
+<!ENTITY hide.accesskey "H">
+<!ENTITY unhide.label "Unhide">
+<!ENTITY unhide.accesskey "n">
+<!ENTITY random.label "Serendipity!">
+<!ENTITY random.accesskey "r">

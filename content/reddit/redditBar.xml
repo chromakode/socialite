@@ -6,13 +6,18 @@
 	<binding id="redditbarcontent" extends="chrome://socialite/content/socialiteBar.xml#socialitebarcontent">
 		<content>
 			<xul:hbox anonid="container" flex="1" align="center">
-				<xul:label anonid="score" class="reddit-score"/>
-				<xul:description anonid="title" flex="1"/>
-				<xul:label anonid="subreddit" class="subreddit"/>
+				<xul:box tooltip="_child">
+					<!-- A parent box element seems to be necessary to make tooltips work. -->
+					<xul:tooltip anonid="tooltipScore" class="reddit-score-tooltip"/>
+					<xul:label anonid="labelScore" class="reddit-score"/>
+				</xul:box>
+				<xul:description anonid="descriptionTitle" flex="1"/>
+				<xul:label anonid="labelSubreddit" class="reddit-subreddit"/>
 				<xul:spacer flex="9999"/>
 				<xul:button anonid="buttonLike" type="checkbox" label="&like.label;" accesskey="&like.accesskey;" autoCheck="false"/>
 				<xul:button anonid="buttonDislike" type="checkbox" label="&dislike.label;" accesskey="&dislike.accesskey;" autoCheck="false"/>
-				<xul:button anonid="buttonComments" label="" accesskey="&comments.accesskey;"/>
+				<xul:button anonid="buttonComments" accesskey="&comments.accesskey;"/>
+				<xul:button anonid="buttonSave" label="&save.label;" accesskey="&save.accesskey;"/>
 				<xul:button anonid="buttonHide" label="&hide.label;" accesskey="&hide.accesskey;"/>
 				<xul:button anonid="buttonRandom" label="&random.label;" accesskey="&random.accesskey;"/>
 				<children/>
@@ -25,43 +30,82 @@
 		
 		<implementation>
 			<field name="uiState">new (Components.utils.import("resource://socialite/reddit/redditLinkInfo.jsm").RedditLinkInfoState)()</field>
-
-			<constructor>
-				this.updateState();
-				this.update();
-			</constructor>
-
+			
      	<method name="update">
         <body>
-          <![CDATA[
-          	// Title
-						var title = document.getAnonymousElementByAttribute(this, "anonid", "title");
-						title.textContent = this.uiState.title;
-						
-						// Like/Dislike buttons
-						var REDDIT_LIKE_INACTIVE_IMAGE = "chrome://socialite/content/reddit/upgray.png";
-						var REDDIT_LIKE_ACTIVE_IMAGE = "chrome://socialite/content/reddit/upmod.png";
-						var REDDIT_DISLIKE_INACTIVE_IMAGE = "chrome://socialite/content/reddit/downgray.png";
-						var REDDIT_DISLIKE_ACTIVE_IMAGE = "chrome://socialite/content/reddit/downmod.png";
-						
-						var buttonLike = document.getAnonymousElementByAttribute(this, "anonid", "buttonLike");
-						var buttonDislike = document.getAnonymousElementByAttribute(this, "anonid", "buttonDislike");
-						if (this.uiState.isLiked == true) {
-					    buttonLike.image = REDDIT_LIKE_ACTIVE_IMAGE;
-					    buttonLike.checked = true;
-					  } else {
-					    buttonLike.image = REDDIT_LIKE_INACTIVE_IMAGE;
-					    buttonLike.checked = false;
-					  }
-					  
-					  if (this.uiState.isLiked == false) {
-					    buttonDislike.image = REDDIT_DISLIKE_ACTIVE_IMAGE;
-					    buttonDislike.checked = true;
-					  } else {
-					    buttonDislike.image = REDDIT_DISLIKE_INACTIVE_IMAGE;
-					    buttonDislike.checked = false;
-					  }
-          ]]>
+					// Score label
+				  var labelScore = document.getAnonymousElementByAttribute(this, "anonid", "labelScore");
+				  labelScore.value = this.uiState.score;
+				  if (this.uiState.isLiked == true) {
+				    labelScore.setAttribute("class", "reddit-score reddit-liked");
+				  } else if (this.uiState.isLiked == false) {
+				    labelScore.setAttribute("class", "reddit-score reddit-disliked");
+				  } else {
+				    labelScore.setAttribute("class", "reddit-score");
+				  }
+         
+         	// Title description
+					var descriptionTitle = document.getAnonymousElementByAttribute(this, "anonid", "descriptionTitle");
+					descriptionTitle.textContent = this.uiState.title;
+					
+					// Section label
+					var labelSubreddit = document.getAnonymousElementByAttribute(this, "anonid", "labelSubreddit");
+					if (this.uiState.section) {
+				    labelSubreddit.value = "["+this.uiState.section+"]";
+				  } else {
+				    labelSubreddit.value = "";
+				  }
+					
+					// Like/Dislike buttons						
+					var buttonLike = document.getAnonymousElementByAttribute(this, "anonid", "buttonLike");
+					var buttonDislike = document.getAnonymousElementByAttribute(this, "anonid", "buttonDislike");
+					
+					var REDDIT_LIKE_INACTIVE_IMAGE = "chrome://socialite/content/reddit/upgray.png";
+					var REDDIT_LIKE_ACTIVE_IMAGE = "chrome://socialite/content/reddit/upmod.png";
+					var REDDIT_DISLIKE_INACTIVE_IMAGE = "chrome://socialite/content/reddit/downgray.png";
+					var REDDIT_DISLIKE_ACTIVE_IMAGE = "chrome://socialite/content/reddit/downmod.png";
+					
+					// Like button
+					if (this.uiState.isLiked == true) {
+				    buttonLike.image = REDDIT_LIKE_ACTIVE_IMAGE;
+				    buttonLike.checked = true;
+				  } else {
+				    buttonLike.image = REDDIT_LIKE_INACTIVE_IMAGE;
+				    buttonLike.checked = false;
+				  }
+				  
+				  // Dislike button
+				  if (this.uiState.isLiked == false) {
+				    buttonDislike.image = REDDIT_DISLIKE_ACTIVE_IMAGE;
+				    buttonDislike.checked = true;
+				  } else {
+				    buttonDislike.image = REDDIT_DISLIKE_INACTIVE_IMAGE;
+				    buttonDislike.checked = false;
+				  }
+				  
+				  // Comments button
+				  var buttonComments = document.getAnonymousElementByAttribute(this, "anonid", "buttonComments");
+				  buttonComments.label = this.uiState.commentCount + " &comments.label;";
+				  
+				  // Save button
+				  var buttonSave = document.getAnonymousElementByAttribute(this, "anonid", "buttonSave");
+				  if (this.uiState.isSaved) {
+				    buttonSave.label = "&unsave.label;";
+				    buttonSave.accesskey = "&unsave.accesskey;";
+				  } else {
+				    buttonSave.label = "&save.label;";
+				    buttonSave.accesskey = "&save.accesskey;";
+				  }
+				  
+				  // Hide button
+				  var buttonHide = document.getAnonymousElementByAttribute(this, "anonid", "buttonHide");
+				  if (this.uiState.isHidden) {
+				    buttonHide.label = "&unhide.label;";
+				    buttonHide.accesskey = "&unhide.accesskey;";
+				  } else {
+				    buttonHide.label = "&hide.label;";
+				    buttonHide.accesskey = "&hide.accesskey;";
+				  }
         </body>
       </method>
       

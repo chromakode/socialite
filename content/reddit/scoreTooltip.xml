@@ -1,4 +1,5 @@
 <?xml version="1.0"?>
+<!DOCTYPE reddit SYSTEM "chrome://socialite/locale/socialite.dtd">
 <bindings
   xmlns="http://www.mozilla.org/xbl"
   xmlns:xbl="http://www.mozilla.org/xbl"
@@ -15,25 +16,30 @@
 
         <xul:rows>
           <xul:row align="center">
-            <xul:image src="chrome://socialite/content/reddit_aupmod.png"/>
-            <xul:label anonid="likeCount" xbl:inherits="value=likeCount"/>
+            <xul:image src="chrome://socialite/content/reddit/upmod.png"/>
+            <xul:label anonid="likeCount" value="&unknown;" xbl:inherits="value=likeCount"/>
           </xul:row>
           <xul:row align="center">
-            <xul:image src="chrome://socialite/content/reddit_adownmod.png"/>
-            <xul:label anonid="dislikeCount" xbl:inherits="value=dislikeCount"/>
+            <xul:image src="chrome://socialite/content/reddit/downmod.png"/>
+            <xul:label anonid="dislikeCount" value="&unknown;" xbl:inherits="value=dislikeCount"/>
           </xul:row>
         </xul:rows>
       </xul:grid>
     </content>
 
     <implementation>
-      <field name="linkInfo"/>
+      <field name="parent"/>
     </implementation>
     
     <handlers>
       <handler event="popupshowing">
-        this.setAttribute("likeCount", this.linkInfo.uiState.likeCount);
-        this.setAttribute("dislikeCount", this.linkInfo.uiState.dislikeCount);
+      	if (this.parent) {
+      		var parent = this.parent; 
+      	} else {
+      		var parent = document.getBindingParent(this);
+      	}
+        this.setAttribute("likeCount", parent.uiState.likeCount || "&unknown;");
+        this.setAttribute("dislikeCount", parent.uiState.dislikeCount || "&unknown;");
       </handler>
     </handlers>
 

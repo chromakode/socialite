@@ -5,10 +5,22 @@
   margin-right: 4px;
 }
 
+.reddit-score-tooltip {
+	-moz-binding: url(chrome://socialite/content/reddit/scoreTooltip.xml#scoretooltip);
+}
+
 .reddit-liked {
   color: #FF8B60;
 }
 
 .reddit-disliked {
   color: #9494FF;
+}
+
+.reddit-subreddit {
+  color: #969696;
+}
+
+.reddit-subreddit:hover {
+  text-decoration: underline;
 }
