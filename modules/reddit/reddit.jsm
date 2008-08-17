@@ -106,7 +106,7 @@ RedditSite.prototype.linkClicked = function(e) {
     
     var linkSubreddit          = doc.getElementById("subreddit_"+linkInfo.fullname)
     if (linkSubreddit) {
-      linkInfo.state.section   = linkSubreddit.textContent;
+      linkInfo.state.subreddit = linkSubreddit.textContent;
     }
 
     var linkComments           = doc.getElementById("comment_"+linkInfo.fullname);
