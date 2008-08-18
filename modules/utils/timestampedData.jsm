@@ -40,12 +40,34 @@ TimestampedData.prototype.getTimestamp = function(name) {
   return this.timestamps[name];
 }
 
-TimestampedData.prototype.copy = function(data, omit) {
-  for (var i=0; i<data.fields.length; i++) {
-    var field = data.fields[i];
-    if ((field in this) &&
-        !(omit && !(omit.indexOf(field) == -1))) {  
+/**
+ * Copy fields from another TimestampedData instance. If a timestamp is
+ * specified, fields will be copied only if the stored value hasn't been updated
+ * since the timestamp.
+ * 
+ * @param data
+ *          The instance to copy from.
+ * @param fields
+ *          The fields to copy from the instance (all fields will be copied if
+ *          null).
+ * @param timestamp
+ *          The timestamp (number of milliseconds since epoch).
+ */
+TimestampedData.prototype.copy = function(data, fields, timestamp) {
+  if (!fields) {
+    // Default to copying all fields
+    fields = data.fields;
+  }
+  
+  for (var i=0; i<fields.length; i++) {
+    var field = fields[i];
+    
+    // If the stored value hasn't been updated since the timestamp, copy it.
+    if ((field in this) && 
+       ((timestamp == null) || (timestamp >= this.getTimestamp(field)))) {
       this[field] = data[field];
+    } else {
+      // Modified since revert timestamp, skipping copy.
     }
   }
 }

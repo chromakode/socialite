@@ -1,4 +1,4 @@
-// A failure callback to retry an action a set number of times
+// A helper function to call a list of functions in sequence
 
 logger = Components.utils.import("resource://socialite/utils/log.jsm");
 

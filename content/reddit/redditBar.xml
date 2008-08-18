@@ -30,6 +30,16 @@
 		
 		<implementation>
 			<field name="uiState">new (Components.utils.import("resource://socialite/reddit/redditLinkInfo.jsm").RedditLinkInfoState)()</field>
+			<field name="afterBound"/>
+			
+			<constructor>
+				this.buttonLike = document.getAnonymousElementByAttribute(this, "anonid", "buttonLike");
+				this.buttonDislike = document.getAnonymousElementByAttribute(this, "anonid", "buttonDislike");
+				this.buttonComments = document.getAnonymousElementByAttribute(this, "anonid", "buttonComments");
+				this.buttonSave = document.getAnonymousElementByAttribute(this, "anonid", "buttonSave");
+				this.buttonHide = document.getAnonymousElementByAttribute(this, "anonid", "buttonHide");
+				this.afterBound();
+			</constructor>
 			
      	<method name="update">
         <body>
@@ -57,8 +67,7 @@
 				  }
 					
 					// Like/Dislike buttons						
-					var buttonLike = document.getAnonymousElementByAttribute(this, "anonid", "buttonLike");
-					var buttonDislike = document.getAnonymousElementByAttribute(this, "anonid", "buttonDislike");
+					
 					
 					var REDDIT_LIKE_INACTIVE_IMAGE = "chrome://socialite/content/reddit/upgray.png";
 					var REDDIT_LIKE_ACTIVE_IMAGE = "chrome://socialite/content/reddit/upmod.png";
@@ -67,44 +76,41 @@
 					
 					// Like button
 					if (this.uiState.isLiked == true) {
-				    buttonLike.image = REDDIT_LIKE_ACTIVE_IMAGE;
-				    buttonLike.checked = true;
+				    this.buttonLike.image = REDDIT_LIKE_ACTIVE_IMAGE;
+				    this.buttonLike.checked = true;
 				  } else {
-				    buttonLike.image = REDDIT_LIKE_INACTIVE_IMAGE;
-				    buttonLike.checked = false;
+				    this.buttonLike.image = REDDIT_LIKE_INACTIVE_IMAGE;
+				    this.buttonLike.checked = false;
 				  }
 				  
 				  // Dislike button
 				  if (this.uiState.isLiked == false) {
-				    buttonDislike.image = REDDIT_DISLIKE_ACTIVE_IMAGE;
-				    buttonDislike.checked = true;
+				    this.buttonDislike.image = REDDIT_DISLIKE_ACTIVE_IMAGE;
+				    this.buttonDislike.checked = true;
 				  } else {
-				    buttonDislike.image = REDDIT_DISLIKE_INACTIVE_IMAGE;
-				    buttonDislike.checked = false;
+				    this.buttonDislike.image = REDDIT_DISLIKE_INACTIVE_IMAGE;
+				    this.buttonDislike.checked = false;
 				  }
 				  
 				  // Comments button
-				  var buttonComments = document.getAnonymousElementByAttribute(this, "anonid", "buttonComments");
-				  buttonComments.label = this.uiState.commentCount + " &comments.label;";
+				  this.buttonComments.label = this.uiState.commentCount + " &comments.label;";
 				  
 				  // Save button
-				  var buttonSave = document.getAnonymousElementByAttribute(this, "anonid", "buttonSave");
 				  if (this.uiState.isSaved) {
-				    buttonSave.label = "&unsave.label;";
-				    buttonSave.accesskey = "&unsave.accesskey;";
+				    this.buttonSave.label = "&unsave.label;";
+				    this.buttonSave.accesskey = "&unsave.accesskey;";
 				  } else {
-				    buttonSave.label = "&save.label;";
-				    buttonSave.accesskey = "&save.accesskey;";
+				    this.buttonSave.label = "&save.label;";
+				    this.buttonSave.accesskey = "&save.accesskey;";
 				  }
 				  
 				  // Hide button
-				  var buttonHide = document.getAnonymousElementByAttribute(this, "anonid", "buttonHide");
 				  if (this.uiState.isHidden) {
-				    buttonHide.label = "&unhide.label;";
-				    buttonHide.accesskey = "&unhide.accesskey;";
+				    this.buttonHide.label = "&unhide.label;";
+				    this.buttonHide.accesskey = "&unhide.accesskey;";
 				  } else {
-				    buttonHide.label = "&hide.label;";
-				    buttonHide.accesskey = "&hide.accesskey;";
+				    this.buttonHide.label = "&hide.label;";
+				    this.buttonHide.accesskey = "&hide.accesskey;";
 				  }
         </body>
       </method>

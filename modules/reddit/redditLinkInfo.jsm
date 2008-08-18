@@ -42,7 +42,7 @@ function RedditLinkInfo(redditsite, url, fullname) {
   
   this.state = new RedditLinkInfoState();
 }
-/*
+
 const fullnameRegex = /(\w+)_(\w+)/;
 
 RedditLinkInfo.prototype.getID = function() {
@@ -96,4 +96,3 @@ RedditLinkInfo.prototype.updateFromJSON = function(json) {
                      "saved: "    + this.state.isSaved + ", "      +
                      "hidden: "   + this.state.isHidden            );
 }
-*/

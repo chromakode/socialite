@@ -227,10 +227,10 @@ Socialite.failureNotification = function(linkInfo, r, action) {
   }
   logger.log(linkID, "Failure occurred, action: " + action.name + ", status: " + r.status);
   
-  if (r.status != 200) {
-    text = "Unexpected HTTP status " + r.status + " recieved (" + action.name + ")";
-  } else {
+  if (r.status == 200) {
     text = "The requested action failed (" + action.name + ")";
+  } else {
+    text = "Unexpected HTTP status " + r.status + " recieved (" + action.name + ")";
   }
   
   alertsService.showAlertNotification(

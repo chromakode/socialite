@@ -39,12 +39,41 @@ RedditSite.prototype.initialize = function() {
 RedditSite.prototype.createBarContent = function(document, linkInfo) {
   var barContent = document.createElement("hbox");
   
-  // FIXME: Necessary for synchronous binding?
-  document.loadBindingDocument("chrome://socialite/content/reddit/redditBar.xml");
-  
   barContent.linkInfo = linkInfo;
-  barContent.style.MozBinding = "url(chrome://socialite/content/reddit/redditBar.xml#redditbarcontent)";
   
+  // FIXME: A hack because I'm tired of trying to figure out how to make XBL apply synchronously. 
+  barContent.afterBound = hitchThis(this, function() {
+    
+    barContent.buttonLike.addEventListener("click", hitchThis(this, function(e) {
+      // We'll update the score locally, without using live data, since this is typically cached on reddit. In general, it makes more sense if there is a visible change in the score, even though we're not being totally accurate!
+      if (this.uiState.isLiked == true) {
+        this.uiState.isLiked = null;
+        this.uiState.score -= 1;
+      } else if (this.uiState.isLiked == false) {
+        this.uiState.isLiked = true;
+        this.uiState.score += 2;
+      } else {
+        this.uiState.isLiked = true;
+        this.uiState.score += 1;
+      }
+
+      this.update();
+      
+      // Submit the vote, and then update state.
+      // (proceeding after each AJAX call completes)
+      var submit = new this.linkInfo.site.API.vote(
+        new this.linkInfo.hitchHandler(this, "update", linkInfo, ["score"]),
+        sequenceCalls(
+          hitchHandler(this, "revertUIState", linkInfo, ["isLiked", "score"]),
+          hitchHandler(this, "actionFailureHandler", linkInfo)
+        )
+      );    
+        
+      submit.perform(barContent.linkInfo.fullname, barContent.uiState.isLiked);
+    }), false); 
+  });
+  
+  barContent.style.MozBinding = "url(chrome://socialite/content/reddit/redditBar.xml#redditbarcontent)"; 
   return barContent;
 }
 
