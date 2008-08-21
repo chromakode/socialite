@@ -57,34 +57,12 @@
 		</content>
 		
 		<implementation>
-			<constructor>
-				this.updateState();
-				this.update();
-			</constructor>
-		
 			<field name="linkInfo"/>
-			<field name="uiState"/>
 			<method name="update">
 				<body>
           <![CDATA[
 						var title = document.getAnonymousElementByAttribute(this, "anonid", "descriptionTitle");
-						title.text = this.uiState.title;
-          ]]>
-				</body>
-			</method>
-			<method name="updateState">
-				<body>
-          <![CDATA[
-          	this.uiState.copy(this.linkInfo.state);
-          ]]>
-				</body>
-			</method>
-			<method name="revertState">
-				<parameter name="properties"/>
-				<parameter name="timestamp"/>
-				<body>
-          <![CDATA[
-					  this.uiState.copy(this.linkInfo.state, properties, timestamp);
+						title.text = this.linkInfo.localState.title;
           ]]>
 				</body>
 			</method>

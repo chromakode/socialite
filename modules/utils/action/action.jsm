@@ -5,21 +5,26 @@ logger = Components.utils.import("resource://socialite/utils/log.jsm");
 var EXPORTED_SYMBOLS = ["Action", "ActionType"];
 
 function Action(name, func) {
-  // Make a copy of the constructor function
-  var action = function() { _MakeAction.apply(this, arguments); };
+  var ActionConstructor = function(){};
 
-  // Make an action object, instantiatable with callbacks
-  action.prototype = new ActionType();
-  action.prototype.name = name;
-  action.prototype.func = func;
+  // Give all instantiated actions a common parent class and set base properties
+  ActionConstructor.prototype = new ActionType();
+  ActionConstructor.prototype.name = name;
+  ActionConstructor.prototype.func = func;
   
-  return action;
-}
-
-_MakeAction = function(successCallback, failureCallback) {
-  this.successCallback = successCallback;
-  this.failureCallback = failureCallback;
-  this.startTime = null;
+  // Method to instantiate a new action, binding it to the object the method was called on.
+  var ActionConstructorMethod = function(successCallback, failureCallback) {
+    var action = new ActionConstructor();
+    
+    action.thisObj = this;
+    action.successCallback = successCallback;
+    action.failureCallback = failureCallback;
+    action.startTime = null;
+    
+    return action;
+  }
+  
+  return ActionConstructorMethod;
 }
 
 function ActionType() {}
@@ -36,7 +41,7 @@ ActionType.prototype.perform = function() {
   
   // Add this action object to the end of the arguments list and call.
   var newargs = this.addToArgs(argArray);
-  return this.func.apply(null, newargs);
+  return this.func.apply(this.thisObj, newargs);
 }
 
 ActionType.prototype.addToArgs = function(args) {

@@ -30,18 +30,67 @@ function RedditLinkInfoFromJSON(json) {
   var linkData = json.data.children[0].data;
   var linkInfo = new RedditLinkInfo(linkData.url, linkData.name, linkData.title);
   
-  linkInfo.updateFromJSON(json);
+  linkInfo.setFromJSON(json);
   
   return linkInfo;
 }
 
+/**
+ * A high-level object for dealing with a single link on Reddit.
+ */
 function RedditLinkInfo(redditsite, url, fullname) {
   this.site = redditsite;
   this.url = url;
   this.fullname = fullname;
   
   this.state = new RedditLinkInfoState();
+  this.localState = new RedditLinkInfoState();
 }
+
+RedditLinkInfo.prototype.update = Action("RedditLinkInfo.update", function(action) {
+  var infoCall = new this.site.API.info(
+    hitchThis(this, function success(r, json) {
+      // Ensure the received data is not older than the last update (for instance, due to lag)
+      if (action.startTime >= this.state.lastUpdated) {
+        this.setFromJSON(json);
+        this.updateLocalState();
+        action.success(r, json);
+      } else {
+        logger.log(this.fullname, "State updated since update request, not updating state");
+      }
+    }),
+    function failure(r) {
+      action.failure(r);
+    }
+  );
+  
+  infoCall.perform(this.url);
+});
+
+RedditLinkInfo.prototype.vote = Action("RedditLinkInfo.vote", function(isLiked, action) {
+  if (this.localState.isLiked == true) {
+    this.localState.isLiked = null;
+    this.localState.score -= 1;
+  } else if (this.localState.isLiked == false) {
+    this.localState.isLiked = true;
+    this.localState.score += 2;
+  } else {
+    this.localState.isLiked = true;
+    this.localState.score += 1;
+  }
+
+  // Submit the vote, and then update state.
+  // (proceeding after each AJAX call completes)
+  var submit = new this.linkInfo.site.API.vote(
+    this.update, // FIXME: do not update "score" field -- the number reddit returns is unreliable
+    function failure(r) {
+      this.revertLocalState(submit.startTime, ["isLiked", "score"])
+      action.failure(r);
+    }
+  );    
+    
+  submit.perform(this.fullname, this.localState.isLiked);
+});
 
 const fullnameRegex = /(\w+)_(\w+)/;
 
@@ -53,29 +102,7 @@ RedditLinkInfo.prototype.getKind = function() {
   return fullnameRegex.exec(this.fullname)[1];
 }
 
-RedditLinkInfo.prototype.update = function(successCallback, failureCallback) {
-  var act = Action("RedditLinkInfo.update", hitchThis(this, function(action) {
-    var infoCall = new this.site.API.info(
-      hitchThis(this, function success(r, json) {
-        if (action.startTime >= this.state.lastUpdated) {
-          this.updateFromJSON(json);
-          action.success(r, json);
-        } else {
-          logger.log(this.fullname, "State updated since update request, not updating state");
-        }
-      }),
-      function failure(r) {
-        action.failure(r);
-      }
-    );
-    
-    infoCall.perform(this.url);
-  }));
-  
-  return (new act(successCallback, failureCallback));
-}
-
-RedditLinkInfo.prototype.updateFromJSON = function(json) {
+RedditLinkInfo.prototype.setFromJSON = function(json) {
   var linkData = json.data.children[0].data;
   
   this.state.title        = linkData.title;
@@ -95,4 +122,12 @@ RedditLinkInfo.prototype.updateFromJSON = function(json) {
                      "comments: " + this.state.commentCount + ", " +
                      "saved: "    + this.state.isSaved + ", "      +
                      "hidden: "   + this.state.isHidden            );
+}
+
+RedditLinkInfo.prototype.updateLocalState = function() {
+  this.localState.copy(this.state);
+}
+
+RedditLinkInfo.prototype.revertLocalState = function(properties, timestamp) {
+  this.localState.copy(this.state, properties, timestamp);
 }

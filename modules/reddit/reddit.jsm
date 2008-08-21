@@ -41,37 +41,21 @@ RedditSite.prototype.createBarContent = function(document, linkInfo) {
   
   barContent.linkInfo = linkInfo;
   
-  // FIXME: A hack because I'm tired of trying to figure out how to make XBL apply synchronously. 
-  barContent.afterBound = hitchThis(this, function() {
+  // We define behaviors here since I intend the RedditBarContent XBL to only be responsible for the display of a RedditLinkInfo instance.
+  // In other words, we'll treat it more like a support widget and define handlers for its commands here.
+  // FIXME: We'll use this 'afterBound' hack because I'm tired of trying to figure out how to make XBL apply synchronously.
+  barContent.afterBound = function() {
     
-    barContent.buttonLike.addEventListener("click", hitchThis(this, function(e) {
-      // We'll update the score locally, without using live data, since this is typically cached on reddit. In general, it makes more sense if there is a visible change in the score, even though we're not being totally accurate!
-      if (this.uiState.isLiked == true) {
-        this.uiState.isLiked = null;
-        this.uiState.score -= 1;
-      } else if (this.uiState.isLiked == false) {
-        this.uiState.isLiked = true;
-        this.uiState.score += 2;
+    this.buttonLike.addEventListener("click", function(e) {
+      if (this.linkInfo.localState.isLiked == true) {
+        (barContent.linkInfo.vote()).perform(null);
       } else {
-        this.uiState.isLiked = true;
-        this.uiState.score += 1;
+        (barContent.linkInfo.vote()).perform(true);
       }
-
-      this.update();
-      
-      // Submit the vote, and then update state.
-      // (proceeding after each AJAX call completes)
-      var submit = new this.linkInfo.site.API.vote(
-        new this.linkInfo.hitchHandler(this, "update", linkInfo, ["score"]),
-        sequenceCalls(
-          hitchHandler(this, "revertUIState", linkInfo, ["isLiked", "score"]),
-          hitchHandler(this, "actionFailureHandler", linkInfo)
-        )
-      );    
-        
-      submit.perform(barContent.linkInfo.fullname, barContent.uiState.isLiked);
-    }), false); 
-  });
+      barContent.update();
+    }, false);
+    
+  };
   
   barContent.style.MozBinding = "url(chrome://socialite/content/reddit/redditBar.xml#redditbarcontent)"; 
   return barContent;
@@ -109,7 +93,7 @@ RedditSite.prototype.linkClicked = function(e) {
     
     // Create the linkInfo object
     var linkInfo = new RedditLinkInfo(this, linkURL, linkID);
-    linkInfo.state.title = linkTitle;
+    linkInfo.localState.title = linkTitle;
     
     //
     // Get some "preloaded" information from the page while we can.
@@ -121,29 +105,29 @@ RedditSite.prototype.linkClicked = function(e) {
     var linkDislikeActive     = /downmod/.test(linkDislike.className);
 
     if (linkLikeActive) {
-      linkInfo.state.isLiked  = true;
+      linkInfo.localState.isLiked  = true;
     } else if (linkDislikeActive) {
-      linkInfo.state.isLiked  = false;
+      linkInfo.localState.isLiked  = false;
     } else {
-      linkInfo.state.isLiked  = null;
+      linkInfo.localState.isLiked  = null;
     }
     
     var scoreSpan             = doc.getElementById("score_"+linkInfo.fullname)
     if (scoreSpan) {
-      linkInfo.state.score    = parseInt(scoreSpan.textContent);
+      linkInfo.localState.score    = parseInt(scoreSpan.textContent);
     }
     
     var linkSubreddit          = doc.getElementById("subreddit_"+linkInfo.fullname)
     if (linkSubreddit) {
-      linkInfo.state.subreddit = linkSubreddit.textContent;
+      linkInfo.localState.subreddit = linkSubreddit.textContent;
     }
 
     var linkComments           = doc.getElementById("comment_"+linkInfo.fullname);
     var commentNum             = /((\d+)\s)?comment[s]?/.exec(linkComments.textContent)[2];
     if (commentNum) {
-      linkInfo.state.commentCount = parseInt(commentNum);
+      linkInfo.localState.commentCount = parseInt(commentNum);
     } else {
-      linkInfo.state.commentCount = 0;
+      linkInfo.localState.commentCount = 0;
     }
     
     var linkSave               = doc.getElementById("save_"+linkInfo.fullname+"_a");
@@ -152,11 +136,11 @@ RedditSite.prototype.linkClicked = function(e) {
     if (linkSave != null) {
       // If there's a save link
       // Whether it's clicked
-      linkInfo.state.isSaved = (linkSave.style.display == "none");
+      linkInfo.localState.isSaved = (linkSave.style.display == "none");
     } else if (linkUnsave != null) {
       // If there's an unsave link (assumption)
       // Whether it's not clicked
-      linkInfo.state.isSaved = (linkUnsave.style.display != "none");
+      linkInfo.localState.isSaved = (linkUnsave.style.display != "none");
     } else {
       // No save or unsave link present -- this shouldn't happen, as far as I know.
       logger.log(linkInfo.fullname, "Unexpected save link absence.");
@@ -168,9 +152,9 @@ RedditSite.prototype.linkClicked = function(e) {
     var linkUnhide           = doc.getElementById("unsave_"+linkInfo.fullname+"_a");
     
     if (linkHide != null) {
-      linkInfo.state.isHidden = false;
+      linkInfo.localState.isHidden = false;
     } else if (linkUnhide != null) {
-      linkInfo.state.isHidden = true;
+      linkInfo.localState.isHidden = true;
     } else {
       // No hide or unhide link present -- this shouldn't happen, as far as I know.
       logger.log(linkInfo.fullname, "Unexpected hide link absence.");

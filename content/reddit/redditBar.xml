@@ -29,7 +29,6 @@
 		</resources>
 		
 		<implementation>
-			<field name="uiState">new (Components.utils.import("resource://socialite/reddit/redditLinkInfo.jsm").RedditLinkInfoState)()</field>
 			<field name="afterBound"/>
 			
 			<constructor>
@@ -38,6 +37,7 @@
 				this.buttonComments = document.getAnonymousElementByAttribute(this, "anonid", "buttonComments");
 				this.buttonSave = document.getAnonymousElementByAttribute(this, "anonid", "buttonSave");
 				this.buttonHide = document.getAnonymousElementByAttribute(this, "anonid", "buttonHide");
+				this.update();
 				this.afterBound();
 			</constructor>
 			
@@ -45,10 +45,10 @@
         <body>
 					// Score label
 				  var labelScore = document.getAnonymousElementByAttribute(this, "anonid", "labelScore");
-				  labelScore.value = this.uiState.score || "?";
-				  if (this.uiState.isLiked == true) {
+				  labelScore.value = this.linkInfo.localState.score || "?";
+				  if (this.linkInfo.localState.isLiked == true) {
 				    labelScore.setAttribute("class", "reddit-score reddit-liked");
-				  } else if (this.uiState.isLiked == false) {
+				  } else if (this.linkInfo.localState.isLiked == false) {
 				    labelScore.setAttribute("class", "reddit-score reddit-disliked");
 				  } else {
 				    labelScore.setAttribute("class", "reddit-score");
@@ -56,26 +56,24 @@
          
 					// Title description
 					var descriptionTitle = document.getAnonymousElementByAttribute(this, "anonid", "descriptionTitle");
-					descriptionTitle.textContent = this.uiState.title;
+					descriptionTitle.textContent = this.linkInfo.localState.title;
 					
 					// Section label
 					var labelSubreddit = document.getAnonymousElementByAttribute(this, "anonid", "labelSubreddit");
-					if (this.uiState.subreddit) {
-				    labelSubreddit.value = "["+this.uiState.subreddit+"]";
+					if (this.linkInfo.localState.subreddit) {
+				    labelSubreddit.value = "["+this.linkInfo.localState.subreddit+"]";
 				  } else {
 				    labelSubreddit.value = "";
 				  }
 					
-					// Like/Dislike buttons						
-					
-					
+					// Like/Dislike buttons
 					var REDDIT_LIKE_INACTIVE_IMAGE = "chrome://socialite/content/reddit/upgray.png";
 					var REDDIT_LIKE_ACTIVE_IMAGE = "chrome://socialite/content/reddit/upmod.png";
 					var REDDIT_DISLIKE_INACTIVE_IMAGE = "chrome://socialite/content/reddit/downgray.png";
 					var REDDIT_DISLIKE_ACTIVE_IMAGE = "chrome://socialite/content/reddit/downmod.png";
 					
 					// Like button
-					if (this.uiState.isLiked == true) {
+					if (this.linkInfo.localState.isLiked == true) {
 				    this.buttonLike.image = REDDIT_LIKE_ACTIVE_IMAGE;
 				    this.buttonLike.checked = true;
 				  } else {
@@ -84,7 +82,7 @@
 				  }
 				  
 				  // Dislike button
-				  if (this.uiState.isLiked == false) {
+				  if (this.linkInfo.localState.isLiked == false) {
 				    this.buttonDislike.image = REDDIT_DISLIKE_ACTIVE_IMAGE;
 				    this.buttonDislike.checked = true;
 				  } else {
@@ -93,10 +91,10 @@
 				  }
 				  
 				  // Comments button
-				  this.buttonComments.label = this.uiState.commentCount + " &comments.label;";
+				  this.buttonComments.label = this.linkInfo.localState.commentCount + " &comments.label;";
 				  
 				  // Save button
-				  if (this.uiState.isSaved) {
+				  if (this.linkInfo.localState.isSaved) {
 				    this.buttonSave.label = "&unsave.label;";
 				    this.buttonSave.accesskey = "&unsave.accesskey;";
 				  } else {
@@ -105,7 +103,7 @@
 				  }
 				  
 				  // Hide button
-				  if (this.uiState.isHidden) {
+				  if (this.linkInfo.localState.isHidden) {
 				    this.buttonHide.label = "&unhide.label;";
 				    this.buttonHide.accesskey = "&unhide.accesskey;";
 				  } else {
