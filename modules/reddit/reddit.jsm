@@ -36,31 +36,6 @@ RedditSite.prototype.initialize = function() {
   (new this.authenticate()).perform();
 }
 
-RedditSite.prototype.createBarContent = function(document, linkInfo) {
-  var barContent = document.createElement("hbox");
-  
-  barContent.linkInfo = linkInfo;
-  
-  // We define behaviors here since I intend the RedditBarContent XBL to only be responsible for the display of a RedditLinkInfo instance.
-  // In other words, we'll treat it more like a support widget and define handlers for its commands here.
-  // FIXME: We'll use this 'afterBound' hack because I'm tired of trying to figure out how to make XBL apply synchronously.
-  barContent.afterBound = function() {
-    
-    this.buttonLike.addEventListener("click", function(e) {
-      if (this.linkInfo.localState.isLiked == true) {
-        (barContent.linkInfo.vote()).perform(null);
-      } else {
-        (barContent.linkInfo.vote()).perform(true);
-      }
-      barContent.update();
-    }, false);
-    
-  };
-  
-  barContent.style.MozBinding = "url(chrome://socialite/content/reddit/redditBar.xml#redditbarcontent)"; 
-  return barContent;
-}
-
 RedditSite.prototype.onSitePageLoad = function(doc, win) {
   // Iterate over each article link and register event listener
   var res = doc.evaluate('//a[@class="title loggedin"]', doc.documentElement, null, XPathResult.UNORDERED_NODE_SNAPSHOT_TYPE, null );
@@ -166,6 +141,58 @@ RedditSite.prototype.linkClicked = function(e) {
   // Add the information we collected to the watch list  
   logger.log(linkInfo.fullname, "Clicked");
   this.parent.watchedURLs.watch(link.href, linkInfo);
+}
+
+RedditSite.prototype.createBarContent = function(document, linkInfo) {
+  var barContent = document.createElement("hbox");
+  
+  barContent.linkInfo = linkInfo;
+  
+  // We define behaviors here since I intend the RedditBarContent XBL to only be responsible for the display of a RedditLinkInfo instance.
+  // In other words, we'll treat it more like a support widget and define handlers for its commands here.
+  // FIXME: We'll use this 'afterBound' hack because I'm tired of trying to figure out how to make XBL apply synchronously.
+  var site = this;
+  barContent.afterBound = function() {
+    
+    var failureHandler = hitchHandler(site, "actionFailureHandler", barContent.linkInfo);
+    
+    this.buttonLike.addEventListener("click", function(e) {
+      var vote = barContent.linkInfo.vote();
+      vote.failureCallback = failureHandler;
+      if (this.linkInfo.localState.isLiked == true) {
+        vote.perform(null);
+      } else {
+        vote.perform(true);
+      }
+      barContent.update();
+    }, false);
+    
+    this.buttonDislike.addEventListener("click", function(e) {
+      var vote = barContent.linkInfo.vote();
+      vote.failureCallback = failureHandler;
+      if (this.linkInfo.localState.isLiked == false) {
+        vote.perform(null);
+      } else {
+        vote.perform(false);
+      }
+      barContent.update();
+    }, false);
+    
+  };
+  
+  barContent.style.MozBinding = "url(chrome://socialite/content/reddit/redditBar.xml#redditbarcontent)"; 
+  return barContent;
+}
+
+RedditSite.prototype.actionFailureHandler = function(linkInfo, r, action) {
+  // 5xx error codes
+  if (r.status >= 500 && r.status < 600) {
+    text = "Reddit was unable to perform the requested action (" + action.name + "). Please try again later.";
+  } else {
+    text = "Unexpected HTTP status " + r.status + " recieved (" + action.name + ")";
+  }
+  
+  this.parent.failureMessage(text);
 }
 
 /*

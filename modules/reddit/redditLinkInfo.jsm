@@ -68,28 +68,42 @@ RedditLinkInfo.prototype.update = Action("RedditLinkInfo.update", function(actio
 });
 
 RedditLinkInfo.prototype.vote = Action("RedditLinkInfo.vote", function(isLiked, action) {
-  if (this.localState.isLiked == true) {
-    this.localState.isLiked = null;
-    this.localState.score -= 1;
-  } else if (this.localState.isLiked == false) {
-    this.localState.isLiked = true;
-    this.localState.score += 2;
-  } else {
-    this.localState.isLiked = true;
-    this.localState.score += 1;
-  }
-
-  // Submit the vote, and then update state.
-  // (proceeding after each AJAX call completes)
-  var submit = new this.linkInfo.site.API.vote(
-    this.update, // FIXME: do not update "score" field -- the number reddit returns is unreliable
-    function failure(r) {
-      this.revertLocalState(submit.startTime, ["isLiked", "score"])
-      action.failure(r);
+  if (isLiked != this.localState.isLiked) {
+    // Determine the updated score
+    if (isLiked == true) {
+      if (this.localState.isLiked == false) {
+        this.localState.score += 2;
+      } else if (this.localState.isLiked == null) {
+        this.localState.score += 1;
+      }
+    } else if (isLiked == false) {
+      if (this.localState.isLiked == true) {
+        this.localState.score -= 2;
+      } else if (this.localState.isLiked == null) {
+        this.localState.score -= 1;
+      }
+    } else if (isLiked == null) {
+      if (this.localState.isLiked == true) {
+        this.localState.score -= 1;
+      } else if (this.localState.isLiked == false) {
+        this.localState.score += 1;
+      }
     }
-  );    
     
-  submit.perform(this.fullname, this.localState.isLiked);
+    this.localState.isLiked = isLiked;
+
+    // Submit the vote, and then update state.
+    // (proceeding after each AJAX call completes)
+    var submit = new this.linkInfo.site.API.vote(
+      this.update, // FIXME: do not update "score" field -- the number reddit returns is unreliable
+      function failure(r) {
+        this.revertLocalState(submit.startTime, ["isLiked", "score"])
+        action.failure(r);
+      }
+    );    
+      
+    submit.perform(this.fullname, this.localState.isLiked);
+  }
 });
 
 const fullnameRegex = /(\w+)_(\w+)/;

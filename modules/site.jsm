@@ -58,3 +58,7 @@ SiteCollection.prototype.onContentLoad = function(doc, win) {
     }
   });
 }
+
+SiteCollection.prototype.failureMessage = function(message) {
+  this.socialite.failureMessage(message);
+}

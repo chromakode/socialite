@@ -189,55 +189,15 @@ Socialite.createNotificationBar = function(notificationBox) {
   return notification;
 }
 
-Socialite.redditUpdateLinkInfo = function(linkInfo, omit) {
-  linkInfo.update(
-    hitchThis(this, function success(r, json, action) {
-      // Only update the UI if the update started after the last user-caused UI update.
-      if (action.startTime >= linkInfo.uiState.lastUpdated) {
-        linkInfo.updateUIState(omit);
-        this.updateButtons(linkInfo);
-      } else {
-        logger.log(linkInfo.fullname, "UI changed since update request, not updating UI");
-      }
-    }),
-    hitchThis(this, function failure(r, action) {
-      this.failureNotification(linkInfo, r, action);
-    })
-  ).perform();
-}
+Socialite.failureMessage = function(message) {
+  logger.log("Socialite", "Failure occurred, message: " + message);
 
-Socialite.revertUIState = function(linkInfo, properties, r, action) {
-  linkInfo.revertUIState(properties, action.startTime);
-  this.updateButtons(linkInfo);
-}
-
-Socialite.actionFailureHandler = function(linkInfo, r, action) {
-  this.failureNotification(linkInfo, r, action);
-  this.redditUpdateLinkInfo(linkInfo);
-}
-
-Socialite.failureNotification = function(linkInfo, r, action) {
-  var text;
-  
-  var linkID;
-  if (linkInfo) {
-    linkID = linkInfo.fullname;
-  } else {
-    linkID = "unknown";
-  }
-  logger.log(linkID, "Failure occurred, action: " + action.name + ", status: " + r.status);
-  
-  if (r.status == 200) {
-    text = "The requested action failed (" + action.name + ")";
-  } else {
-    text = "Unexpected HTTP status " + r.status + " recieved (" + action.name + ")";
-  }
-  
   alertsService.showAlertNotification(
     "chrome://global/skin/icons/Error.png",
-    "Socialite Connection Error",
-    text, 
-    null, null, null, "socialite-failure");
+    "Socialite Error",
+    message, 
+    null, null, null, "socialite-failure"
+  );
 }
 
 // ---
