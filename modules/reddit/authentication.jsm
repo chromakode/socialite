@@ -49,7 +49,7 @@ var getAuthHash = Action("reddit_auth.getAuthHash", function(siteURL, action) {
   var logins = loginManager.findLogins({}, PASSWORD_HOSTNAME, null, PASSWORD_REALM_PRE + siteURL);
   if (logins.length == 0) {
     // No stored hash... time to get one
-    var act = new refreshAuthHash();
+    var act = refreshAuthHash();
     act.chainTo(action);
     act.perform(siteURL);
   } else {

@@ -8,7 +8,7 @@ var EXPORTED_SYMBOLS = ["RequestAction", "GetAction", "PostAction"];
 STATUS_SUCCESS = 200;
 
 function RequestAction(method, url, parameters, successCallback, failureCallback) {
-  var act = new _HTTPRequestAction(successCallback, failureCallback);
+  var act = _HTTPRequestAction(successCallback, failureCallback);
   
   act.url = url;
   
@@ -37,11 +37,11 @@ function RequestAction(method, url, parameters, successCallback, failureCallback
 }
 
 function GetAction(url, parameters, successCallback, failureCallback) {
-  return new RequestAction("get", url, parameters, successCallback, failureCallback);
+  return RequestAction("get", url, parameters, successCallback, failureCallback);
 }
 
 function PostAction(url, parameters, successCallback, failureCallback) {
-  return new RequestAction("post", url, parameters, successCallback, failureCallback);
+  return RequestAction("post", url, parameters, successCallback, failureCallback);
 }
 
 // Based on code from reddit.com javascript:

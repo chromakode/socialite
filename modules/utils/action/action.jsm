@@ -5,16 +5,17 @@ logger = Components.utils.import("resource://socialite/utils/log.jsm");
 var EXPORTED_SYMBOLS = ["Action", "ActionType"];
 
 function Action(name, func) {
-  var ActionConstructor = function(){};
+  // Create a new object "class" for this action
+  var ActionClass = function(){};
 
-  // Give all instantiated actions a common parent class and set base properties
-  ActionConstructor.prototype = new ActionType();
-  ActionConstructor.prototype.name = name;
-  ActionConstructor.prototype.func = func;
+  // Give all instantiated actions the common parent class and set base properties
+  ActionClass.prototype = new ActionType();
+  ActionClass.prototype.name = name;
+  ActionClass.prototype.func = func;
   
-  // Method to instantiate a new action, binding it to the object the method was called on.
+  // Method to instantiate a new action, binding it to the object the method was called on
   var ActionConstructorMethod = function(successCallback, failureCallback) {
-    var action = new ActionConstructor();
+    var action = new ActionClass();
     
     action.thisObj = this;
     action.successCallback = successCallback;
@@ -23,6 +24,9 @@ function Action(name, func) {
     
     return action;
   }
+  
+  // To modify the action class after the fact, we'll create a property on the constructor
+  ActionConstructorMethod.action = ActionClass;
   
   return ActionConstructorMethod;
 }

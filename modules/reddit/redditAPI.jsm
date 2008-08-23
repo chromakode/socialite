@@ -37,10 +37,10 @@ function RedditAPI(reddit) {
   this.reddit = reddit;
   
   this.infoQuantizer = new Quantizer("reddit.info.quantizer", QUANTIZE_TIME, sameURL);
-  this.info.func = this.infoQuantizer.quantize(this.info.func);
+  this.info.action.prototype.func = this.infoQuantizer.quantize(this.info.action.prototype.func);
   
   this.voteQuantizer = new Quantizer("reddit.vote.quantizer", QUANTIZE_TIME, sameLinkID);
-  this.vote.func = this.voteQuantizer.quantize(this.vote.func);
+  this.vote.action.prototype.func = this.voteQuantizer.quantize(this.vote.action.prototype.func);
 }
 
 RedditAPI.prototype.info = Action("reddit.info", function(url, action) {
@@ -53,7 +53,7 @@ RedditAPI.prototype.info = Action("reddit.info", function(url, action) {
   };
    
   http.GetAction(
-    APIURL(this.reddit.auth.site, "info.json"),
+    APIURL(this.reddit.auth.siteURL, "info.json"),
     params,
     
     function success(r) {
@@ -103,7 +103,7 @@ RedditAPI.prototype.vote = Action("reddit.vote", function(linkID, isLiked, actio
   };
   params = this.reddit.auth.authModHash(params);
   
-  var act = http.PostAction(APIURL(this.reddit.auth.site, "vote"), params);
+  var act = http.PostAction(APIURL(this.reddit.auth.siteURL, "vote"), params);
   act.chainTo(action);
   act.perform();
 });

@@ -19,21 +19,21 @@ function RedditSite(sitename, siteurl) {
   this.API = new RedditAPI(this);
   this.bookmarkletAPI = new BookmarkletAPI(this);
   
-  this.authenticate = Action("reddit.authenticate", hitchThis(this, function(action) {
-    (new getAuthHash(
+  this.authenticate = Action("reddit.authenticate", function(action) {
+    (getAuthHash(
       hitchThis(this, function success(auth) {
         this.auth = auth;
         action.success(auth);
       }),
       function failure() { action.failure(); }
     )).perform(this.siteurl);
-  }));
+  });
 }
 
 RedditSite.prototype = new SocialiteSite();
 
 RedditSite.prototype.initialize = function() {
-  (new this.authenticate()).perform();
+  this.authenticate().perform();
 }
 
 RedditSite.prototype.onSitePageLoad = function(doc, win) {
@@ -159,7 +159,7 @@ RedditSite.prototype.createBarContent = function(document, linkInfo) {
     this.buttonLike.addEventListener("click", function(e) {
       var vote = barContent.linkInfo.vote();
       vote.failureCallback = failureHandler;
-      if (this.linkInfo.localState.isLiked == true) {
+      if (barContent.linkInfo.localState.isLiked == true) {
         vote.perform(null);
       } else {
         vote.perform(true);
@@ -170,7 +170,7 @@ RedditSite.prototype.createBarContent = function(document, linkInfo) {
     this.buttonDislike.addEventListener("click", function(e) {
       var vote = barContent.linkInfo.vote();
       vote.failureCallback = failureHandler;
-      if (this.linkInfo.localState.isLiked == false) {
+      if (barContent.linkInfo.localState.isLiked == false) {
         vote.perform(null);
       } else {
         vote.perform(false);

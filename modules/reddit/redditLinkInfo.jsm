@@ -94,7 +94,7 @@ RedditLinkInfo.prototype.vote = Action("RedditLinkInfo.vote", function(isLiked, 
 
     // Submit the vote, and then update state.
     // (proceeding after each AJAX call completes)
-    var submit = new this.linkInfo.site.API.vote(
+    var submit = this.site.API.vote(
       this.update, // FIXME: do not update "score" field -- the number reddit returns is unreliable
       function failure(r) {
         this.revertLocalState(submit.startTime, ["isLiked", "score"])
