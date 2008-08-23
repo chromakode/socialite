@@ -155,10 +155,18 @@ RedditSite.prototype.createBarContent = function(document, linkInfo) {
   barContent.afterBound = function() {
     
     var failureHandler = hitchHandler(site, "actionFailureHandler", barContent.linkInfo);
-    
+    var voteUpdateHandler = function() {
+      barContent.linkInfo.update(
+        hitchThis(barContent, barContent.update),
+        failureHandler
+      ).perform(["score"]);
+    };
+        
     this.buttonLike.addEventListener("click", function(e) {
-      var vote = barContent.linkInfo.vote();
-      vote.failureCallback = failureHandler;
+      var vote = barContent.linkInfo.vote(
+        voteUpdateHandler,
+        failureHandler
+      );
       if (barContent.linkInfo.localState.isLiked == true) {
         vote.perform(null);
       } else {
@@ -168,8 +176,10 @@ RedditSite.prototype.createBarContent = function(document, linkInfo) {
     }, false);
     
     this.buttonDislike.addEventListener("click", function(e) {
-      var vote = barContent.linkInfo.vote();
-      vote.failureCallback = failureHandler;
+      var vote = barContent.linkInfo.vote(
+        voteUpdateHandler,
+        failureHandler
+      );
       if (barContent.linkInfo.localState.isLiked == false) {
         vote.perform(null);
       } else {

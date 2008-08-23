@@ -28,18 +28,18 @@
     </content>
 
     <implementation>
-      <field name="parent"/>
+      <field name="linkInfo"/>
     </implementation>
     
     <handlers>
       <handler event="popupshowing">
-      	if (this.parent) {
-      		var parent = this.parent; 
+      	if (this.linkInfo) {
+      		var linkInfo = this.linkInfo; 
       	} else {
-      		var parent = document.getBindingParent(this);
+      		var linkInfo = document.getBindingParent(this).linkInfo;
       	}
-        this.setAttribute("likeCount", parent.uiState.likeCount || "&unknown;");
-        this.setAttribute("dislikeCount", parent.uiState.dislikeCount || "&unknown;");
+        this.setAttribute("likeCount", linkInfo.localState.likeCount || "&unknown;");
+        this.setAttribute("dislikeCount", linkInfo.localState.dislikeCount || "&unknown;");
       </handler>
     </handlers>
 

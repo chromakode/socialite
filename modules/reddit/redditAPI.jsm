@@ -36,11 +36,13 @@ function sameLinkID(func1, arg1, func2, arg2) {
 function RedditAPI(reddit) {
   this.reddit = reddit;
   
+  // Replace (hook in) this instances' action functions with quantized versions.
+  // This way, we need only create the actions once, in the RedditAPI prototype, yet can get instance-specific quantization upon instantiation.
   this.infoQuantizer = new Quantizer("reddit.info.quantizer", QUANTIZE_TIME, sameURL);
-  this.info.action.prototype.func = this.infoQuantizer.quantize(this.info.action.prototype.func);
+  this.info.actionClass.prototype.func = this.infoQuantizer.quantize(this.info.actionClass.prototype.func);
   
   this.voteQuantizer = new Quantizer("reddit.vote.quantizer", QUANTIZE_TIME, sameLinkID);
-  this.vote.action.prototype.func = this.voteQuantizer.quantize(this.vote.action.prototype.func);
+  this.vote.actionClass.prototype.func = this.voteQuantizer.quantize(this.vote.actionClass.prototype.func);
 }
 
 RedditAPI.prototype.info = Action("reddit.info", function(url, action) {

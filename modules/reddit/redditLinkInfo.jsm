@@ -47,17 +47,17 @@ function RedditLinkInfo(redditsite, url, fullname) {
   this.localState = new RedditLinkInfoState();
 }
 
-RedditLinkInfo.prototype.update = Action("RedditLinkInfo.update", function(action) {
-  var infoCall = new this.site.API.info(
+RedditLinkInfo.prototype.update = Action("RedditLinkInfo.update", function(omittedFields, action) {  
+  var infoCall = this.site.API.info(
     hitchThis(this, function success(r, json) {
       // Ensure the received data is not older than the last update (for instance, due to lag)
       if (action.startTime >= this.state.lastUpdated) {
         this.setFromJSON(json);
-        this.updateLocalState();
-        action.success(r, json);
+        this.updateLocalState(omittedFields, action.startTime);
       } else {
         logger.log(this.fullname, "State updated since update request, not updating state");
       }
+      action.success(r, json);
     }),
     function failure(r) {
       action.failure(r);
@@ -95,7 +95,9 @@ RedditLinkInfo.prototype.vote = Action("RedditLinkInfo.vote", function(isLiked, 
     // Submit the vote, and then update state.
     // (proceeding after each AJAX call completes)
     var submit = this.site.API.vote(
-      this.update, // FIXME: do not update "score" field -- the number reddit returns is unreliable
+      function success(r) {
+        action.success(r);
+      },
       function failure(r) {
         this.revertLocalState(submit.startTime, ["isLiked", "score"])
         action.failure(r);
@@ -138,8 +140,8 @@ RedditLinkInfo.prototype.setFromJSON = function(json) {
                      "hidden: "   + this.state.isHidden            );
 }
 
-RedditLinkInfo.prototype.updateLocalState = function() {
-  this.localState.copy(this.state);
+RedditLinkInfo.prototype.updateLocalState = function(omittedFields, timestamp) {
+  this.localState.copy(this.state, omittedFields, timestamp, true);
 }
 
 RedditLinkInfo.prototype.revertLocalState = function(properties, timestamp) {

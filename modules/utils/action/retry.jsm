@@ -7,7 +7,7 @@ Components.utils.import("resource://socialite/utils/hitch.jsm");
 var EXPORTED_SYMBOLS = ["retryAction"];
 
 function retryAction(startCount, delay, retryCallback, successCallback, failureCallback) {
-  var act = new _RetryAction(successCallback, failureCallback);
+  var act = _RetryAction(successCallback, failureCallback);
   act.count = startCount;
   act.delay = delay
   act.retryCallback = retryCallback;

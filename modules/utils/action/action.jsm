@@ -26,7 +26,7 @@ function Action(name, func) {
   }
   
   // To modify the action class after the fact, we'll create a property on the constructor
-  ActionConstructorMethod.action = ActionClass;
+  ActionConstructorMethod.actionClass = ActionClass;
   
   return ActionConstructorMethod;
 }

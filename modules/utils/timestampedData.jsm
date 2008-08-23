@@ -52,16 +52,26 @@ TimestampedData.prototype.getTimestamp = function(name) {
  *          null).
  * @param timestamp
  *          The timestamp (number of milliseconds since epoch).
+ * @param omit
+ *          If true, fields given will be ommitted and all other fields will be
+ *          copied.
  */
-TimestampedData.prototype.copy = function(data, fields, timestamp) {
-  if (!fields) {
-    // Default to copying all fields
-    fields = data.fields;
+TimestampedData.prototype.copy = function(data, fields, timestamp, omit) {
+  if (omit) {
+    // Copy all fields except those omitted
+    var copiedFields = data.fields.filter(function(field) {
+      return fields.indexOf(field) == -1; 
+    });
+  } else {
+    if (!fields) {
+      // Default to copying all fields
+      fields = data.fields;
+    }
+    // Copy only the fields required
+    var copiedFields = fields;
   }
   
-  for (var i=0; i<fields.length; i++) {
-    var field = fields[i];
-    
+  copiedFields.forEach(function(field, index, array) {
     // If the stored value hasn't been updated since the timestamp, copy it.
     if ((field in this) && 
        ((timestamp == null) || (timestamp >= this.getTimestamp(field)))) {
@@ -69,5 +79,6 @@ TimestampedData.prototype.copy = function(data, fields, timestamp) {
     } else {
       // Modified since revert timestamp, skipping copy.
     }
-  }
+  }, this);
+  
 }
