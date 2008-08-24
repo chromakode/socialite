@@ -11,7 +11,7 @@
 					<xul:tooltip anonid="tooltipScore" class="reddit-score-tooltip"/>
 					<xul:label anonid="labelScore" value="?" class="reddit-score"/>
 				</xul:box>
-				<xul:description anonid="descriptionTitle" flex="1"/>
+				<xul:description anonid="descriptionTitle" class="socialite-title" flex="1"/>
 				<xul:label anonid="labelSubreddit" class="reddit-subreddit"/>
 				<xul:spacer flex="9999"/>
 				<xul:button anonid="buttonLike" type="checkbox" label="&like.label;" accesskey="&like.accesskey;" autoCheck="false"/>
@@ -25,6 +25,7 @@
 		</content>
 		
 		<resources>
+			<stylesheet src="chrome://socialite/skin/socialite.css"/>
 			<stylesheet src="chrome://socialite/skin/reddit.css"/>
 		</resources>
 		
@@ -34,9 +35,11 @@
 			<constructor>
 				this.buttonLike = document.getAnonymousElementByAttribute(this, "anonid", "buttonLike");
 				this.buttonDislike = document.getAnonymousElementByAttribute(this, "anonid", "buttonDislike");
+				this.labelSubreddit = document.getAnonymousElementByAttribute(this, "anonid", "labelSubreddit");
 				this.buttonComments = document.getAnonymousElementByAttribute(this, "anonid", "buttonComments");
 				this.buttonSave = document.getAnonymousElementByAttribute(this, "anonid", "buttonSave");
 				this.buttonHide = document.getAnonymousElementByAttribute(this, "anonid", "buttonHide");
+				this.buttonRandom = document.getAnonymousElementByAttribute(this, "anonid", "buttonRandom");
 				this.update();
 				this.afterBound();
 			</constructor>

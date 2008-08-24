@@ -200,6 +200,10 @@ Socialite.failureMessage = function(message) {
   );
 }
 
+Socialite.openUILink = function(url, e) {
+  openUILink(url, e);
+}
+
 // ---
 
 Socialite.init();

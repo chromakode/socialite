@@ -11,9 +11,9 @@ var EXPORTED_SYMBOLS = ["RedditSite"];
 
 var XPathResult = Components.interfaces.nsIDOMXPathResult;
 
-function RedditSite(sitename, siteurl) {
-  this.sitename = sitename;
-  this.siteurl = siteurl;
+function RedditSite(siteName, siteURL) {
+  this.siteName = siteName;
+  this.siteURL = siteURL;
   
   this.auth = null;
   this.API = new RedditAPI(this);
@@ -161,6 +161,16 @@ RedditSite.prototype.createBarContent = function(document, linkInfo) {
         failureHandler
       ).perform(["score"]);
     };
+    var updateHandler = function() {
+      barContent.linkInfo.update(
+        hitchThis(barContent, barContent.update),
+        failureHandler
+      ).perform([]);
+    };
+    
+    this.labelSubreddit.addEventListener("click", function(e) {
+      site.parent.openUILink("http://"+site.siteURL+"/r/"+barContent.linkInfo.localState.subreddit+"/", e);
+    }, false);
         
     this.buttonLike.addEventListener("click", function(e) {
       var vote = barContent.linkInfo.vote(
@@ -188,6 +198,53 @@ RedditSite.prototype.createBarContent = function(document, linkInfo) {
       barContent.update();
     }, false);
     
+    this.buttonComments.addEventListener("click", function(e) {
+      site.parent.openUILink("http://"+site.siteURL+"/info/"+barContent.linkInfo.getID()+"/comments/", e);
+    }, false);
+    
+    this.buttonSave.addEventListener("click", function(e) {
+      if (barContent.linkInfo.localState.isSaved) {
+        var submit = barContent.linkInfo.unsave(
+          updateHandler,
+          failureHandler
+        );
+      } else {
+        var submit = barContent.linkInfo.save(
+          updateHandler,
+          failureHandler
+        );
+      }
+      submit.perform()
+      barContent.update();
+    }, false);
+    
+    this.buttonHide.addEventListener("click", function(e) {
+      if (barContent.linkInfo.localState.isHidden) {
+        var submit = barContent.linkInfo.unhide(
+          updateHandler,
+          failureHandler
+        );
+      } else {
+        var submit = barContent.linkInfo.hide(
+          updateHandler,
+          failureHandler
+        );
+      }
+      submit.perform()
+      barContent.update();
+    }, false);
+    
+    this.buttonRandom.addEventListener("click", function(e) {
+      site.API.randomrising(
+        function (r, json) {
+          var linkInfo = RedditLinkInfoFromJSON(this, json);
+          site.parent.watchedURLs.watch(linkInfo.url, linkInfo);
+          site.parent.openUILink(linkInfo.url, e);
+        },
+        failureHandler
+      ).perform();
+    }, false);
+    
   };
   
   barContent.style.MozBinding = "url(chrome://socialite/content/reddit/redditBar.xml#redditbarcontent)"; 
@@ -204,228 +261,3 @@ RedditSite.prototype.actionFailureHandler = function(linkInfo, r, action) {
   
   this.parent.failureMessage(text);
 }
-
-/*
-Socialite.updateLikeButtons = function(ui, isLiked) {
-  if (isLiked == true) {
-    ui.buttonLike.setAttribute("image", REDDIT_LIKE_ACTIVE_IMAGE);
-    ui.buttonLike.setAttribute("checked", true);
-  } else {
-    ui.buttonLike.setAttribute("image", REDDIT_LIKE_INACTIVE_IMAGE);
-    ui.buttonLike.setAttribute("checked", false);
-  }
-  
-  if (isLiked == false) {
-    ui.buttonDislike.setAttribute("image", REDDIT_DISLIKE_ACTIVE_IMAGE);
-    ui.buttonDislike.setAttribute("checked", true);
-  } else {
-    ui.buttonDislike.setAttribute("image", REDDIT_DISLIKE_INACTIVE_IMAGE);
-    ui.buttonDislike.setAttribute("checked", false);
-  }
-};
-
-Socialite.updateScoreLabel = function(ui, score, isLiked) {
-  ui.labelScore.setAttribute("value", score);
-  if (isLiked == true) {
-    ui.labelScore.setAttribute("class", "socialite-score socialite-liked");
-  } else if (isLiked == false) {
-    ui.labelScore.setAttribute("class", "socialite-score socialite-disliked");  
-  } else {
-    ui.labelScore.setAttribute("class", "socialite-score");  
-  }
-}
-
-Socialite.updateSectionLabel = function(ui, section) {
-  if (section) {
-    ui.labelSection.setAttribute("value", "["+section+"]");
-  } else {
-    ui.labelSection.setAttribute("value", "");
-  }
-}
-
-Socialite.updateCommentsButton = function(ui, commentCount) {
-  ui.buttonComments.setAttribute("label", this.strings.getFormattedString("comments", [commentCount.toString()]));
-}
-
-Socialite.updateSaveButton = function(ui, isSaved) {
-  if (isSaved) {
-    ui.buttonSave.setAttribute("label", this.strings.getString("unsave"));
-    ui.buttonSave.setAttribute("accesskey", this.strings.getString("unsave.accesskey"));
-  } else {
-    ui.buttonSave.setAttribute("label", this.strings.getString("save"));
-    ui.buttonSave.setAttribute("accesskey", this.strings.getString("save.accesskey"));
-  }
-}
-
-Socialite.updateHideButton = function(ui, isHidden) {
-  if (isHidden) {
-    ui.buttonHide.setAttribute("label", this.strings.getString("unhide"));
-    ui.buttonHide.setAttribute("accesskey", this.strings.getString("unhide.accesskey"));
-  } else {
-    ui.buttonHide.setAttribute("label", this.strings.getString("hide"));
-    ui.buttonHide.setAttribute("accesskey", this.strings.getString("hide.accesskey"));
-  }
-}
-
-Socialite.updateButtons = function(linkInfo) {
-  if (linkInfo.modActive) {
-    linkInfo.ui.buttonLike.setAttribute("disabled", false);
-    linkInfo.ui.buttonDislike.setAttribute("disabled", false);
-    linkInfo.ui.buttonSave.setAttribute("disabled", false);
-  } else {
-    linkInfo.ui.buttonLike.setAttribute("disabled", true);
-    linkInfo.ui.buttonDislike.setAttribute("disabled", true);
-    linkInfo.ui.buttonSave.setAttribute("disabled", true);
-  }
-  
-  this.updateLikeButtons(linkInfo.ui, linkInfo.uiState.isLiked);
-  this.updateScoreLabel(linkInfo.ui, linkInfo.uiState.score, linkInfo.uiState.isLiked);
-  this.updateSectionLabel(linkInfo.ui, linkInfo.uiState.subreddit);
-  this.updateCommentsButton(linkInfo.ui, linkInfo.uiState.commentCount);
-  this.updateSaveButton(linkInfo.ui, linkInfo.uiState.isSaved);
-  this.updateHideButton(linkInfo.ui, linkInfo.uiState.isHidden);
-  
-  logger.log(linkInfo.fullname, "Updated UI");
-}
-
-Socialite.siteLinkClicked = function(e) {
-  openUILink("http://www.reddit.com", e);
-};
-
-Socialite.buttonLikeClicked = function(linkInfo, e) {
-  // We'll update the score locally, without using live data, since this is typically cached on reddit. In general, it makes more sense if there is a visible change in the score, even though we're not being totally accurate!
-  if (linkInfo.uiState.isLiked == true) {
-    linkInfo.uiState.isLiked = null;
-    linkInfo.uiState.score -= 1;
-  } else if (linkInfo.uiState.isLiked == false) {
-    linkInfo.uiState.isLiked = true;
-    linkInfo.uiState.score += 2;
-  } else {
-    linkInfo.uiState.isLiked = true;
-    linkInfo.uiState.score += 1;
-  }
-
-  // Provide instant feedback before sending
-  this.updateLikeButtons(linkInfo.ui, linkInfo.uiState.isLiked);
-  this.updateScoreLabel(linkInfo.ui, linkInfo.uiState.score, linkInfo.uiState.isLiked);
-  
-  // Submit the vote, and then update state.
-  // (proceeding after each AJAX call completes)
-  var submit = new this.reddit.API.vote(
-    hitchHandler(this, "redditUpdateLinkInfo", linkInfo, ["score"]),
-    sequenceCalls(
-      hitchHandler(this, "revertUIState", linkInfo, ["isLiked", "score"]),
-      hitchHandler(this, "actionFailureHandler", linkInfo)
-    )
-  );    
-    
-  submit.perform(linkInfo.fullname, linkInfo.uiState.isLiked);
-};
-
-Socialite.buttonDislikeClicked = function(linkInfo, e) {
-  if (linkInfo.uiState.isLiked == true) {
-    linkInfo.uiState.isLiked = false;
-    linkInfo.uiState.score -= 2;
-  } else if (linkInfo.uiState.isLiked == false) {
-    linkInfo.uiState.isLiked = null;
-    linkInfo.uiState.score += 1;
-  } else {
-    linkInfo.uiState.isLiked = false;
-    linkInfo.uiState.score -= 1;
-  }
-  
-  // Provide instant feedback before sending
-  this.updateLikeButtons(linkInfo.ui, linkInfo.uiState.isLiked);
-  this.updateScoreLabel(linkInfo.ui, linkInfo.uiState.score, linkInfo.uiState.isLiked);
-  
-  // Submit the vote, and then update state.
-  // (proceeding after the AJAX call completes)
-  var submit = new this.reddit.API.vote(
-    hitchHandler(this, "redditUpdateLinkInfo", linkInfo, ["score"]),
-    sequenceCalls(
-      hitchHandler(this, "revertUIState", linkInfo, ["isLiked", "score"]),
-      hitchHandler(this, "actionFailureHandler", linkInfo)
-    )
-  );
-  
-  submit.perform(linkInfo.fullname, linkInfo.uiState.isLiked);
-};
-
-Socialite.sectionClicked = function(linkInfo, e) {
-  openUILink("http://www.reddit.com/r/"+linkInfo.state.subreddit+"/", e);
-};
-
-Socialite.buttonCommentsClicked = function(linkInfo, e) {
-  openUILink("http://www.reddit.com/info/"+linkInfo.getID()+"/comments/", e);
-};
-
-Socialite.buttonSaveClicked = function(linkInfo, e) {
-  if (linkInfo.uiState.isSaved) {
-    
-    linkInfo.uiState.isSaved = false;
-    this.updateSaveButton(linkInfo.ui, linkInfo.uiState.isSaved);
-
-    (new this.reddit.API.unsave(
-      hitchHandler(this, "redditUpdateLinkInfo", linkInfo),
-      sequenceCalls(
-        hitchHandler(this, "revertUIState", linkInfo, ["isSaved"]),
-        hitchHandler(this, "actionFailureHandler", linkInfo)
-      )
-    )).perform(linkInfo.fullname);
-        
-  } else {
-  
-    linkInfo.uiState.isSaved = true;
-    this.updateSaveButton(linkInfo.ui, linkInfo.uiState.isSaved);
-
-    (new this.reddit.API.save(
-      hitchHandler(this, "redditUpdateLinkInfo", linkInfo),
-      sequenceCalls(
-        hitchHandler(this, "revertUIState", linkInfo, ["isSaved"]),
-        hitchHandler(this, "actionFailureHandler", linkInfo)
-      )
-    )).perform(linkInfo.fullname);
-  }
-};
-
-Socialite.buttonHideClicked = function(linkInfo, e) {
-  if (linkInfo.uiState.isHidden) {
-    
-    linkInfo.uiState.isHidden = false;
-    this.updateHideButton(linkInfo.ui, linkInfo.uiState.isHidden);
-
-    (new redditAPI.unhide(
-      hitchHandler(this, "redditUpdateLinkInfo", linkInfo),
-      sequenceCalls(
-        hitchHandler(this, "revertUIState", linkInfo, ["isHidden"]),
-        hitchHandler(this, "actionFailureHandler", linkInfo)
-      )
-    )).perform(linkInfo.fullname);
-        
-  } else {
-  
-    linkInfo.uiState.isHidden = true;
-    this.updateHideButton(linkInfo.ui, linkInfo.uiState.isHidden);
-
-    (new this.reddit.API.hide(
-      hitchHandler(this, "redditUpdateLinkInfo", linkInfo),
-      sequenceCalls(
-        hitchHandler(this, "revertUIState", linkInfo, ["isHidden"]),
-        hitchHandler(this, "actionFailureHandler", linkInfo)
-      )
-    )).perform(linkInfo.fullname);
-  }
-};
-
-Socialite.buttonRandomClicked = function(e) {
-  var self = this;
-
-  (new this.reddit.API.randomrising(
-    function (r, json) {
-      var linkInfo = LinkInfoFromJSON(json);
-      self.watchLink(linkInfo.url, linkInfo);
-      openUILink(linkInfo.url, e);
-    },
-    hitchHandler(this, "failureNotification", null))
-  ).perform();
-};*/

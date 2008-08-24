@@ -7,8 +7,8 @@ var EXPORTED_SYMBOLS = ["SocialiteSite", "SiteCollection"];
 
 function SocialiteSite() {
   this.parent = null;
-  this.sitename = null;
-  this.siteurl = null;
+  this.siteName = null;
+  this.siteURL = null;
 }
 
 SocialiteSite.prototype.onAddToCollection = function(collection) {
@@ -53,7 +53,7 @@ SiteCollection.prototype.initialize = function() {
 
 SiteCollection.prototype.onContentLoad = function(doc, win) {
   this.sites.forEach(function(site, index, array) {
-    if (strEndsWith(doc.location.hostname, site.siteurl)) {
+    if (strEndsWith(doc.location.hostname, site.siteURL)) {
       site.onSitePageLoad(doc, win);
     }
   });
@@ -61,4 +61,8 @@ SiteCollection.prototype.onContentLoad = function(doc, win) {
 
 SiteCollection.prototype.failureMessage = function(message) {
   this.socialite.failureMessage(message);
+}
+
+SiteCollection.prototype.openUILink = function(url, e) {
+  this.socialite.openUILink(url, e);
 }

@@ -26,11 +26,12 @@ RedditLinkInfoState.prototype = new TimestampedData;
 
 // ---
 
-function RedditLinkInfoFromJSON(json) {
+function RedditLinkInfoFromJSON(redditsite, json) {
   var linkData = json.data.children[0].data;
-  var linkInfo = new RedditLinkInfo(linkData.url, linkData.name, linkData.title);
+  var linkInfo = new RedditLinkInfo(redditsite, linkData.url, linkData.name);
   
   linkInfo.setFromJSON(json);
+  linkInfo.updateLocalState();
   
   return linkInfo;
 }
@@ -59,9 +60,7 @@ RedditLinkInfo.prototype.update = Action("RedditLinkInfo.update", function(omitt
       }
       action.success(r, json);
     }),
-    function failure(r) {
-      action.failure(r);
-    }
+    function failure(r) { action.failure(r); }
   );
   
   infoCall.perform(this.url);
@@ -95,9 +94,7 @@ RedditLinkInfo.prototype.vote = Action("RedditLinkInfo.vote", function(isLiked, 
     // Submit the vote, and then update state.
     // (proceeding after each AJAX call completes)
     var submit = this.site.API.vote(
-      function success(r) {
-        action.success(r);
-      },
+      function success(r) { action.success(r); },
       function failure(r) {
         this.revertLocalState(submit.startTime, ["isLiked", "score"])
         action.failure(r);
@@ -106,6 +103,70 @@ RedditLinkInfo.prototype.vote = Action("RedditLinkInfo.vote", function(isLiked, 
       
     submit.perform(this.fullname, this.localState.isLiked);
   }
+});
+
+RedditLinkInfo.prototype.hide = Action("RedditLinkInfo.hide", function(action) {
+  if (!this.localState.isHidden) {
+   this.localState.isHidden = true;
+  
+   var submit = this.site.API.hide(
+      function success(r) { action.success(r); },
+      function failure(r) {
+        this.revertLocalState(submit.startTime, ["isHidden"])
+        action.failure(r);
+      }
+    )
+    
+    submit.perform(this.fullname);
+  }  
+});
+
+RedditLinkInfo.prototype.unhide = Action("RedditLinkInfo.unhide", function(action) {
+  if (this.localState.isHidden) {
+   this.localState.isHidden = false;
+  
+   var submit = this.site.API.unhide(
+      function success(r) { action.success(r); },
+      function failure(r) {
+        this.revertLocalState(submit.startTime, ["isHidden"])
+        action.failure(r);
+      }
+    )
+    
+    submit.perform(this.fullname);
+  }  
+});
+
+RedditLinkInfo.prototype.save = Action("RedditLinkInfo.save", function(action) {
+  if (!this.localState.isSaved) {
+   this.localState.isSaved = true;
+  
+   var submit = this.site.API.save(
+      function success(r) { action.success(r); },
+      function failure(r) {
+        this.revertLocalState(submit.startTime, ["isSaved"])
+        action.failure(r);
+      }
+    )
+    
+    submit.perform(this.fullname);
+  }  
+});
+
+RedditLinkInfo.prototype.unsave = Action("RedditLinkInfo.unsave", function(action) {
+  if (this.localState.isSaved) {
+   this.localState.isSaved = false;
+  
+   var submit = this.site.API.unsave(
+      function success(r) { action.success(r); },
+      function failure(r) {
+        this.revertLocalState(submit.startTime, ["isSaved"])
+        action.failure(r);
+      }
+    )
+    
+    submit.perform(this.fullname);
+  }  
 });
 
 const fullnameRegex = /(\w+)_(\w+)/;

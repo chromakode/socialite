@@ -43,6 +43,14 @@ function RedditAPI(reddit) {
   
   this.voteQuantizer = new Quantizer("reddit.vote.quantizer", QUANTIZE_TIME, sameLinkID);
   this.vote.actionClass.prototype.func = this.voteQuantizer.quantize(this.vote.actionClass.prototype.func);
+  
+  this.saveQuantizer = new Quantizer("reddit.save.quantizer", QUANTIZE_TIME, sameLinkID);
+  this.save.actionClass.prototype.func = this.saveQuantizer.quantize(this.save.actionClass.prototype.func);
+  this.unsave.actionClass.prototype.func = this.saveQuantizer.quantize(this.unsave.actionClass.prototype.func);
+  
+  this.hideQuantizer = new Quantizer("reddit.hide.quantizer", QUANTIZE_TIME, sameLinkID);
+  this.hide.actionClass.prototype.func = this.hideQuantizer.quantize(this.hide.actionClass.prototype.func);
+  this.unhide.actionClass.prototype.func = this.hideQuantizer.quantize(this.unhide.actionClass.prototype.func);
 }
 
 RedditAPI.prototype.info = Action("reddit.info", function(url, action) {
@@ -66,26 +74,24 @@ RedditAPI.prototype.info = Action("reddit.info", function(url, action) {
   ).perform();
 });
 
-/*
-  this.randomrising = Action("reddit.randomrising", hitchThis(this, function(action) {
-    logger.log("reddit", "Making ajax randomrising call");
+RedditAPI.prototype.randomrising = Action("reddit.randomrising", function(action) {
+  logger.log("reddit", "Making ajax randomrising call");
+  
+  var params = {
+    limit: 1
+  };
     
-    var params = {
-      limit: 1,
-    };
-      
-    var act = http.GetAction(
-      "http://www.reddit.com/randomrising.json",
-      params,
-      
-      function success(r) {
-        var json = nativeJSON.decode(r.responseText);
-        action.success(r, json);
-      },
-      function failure(r) { action.failure(); }
-    ).perform();
-  }));
-*/
+  var act = http.GetAction(
+    "http://www.reddit.com/randomrising.json",
+    params,
+    
+    function success(r) {
+      var json = nativeJSON.decode(r.responseText);
+      action.success(r, json);
+    },
+    function failure(r) { action.failure(); }
+  ).perform();
+});
 
 RedditAPI.prototype.vote = Action("reddit.vote", function(linkID, isLiked, action) {
   logger.log("reddit", "Making ajax vote call");
@@ -110,59 +116,57 @@ RedditAPI.prototype.vote = Action("reddit.vote", function(linkID, isLiked, actio
   act.perform();
 });
 
-/*
-  this.saveQuantizer = new Quantizer("reddit.save.quantizer", QUANTIZE_TIME, sameLinkID);
-  this.save = Action("reddit.save", this.saveQuantizer.quantize(hitchThis(this, function(linkID, action) {
-    logger.log("reddit", "Making ajax save call");
-    
-    var params = {
-      id:    linkID,
-    };
-    params = this.reddit.auth.authModHash(params);
-    
-    var act = http.PostAction(APIURL(this.reddit.auth.site, "save"), params);
-    act.chainTo(action);
-    act.perform();
-  })));
 
-  this.unsave = Action("reddit.unsave", this.saveQuantizer.quantize(function(linkID, action) {
-    logger.log("reddit", "Making ajax unsave call");
-    
-    var params = {
-      id:    linkID,
-    };
-    params = this.reddit.auth.authModHash(params);
-    
-    var act = http.PostAction(APIURL(this.reddit.auth.site, "unsave"), params);
-    act.chainTo(action);
-    act.perform();
-  }));
+RedditAPI.prototype.save = Action("reddit.save", function(linkID, action) {
+  logger.log("reddit", "Making ajax save call");
+  
+  var params = {
+    id:    linkID
+  };
+  params = this.reddit.auth.authModHash(params);
+  
+  var act = http.PostAction(APIURL(this.reddit.auth.siteURL, "save"), params);
+  act.chainTo(action);
+  act.perform();
+});
 
-  this.hideQuantizer = new Quantizer("reddit.hide.quantizer", QUANTIZE_TIME, sameLinkID);
-  this.hide = Action("reddit.hide", this.hideQuantizer.quantize(hitchThis(this, function(linkID, action) {
-    logger.log("reddit", "Making ajax hide call");
-    
-    var params = {
-      id:    linkID,
-    };
-    params = this.reddit.auth.authModHash(params);
-    
-    var act = http.PostAction(APIURL(this.reddit.auth.site, "hide"), params);
-    act.chainTo(action);
-    act.perform();
-  })));
+RedditAPI.prototype.unsave = Action("reddit.unsave", function(linkID, action) {
+  logger.log("reddit", "Making ajax unsave call");
+  
+  var params = {
+    id:    linkID
+  };
+  params = this.reddit.auth.authModHash(params);
+  
+  var act = http.PostAction(APIURL(this.reddit.auth.siteURL, "unsave"), params);
+  act.chainTo(action);
+  act.perform();
+});
 
-  this.unhide = Action("reddit.unhide", this.hideQuantizer.quantize(hitchThis(this, function(linkID, action) {
-    logger.log("reddit", "Making ajax unhide call");
-    
-    var params = {
-      id:    linkID,
-    };
-    params = this.reddit.auth.authModHash(params);
-    
-    var act = http.PostAction(APIURL(this.reddit.auth.site, "unhide"), params);
-    act.chainTo(action);
-    act.perform();
-  })));
-}
-*/
+
+RedditAPI.prototype.hide = Action("reddit.hide", function(linkID, action) {
+  logger.log("reddit", "Making ajax hide call");
+  
+  var params = {
+    id:    linkID
+  };
+  params = this.reddit.auth.authModHash(params);
+  
+  var act = http.PostAction(APIURL(this.reddit.auth.siteURL, "hide"), params);
+  act.chainTo(action);
+  act.perform();
+});
+
+
+RedditAPI.prototype.unhide = Action("reddit.unhide", function(linkID, action) {
+  logger.log("reddit", "Making ajax unhide call");
+  
+  var params = {
+    id:    linkID
+  };
+  params = this.reddit.auth.authModHash(params);
+  
+  var act = http.PostAction(APIURL(this.reddit.auth.siteURL, "unhide"), params);
+  act.chainTo(action);
+  act.perform();
+});

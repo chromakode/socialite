@@ -58,10 +58,15 @@ TimestampedData.prototype.getTimestamp = function(name) {
  */
 TimestampedData.prototype.copy = function(data, fields, timestamp, omit) {
   if (omit) {
-    // Copy all fields except those omitted
-    var copiedFields = data.fields.filter(function(field) {
-      return fields.indexOf(field) == -1; 
-    });
+    if (fields) {
+      // Copy all fields except those omitted
+      var copiedFields = data.fields.filter(function(field) {
+        return fields.indexOf(field) == -1; 
+      });
+    } else {
+      // Shortcut if no omitted fields are given 
+      copiedFields = data.fields;
+    }
   } else {
     if (!fields) {
       // Default to copying all fields

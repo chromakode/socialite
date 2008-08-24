@@ -24,7 +24,7 @@ Quantizer.prototype.quantize = function(func) {
   var self = this;
   var quantized = function() {
     self.callQuantized(func, this, arguments);
-  }
+  };
   
   return quantized;
 }
