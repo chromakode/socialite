@@ -1,4 +1,4 @@
-var EXPORTED_SYMBOLS = ["strStartsWith", "String.prototype.startsWith", "strEndsWith", "String.prototype.endsWith"];
+var EXPORTED_SYMBOLS = ["String", "strStartsWith", "strEndsWith"];
 
 function strStartsWith(str1, str2) {
   return str1.substring(0, str2.length) == str2;

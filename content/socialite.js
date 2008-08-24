@@ -147,6 +147,7 @@ Socialite.linkStartLoad = function(win, isLoading) {
     if (this.sites.watchedURLs.isWatched(href)) {
       // This is a watched link. Create a notification box and initialize.
       var bar = this.createNotificationBar(notificationBox);
+      bar.url = href;
       
       // Populate the bar
       this.sites.watchedURLs.getWatcherInfoList(href).forEach(function(entry, index, array) {
@@ -159,10 +160,10 @@ Socialite.linkStartLoad = function(win, isLoading) {
       var bar = this.tabBars[currentTab];
     
       if (bar) {
-        if (!persistence.onLocationChange(bar.linkInfo.url, href)) {
+        if (!persistence.onLocationChange(bar.url, href)) {
           notificationBox.removeNotification(bar);
           this.tabBars[currentTab] = null;
-          logger.log(linkInfo.fullname, "Removed notification");
+          logger.log("Socialite", "Removed notification");
         }
       }
     }

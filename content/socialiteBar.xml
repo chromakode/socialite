@@ -25,6 +25,7 @@
 		</content>
 		
 		<implementation>
+			<field name="url"/>
 			<field name="content">[]</field>
 			<method name="addSiteContent">
 				<parameter name="siteContent"/>
