@@ -115,12 +115,13 @@ Socialite.tabOpened = function(e) {
   
   logger.log("main", "Tab opened: " + win.location.href);
   
-  this.linkStartLoad(win);
+  this.linkStartLoad(win, true);
 }
 
 Socialite.tabClosed = function(e) {
   var browser = e.originalTarget.linkedBrowser;
   var currentTab = this.tabBrowser.tabContainer.selectedIndex;
+  
   this.tabBars[currentTab] = null;
   
   logger.log("main", "Tab closed: " + browser.contentWindow.location.href);
@@ -143,30 +144,34 @@ Socialite.linkStartLoad = function(win, isLoading) {
   var currentTab = this.tabBrowser.tabContainer.selectedIndex;
   var notificationBox = this.tabBrowser.getNotificationBox(browser);
 
-  if (isLoading) {
-    if (this.sites.watchedURLs.isWatched(href)) {
-      // This is a watched link. Create a notification box and initialize.
-      var bar = this.createNotificationBar(notificationBox);
-      bar.url = href;
-      
-      // Populate the bar
-      this.sites.watchedURLs.getWatcherInfoList(href).forEach(function(entry, index, array) {
-        bar.addSiteContent(entry.site.createBarContent(document, entry.linkInfo));
-      });
-      
-      this.tabBars[currentTab] = bar;
-    } else {
-      // Handle persistence changes, if any.
-      var bar = this.tabBars[currentTab];
-    
-      if (bar) {
-        if (!persistence.onLocationChange(bar.url, href)) {
-          notificationBox.removeNotification(bar);
-          this.tabBars[currentTab] = null;
-          logger.log("Socialite", "Removed notification");
-        }
-      }
+  var bar = this.tabBars[currentTab];
+  if (bar) {
+    // Handle persistence changes, if any.
+    if (!persistence.onLocationChange(bar.url, href)) {
+      notificationBox.removeNotification(bar);
+    } else { 
+      bar.refresh();
     }
+  } else if (this.sites.watchedURLs.isWatched(href)) {
+    // This is a watched link. Create a notification box and initialize.
+    var newBar = this.createNotificationBar(notificationBox);
+    newBar.url = href;
+    
+    this.tabBars[currentTab] = newBar;
+    
+    // Notification close handler
+    newBar.addEventListener("DOMNodeRemoved", hitchThis(this, function(e) {
+      if (e.relatedNode == notificationBox) {
+        this.tabBars[currentTab] = null;
+        logger.log("Socialite", "Notification closed");
+      }
+    }), false);
+    
+    // Populate the bar
+    this.sites.watchedURLs.getWatcherInfoList(href).forEach(function(entry, index, array) {
+      newBar.addSiteContent(entry.site.createBarContent(document, entry.linkInfo));
+    });
+    newBar.refresh();
   }
 }
 
@@ -186,7 +191,7 @@ Socialite.createNotificationBar = function(notificationBox) {
   // Make the notification immortal -- we'll handle closing it.
   notification.persistence = -1;
   
-  logger.log("Socialite", "Notification box created");
+  logger.log("Socialite", "Notification created");
   return notification;
 }
 

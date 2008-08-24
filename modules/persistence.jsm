@@ -60,6 +60,6 @@ function onLocationChange(oldURL, newURL) {
     var oldDir = dropPathLevels(oldURI.path, 1);
     
     logger.log("Persistence", "Comparing hosts and directories: " + oldURI.host + ":" + oldDir + ", " + newURI.host + ":" + newURI.path);
-    return (oldURI.host == newURI.host) && newURI.path.startsWith(oldDir);
+    return (oldURI.host == newURI.host) && strStartsWith(newURI.path, oldDir);
   }
 }

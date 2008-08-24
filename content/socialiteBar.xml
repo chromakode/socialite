@@ -36,12 +36,12 @@
           ]]>
 				</body>
 			</method>
-			<method name="update">
+			<method name="refresh">
 				<body>
           <![CDATA[
-          	this.content.forEach(function(siteContent, index, array) {
-					    siteContent.update();
-					  });
+	          // Refresh the top (currently displayed) content.
+	          var deck = document.getAnonymousElementByAttribute(this, "anonid", "deckContent");
+          	this.content[deck.selectedIndex].refresh();
           ]]>
 				</body>
 			</method>
@@ -59,11 +59,22 @@
 		
 		<implementation>
 			<field name="linkInfo"/>
+			<field name="refreshCallback"/>
 			<method name="update">
 				<body>
           <![CDATA[
 						var title = document.getAnonymousElementByAttribute(this, "anonid", "descriptionTitle");
 						title.text = this.linkInfo.localState.title;
+          ]]>
+				</body>
+			</method>
+			
+			<method name="refresh">
+				<body>
+          <![CDATA[
+						if (this.refreshCallback) {
+							this.refreshCallback();
+						}
           ]]>
 				</body>
 			</method>

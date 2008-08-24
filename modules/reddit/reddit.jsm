@@ -148,7 +148,7 @@ RedditSite.prototype.createBarContent = function(document, linkInfo) {
   barContent.linkInfo = linkInfo;
   
   // We define behaviors here since I intend the RedditBarContent XBL to only be responsible for the display of a RedditLinkInfo instance.
-  // In other words, we'll treat it more like a support widget and define handlers for its commands here.
+  // In other words, we'll treat it more like a support widget and define handlers for its commands here. This is helpful because the scripting scope in XBL is limited.
   // FIXME: We'll use this 'afterBound' hack because I'm tired of trying to figure out how to make XBL apply synchronously.
   var site = this;
   barContent.afterBound = function() {
@@ -166,6 +166,8 @@ RedditSite.prototype.createBarContent = function(document, linkInfo) {
         failureHandler
       ).perform([]);
     };
+    
+    this.refreshCallback = updateHandler;
     
     this.labelSubreddit.addEventListener("click", function(e) {
       site.parent.openUILink("http://"+site.siteURL+"/r/"+barContent.linkInfo.localState.subreddit+"/", e);
