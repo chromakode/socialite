@@ -6,11 +6,16 @@ function WatchedURLs(limit) {
   this.watches = {};
 }
 
-WatchedURLs.prototype.watch = function(href, linkInfo) {
+WatchedURLs.prototype.watch = function(href, site, linkInfo) {
+  var entry = {
+    site: site,
+    linkInfo: linkInfo
+  }
+  
   if (!(href in this.watches)) {
     this.watches[href] = [];
   }
-  this.watches[href].push(linkInfo);
+  this.watches[href].push(entry);
 
   logger.log("WatchedURLs", "Watching: " + href);
 }

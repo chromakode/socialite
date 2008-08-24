@@ -33,8 +33,8 @@ function sameLinkID(func1, arg1, func2, arg2) {
   return (linkID1 == linkID2);
 }
 
-function RedditAPI(reddit) {
-  this.reddit = reddit;
+function RedditAPI(auth) {
+  this.auth = auth;
   
   // Replace (hook in) this instances' action functions with quantized versions.
   // This way, we need only create the actions once, in the RedditAPI prototype, yet can get instance-specific quantization upon instantiation.
@@ -63,7 +63,7 @@ RedditAPI.prototype.info = Action("reddit.info", function(url, action) {
   };
    
   http.GetAction(
-    APIURL(this.reddit.auth.siteURL, "info.json"),
+    APIURL(this.auth.siteURL, "info.json"),
     params,
     
     function success(r) {
@@ -109,9 +109,9 @@ RedditAPI.prototype.vote = Action("reddit.vote", function(linkID, isLiked, actio
     id:    linkID,
     dir:   dir
   };
-  params = this.reddit.auth.authModHash(params);
+  params = this.auth.authModHash(params);
   
-  var act = http.PostAction(APIURL(this.reddit.auth.siteURL, "vote"), params);
+  var act = http.PostAction(APIURL(this.auth.siteURL, "vote"), params);
   act.chainTo(action);
   act.perform();
 });
@@ -123,9 +123,9 @@ RedditAPI.prototype.save = Action("reddit.save", function(linkID, action) {
   var params = {
     id:    linkID
   };
-  params = this.reddit.auth.authModHash(params);
+  params = this.auth.authModHash(params);
   
-  var act = http.PostAction(APIURL(this.reddit.auth.siteURL, "save"), params);
+  var act = http.PostAction(APIURL(this.auth.siteURL, "save"), params);
   act.chainTo(action);
   act.perform();
 });
@@ -136,9 +136,9 @@ RedditAPI.prototype.unsave = Action("reddit.unsave", function(linkID, action) {
   var params = {
     id:    linkID
   };
-  params = this.reddit.auth.authModHash(params);
+  params = this.auth.authModHash(params);
   
-  var act = http.PostAction(APIURL(this.reddit.auth.siteURL, "unsave"), params);
+  var act = http.PostAction(APIURL(this.auth.siteURL, "unsave"), params);
   act.chainTo(action);
   act.perform();
 });
@@ -150,9 +150,9 @@ RedditAPI.prototype.hide = Action("reddit.hide", function(linkID, action) {
   var params = {
     id:    linkID
   };
-  params = this.reddit.auth.authModHash(params);
+  params = this.auth.authModHash(params);
   
-  var act = http.PostAction(APIURL(this.reddit.auth.siteURL, "hide"), params);
+  var act = http.PostAction(APIURL(this.auth.siteURL, "hide"), params);
   act.chainTo(action);
   act.perform();
 });
@@ -164,9 +164,9 @@ RedditAPI.prototype.unhide = Action("reddit.unhide", function(linkID, action) {
   var params = {
     id:    linkID
   };
-  params = this.reddit.auth.authModHash(params);
+  params = this.auth.authModHash(params);
   
-  var act = http.PostAction(APIURL(this.reddit.auth.siteURL, "unhide"), params);
+  var act = http.PostAction(APIURL(this.auth.siteURL, "unhide"), params);
   act.chainTo(action);
   act.perform();
 });

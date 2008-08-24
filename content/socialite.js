@@ -149,8 +149,8 @@ Socialite.linkStartLoad = function(win, isLoading) {
       var bar = this.createNotificationBar(notificationBox);
       
       // Populate the bar
-      this.sites.watchedURLs.getWatcherInfoList(href).forEach(function(linkInfo, index, array) {
-        bar.addSiteContent(linkInfo.site.createBarContent(document, linkInfo));
+      this.sites.watchedURLs.getWatcherInfoList(href).forEach(function(entry, index, array) {
+        bar.addSiteContent(entry.site.createBarContent(document, entry.linkInfo));
       });
       
       this.tabBars[currentTab] = bar;

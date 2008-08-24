@@ -26,9 +26,9 @@ RedditLinkInfoState.prototype = new TimestampedData;
 
 // ---
 
-function RedditLinkInfoFromJSON(redditsite, json) {
+function RedditLinkInfoFromJSON(api, json) {
   var linkData = json.data.children[0].data;
-  var linkInfo = new RedditLinkInfo(redditsite, linkData.url, linkData.name);
+  var linkInfo = new RedditLinkInfo(api, linkData.url, linkData.name);
   
   linkInfo.setFromJSON(json);
   linkInfo.updateLocalState();
@@ -39,8 +39,8 @@ function RedditLinkInfoFromJSON(redditsite, json) {
 /**
  * A high-level object for dealing with a single link on Reddit.
  */
-function RedditLinkInfo(redditsite, url, fullname) {
-  this.site = redditsite;
+function RedditLinkInfo(api, url, fullname) {
+  this.redditAPI = api;
   this.url = url;
   this.fullname = fullname;
   
@@ -49,7 +49,7 @@ function RedditLinkInfo(redditsite, url, fullname) {
 }
 
 RedditLinkInfo.prototype.update = Action("RedditLinkInfo.update", function(omittedFields, action) {  
-  var infoCall = this.site.API.info(
+  var infoCall = this.redditAPI.info(
     hitchThis(this, function success(r, json) {
       // Ensure the received data is not older than the last update (for instance, due to lag)
       if (action.startTime >= this.state.lastUpdated) {
@@ -93,7 +93,7 @@ RedditLinkInfo.prototype.vote = Action("RedditLinkInfo.vote", function(isLiked, 
 
     // Submit the vote, and then update state.
     // (proceeding after each AJAX call completes)
-    var submit = this.site.API.vote(
+    var submit = this.redditAPI.vote(
       function success(r) { action.success(r); },
       function failure(r) {
         this.revertLocalState(submit.startTime, ["isLiked", "score"])
@@ -109,7 +109,7 @@ RedditLinkInfo.prototype.hide = Action("RedditLinkInfo.hide", function(action) {
   if (!this.localState.isHidden) {
    this.localState.isHidden = true;
   
-   var submit = this.site.API.hide(
+   var submit = this.redditAPI.hide(
       function success(r) { action.success(r); },
       function failure(r) {
         this.revertLocalState(submit.startTime, ["isHidden"])
@@ -125,7 +125,7 @@ RedditLinkInfo.prototype.unhide = Action("RedditLinkInfo.unhide", function(actio
   if (this.localState.isHidden) {
    this.localState.isHidden = false;
   
-   var submit = this.site.API.unhide(
+   var submit = this.redditAPI.unhide(
       function success(r) { action.success(r); },
       function failure(r) {
         this.revertLocalState(submit.startTime, ["isHidden"])
@@ -141,7 +141,7 @@ RedditLinkInfo.prototype.save = Action("RedditLinkInfo.save", function(action) {
   if (!this.localState.isSaved) {
    this.localState.isSaved = true;
   
-   var submit = this.site.API.save(
+   var submit = this.redditAPI.save(
       function success(r) { action.success(r); },
       function failure(r) {
         this.revertLocalState(submit.startTime, ["isSaved"])
@@ -157,7 +157,7 @@ RedditLinkInfo.prototype.unsave = Action("RedditLinkInfo.unsave", function(actio
   if (this.localState.isSaved) {
    this.localState.isSaved = false;
   
-   var submit = this.site.API.unsave(
+   var submit = this.redditAPI.unsave(
       function success(r) { action.success(r); },
       function failure(r) {
         this.revertLocalState(submit.startTime, ["isSaved"])

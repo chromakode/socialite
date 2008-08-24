@@ -4,7 +4,7 @@ Components.utils.import("resource://socialite/utils/action/action.jsm");
 Components.utils.import("resource://socialite/utils/hitch.jsm");
 Components.utils.import("resource://socialite/reddit/authentication.jsm");
 Components.utils.import("resource://socialite/reddit/redditAPI.jsm");
-Components.utils.import("resource://socialite/reddit/bookmarkletAPI.jsm");
+//Components.utils.import("resource://socialite/reddit/bookmarkletAPI.jsm");
 Components.utils.import("resource://socialite/reddit/redditLinkInfo.jsm");
 
 var EXPORTED_SYMBOLS = ["RedditSite"];
@@ -15,18 +15,17 @@ function RedditSite(siteName, siteURL) {
   this.siteName = siteName;
   this.siteURL = siteURL;
   
-  this.auth = null;
-  this.API = new RedditAPI(this);
-  this.bookmarkletAPI = new BookmarkletAPI(this);
+  this.API = new RedditAPI();
+  //this.bookmarkletAPI = new BookmarkletAPI(this);
   
   this.authenticate = Action("reddit.authenticate", function(action) {
-    (getAuthHash(
+    getAuthHash(
       hitchThis(this, function success(auth) {
-        this.auth = auth;
+        this.API.auth = auth;
         action.success(auth);
       }),
       function failure() { action.failure(); }
-    )).perform(this.siteurl);
+    ).perform(this.siteURL);
   });
 }
 
@@ -53,7 +52,7 @@ RedditSite.prototype.onSitePageLoad = function(doc, win) {
   // Snarf the authentication hash using wrappedJSObject
   // This should be safe, since Firefox 3 uses a XPCSafeJSObjectWrapper
   // See http://developer.mozilla.org/en/docs/XPConnect_wrappers#XPCSafeJSObjectWrapper
-  this.auth.snarfModHash(win.wrappedJSObject.modhash);
+  this.API.auth.snarfModHash(win.wrappedJSObject.modhash);
 }
 
 RedditSite.prototype.linkClicked = function(e) {
@@ -67,7 +66,7 @@ RedditSite.prototype.linkClicked = function(e) {
     var linkTitle = link.textContent;
     
     // Create the linkInfo object
-    var linkInfo = new RedditLinkInfo(this, linkURL, linkID);
+    var linkInfo = new RedditLinkInfo(this.API, linkURL, linkID);
     linkInfo.localState.title = linkTitle;
     
     //
@@ -140,7 +139,7 @@ RedditSite.prototype.linkClicked = function(e) {
   
   // Add the information we collected to the watch list  
   logger.log(linkInfo.fullname, "Clicked");
-  this.parent.watchedURLs.watch(link.href, linkInfo);
+  this.parent.watchedURLs.watch(linkInfo.url, this, linkInfo);
 }
 
 RedditSite.prototype.createBarContent = function(document, linkInfo) {
@@ -237,8 +236,8 @@ RedditSite.prototype.createBarContent = function(document, linkInfo) {
     this.buttonRandom.addEventListener("click", function(e) {
       site.API.randomrising(
         function (r, json) {
-          var linkInfo = RedditLinkInfoFromJSON(this, json);
-          site.parent.watchedURLs.watch(linkInfo.url, linkInfo);
+          var linkInfo = RedditLinkInfoFromJSON(site.API, json);
+          site.parent.watchedURLs.watch(linkInfo.url, site, linkInfo);
           site.parent.openUILink(linkInfo.url, e);
         },
         failureHandler
