@@ -17,8 +17,16 @@
   color: #9494FF;
 }
 
+.reddit-subreddit:before {
+  content: "[";
+}
+
 .reddit-subreddit {
   color: #969696;
+}
+
+.reddit-subreddit:after {
+  content: "]";
 }
 
 .reddit-subreddit:hover {

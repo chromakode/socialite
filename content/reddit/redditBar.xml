@@ -64,7 +64,7 @@
 					// Section label
 					var labelSubreddit = document.getAnonymousElementByAttribute(this, "anonid", "labelSubreddit");
 					if (this.linkInfo.localState.subreddit) {
-				    labelSubreddit.value = "["+this.linkInfo.localState.subreddit+"]";
+				    labelSubreddit.value = this.linkInfo.localState.subreddit;
 				  } else {
 				    labelSubreddit.value = "";
 				  }
