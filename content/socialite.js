@@ -11,9 +11,7 @@ persistence = Components.utils.import("resource://socialite/persistence.jsm");
 Components.utils.import("resource://socialite/site.jsm");
 
 Components.utils.import("resource://socialite/utils/action/action.jsm");
-Components.utils.import("resource://socialite/utils/action/sequence.jsm");
 Components.utils.import("resource://socialite/utils/hitch.jsm");
-Components.utils.import("resource://socialite/utils/oneshot.jsm");
 
 Components.utils.import("resource://socialite/reddit/reddit.jsm");
 Components.utils.import("resource://socialite/reddit/redditAPI.jsm");
@@ -77,9 +75,13 @@ Socialite.onLoad = function() {
   this.sites = new SiteCollection(this);
   this.sites.initialize();
   
-  var reddit = new RedditSite("reddit", "reddit.com");
+  var reddit = new RedditSite("reddit", "www.reddit.com");
   reddit.initialize();
   this.sites.addSite(reddit);
+  
+  var fuddit = new RedditSite("fuddit", "www.fuddit.com");
+  fuddit.initialize();
+  this.sites.addSite(fuddit);
   
   this.tabBrowser.addEventListener("DOMContentLoaded", hitchHandler(this, "contentLoad"), false);
   
@@ -168,9 +170,9 @@ Socialite.linkStartLoad = function(win, isLoading) {
     }), false);
     
     // Populate the bar
-    this.sites.watchedURLs.getWatcherInfoList(href).forEach(function(entry, index, array) {
-      newBar.addSiteContent(entry.site.createBarContent(document, entry.linkInfo));
-    });
+    for each (entry in this.sites.watchedURLs.getWatches(href)) {
+      newBar.addSiteContent(entry.site, entry.site.createBarContent(document, entry.linkInfo));
+    };
     newBar.refresh();
   }
 }

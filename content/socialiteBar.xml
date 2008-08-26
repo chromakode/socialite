@@ -3,16 +3,11 @@
 <bindings xmlns="http://www.mozilla.org/xbl" xmlns:xbl="http://www.mozilla.org/xbl"
 	xmlns:xul="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul">
 	
-	<binding id="socialitebar"
-		extends="chrome://global/content/bindings/notification.xml#notification">
+	<binding id="socialitebar" extends="chrome://global/content/bindings/notification.xml#notification">
 		<content>
-			<xul:hbox class="notification-inner outset" flex="1"
-				xbl:inherits="type">
+			<xul:hbox class="notification-inner outset" flex="1" xbl:inherits="type">
 				<xul:hbox anonid="details" flex="1" align="center">
-					<xul:hbox anonid="boxSite" align="center">
-						<xul:image anonid="imageSite"/>
-						<xul:label anonid="labelSite" class="text-link"/>
-					</xul:hbox>
+					<xul:hbox anonid="siteSelector"/>
 					<xul:separator width="0px" height="18px" orient="vertical" class="socialite-separator"/>
 					<xul:deck anonid="deckContent" flex="1" align="center">
 						<children/>
@@ -24,24 +19,42 @@
 			</xul:hbox>
 		</content>
 		
+		<resources>
+			<stylesheet src="chrome://socialite/skin/socialite.css"/>
+		</resources>
+		
 		<implementation>
 			<field name="url"/>
 			<field name="content">[]</field>
+			
+			<constructor>
+				var siteSelector = document.getAnonymousElementByAttribute(this, "anonid", "siteSelector");
+				var deckContent = document.getAnonymousElementByAttribute(this, "anonid", "deckContent");
+				siteSelector.addEventListener("command", function(event) {
+					deckContent.selectedIndex = event.detail;
+				}, false);
+			</constructor>
+			
 			<method name="addSiteContent">
+				<parameter name="site"/>
 				<parameter name="siteContent"/>
 				<body>
           <![CDATA[
           	this.content.push(siteContent);
 						this.appendChild(siteContent);
+						
+						var siteSelector = document.getAnonymousElementByAttribute(this, "anonid", "siteSelector");
+						siteSelector.addSite(site);
           ]]>
 				</body>
 			</method>
+			
 			<method name="refresh">
 				<body>
           <![CDATA[
 	          // Refresh the top (currently displayed) content.
-	          var deck = document.getAnonymousElementByAttribute(this, "anonid", "deckContent");
-          	this.content[deck.selectedIndex].refresh();
+	          var deckContent = document.getAnonymousElementByAttribute(this, "anonid", "deckContent");
+          	this.content[deckContent.selectedIndex].refresh();
           ]]>
 				</body>
 			</method>
@@ -50,25 +63,12 @@
 	
 	<binding id="socialitebarcontent">
 		<content>
-			<xul:hbox anonid="container" flex="1" align="center">
-				<xul:description anonid="descriptionTitle" flex="1"/>
-				<xul:spacer flex="1"/>
-				<children/>
-			</xul:hbox>
 		</content>
 		
 		<implementation>
 			<field name="linkInfo"/>
 			<field name="refreshCallback"/>
-			<method name="update">
-				<body>
-          <![CDATA[
-						var title = document.getAnonymousElementByAttribute(this, "anonid", "descriptionTitle");
-						title.text = this.linkInfo.localState.title;
-          ]]>
-				</body>
-			</method>
-			
+
 			<method name="refresh">
 				<body>
           <![CDATA[
@@ -76,6 +76,92 @@
 							this.refreshCallback();
 						}
           ]]>
+				</body>
+			</method>
+		</implementation>
+	</binding>
+	
+	<binding id="socialitesiteselector">
+		<content>
+			<xul:hbox align="center">
+				<xul:image anonid="imageSite" class="messageImage"/>
+				<xul:label anonid="labelSite" class="socialite-site-name text-link"/>
+				<xul:toolbarbutton anonid="buttonSiteSelector" type="menu" hidden="true">
+				  <xul:menupopup anonid="menuSites" position="after_end">
+				  </xul:menupopup>
+				</xul:toolbarbutton>
+			</xul:hbox>
+		</content>
+		
+		<resources>
+			<stylesheet src="chrome://socialite/skin/socialite.css"/>
+			<stylesheet src="chrome://global/skin/notification.css"/>
+		</resources>
+		
+		<implementation>
+			<field name="sites">[]</field>
+			<field name="selectedIndex"/>
+		
+			<constructor>
+				var labelSite = document.getAnonymousElementByAttribute(this, "anonid", "labelSite");
+				
+				var self = this;
+				labelSite.addEventListener("click", function(event) {
+					openUILink(self.sites[self.selectedIndex].siteURL);
+				}, false);
+			</constructor>
+		
+			<method name="addSite">
+				<parameter name="site"/>
+				<body>
+          <![CDATA[
+						this.sites.push(site);
+						var newIndex = this.sites.length - 1;
+						
+						var menuSites = document.getAnonymousElementByAttribute(this, "anonid", "menuSites");
+						
+						var menuItem = document.createElement("menuitem");
+						menuItem.class = "menuitem-iconic";
+						// For some reason, the properties don't work?
+						menuItem.setAttribute("label", site.siteName);
+						menuItem.setAttribute("image", site.getIconURI());
+						
+						var self = this;
+						menuItem.addEventListener("command", function(event) {
+							self.selectSite(newIndex);
+							event.stopPropagation();
+						}, false);
+						
+						menuSites.appendChild(menuItem);
+						
+						if (this.sites.length == 1) {
+							this.selectSite(0);
+						} else {
+							var buttonSiteSelector = document.getAnonymousElementByAttribute(this, "anonid", "buttonSiteSelector");
+							buttonSiteSelector.hidden = false;
+						}
+          ]]>
+				</body>
+			</method>
+			
+			<method name="selectSite">
+				<parameter name="index"/>
+				<body>
+					<![CDATA[
+						var siteImage = document.getAnonymousElementByAttribute(this, "anonid", "imageSite");
+						var siteName = document.getAnonymousElementByAttribute(this, "anonid", "labelSite");
+						
+						var site = this.sites[index];
+						siteImage.src = site.getIconURI();
+						siteName.value = site.siteName;
+						
+						this.selectedIndex = index;
+						
+						// Fire event
+						var event = document.createEvent("UIEvent");
+						event.initUIEvent("command", true, true, window, this.selectedIndex);
+						this.dispatchEvent(event);
+					]]>
 				</body>
 			</method>
 		</implementation>

@@ -2,12 +2,20 @@
   margin-bottom: 2px !important;
 }
 
+.socialite-site-name {
+  margin-right: 0;
+}
+
 .socialite-separator {
   margin-left: 7px !important;
   margin-right: 7px !important;
   border: none !important;
   border-left: 1px solid black !important;
   opacity: 0.25;
+}
+
+hbox[anonid="siteSelector"] {
+	-moz-binding: url(chrome://socialite/content/socialiteBar.xml#socialitesiteselector);
 }
 
 notification[value="socialite-header"] {

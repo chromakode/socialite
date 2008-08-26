@@ -2,6 +2,11 @@ logger = Components.utils.import("resource://socialite/utils/log.jsm");
 Components.utils.import("resource://socialite/utils/strUtils.jsm");
 Components.utils.import("resource://socialite/watchedURLs.jsm");
 
+var faviconService = Components.classes["@mozilla.org/browser/favicon-service;1"]
+                                        .getService(Components.interfaces.nsIFaviconService);
+
+var IOService = Components.classes["@mozilla.org/network/io-service;1"]
+                                   .getService(Components.interfaces.nsIIOService);
 
 var EXPORTED_SYMBOLS = ["SocialiteSite", "SiteCollection"];
 
@@ -16,6 +21,11 @@ SocialiteSite.prototype.onAddToCollection = function(collection) {
 }
 SocialiteSite.prototype.onRemoveFromCollection = function(collection) {
   this.parent = null;
+}
+
+SocialiteSite.prototype.getIconURI = function() {
+  var siteURI = IOService.newURI("http://"+this.siteURL, null, null);
+  return faviconService.getFaviconImageForPage(siteURI).spec;
 }
 
 SocialiteSite.prototype.onSitePageLoad = logger.makeStubFunction("SocialiteSite", "onSitePageLoad");

@@ -15,8 +15,8 @@ QUANTIZE_TIME = 1000;
 
 var REDDIT_API_PATH = "/api/";
 function APIURL(site, op) {
-  // Vote calls will 404 without the 'www.'
-  return "http://www." + site + REDDIT_API_PATH + op;
+  // Note: vote calls will 404 without the 'www.' (included in site URL)
+  return "http://" + site + REDDIT_API_PATH + op;
 }
 
 function sameURL(func1, arg1, func2, arg2) {
