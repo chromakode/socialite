@@ -22,8 +22,9 @@ document.loadBindingDocument("chrome://socialite/content/reddit/redditBar.xml");
 var alertsService = Components.classes["@mozilla.org/alerts-service;1"]
                     .getService(Components.interfaces.nsIAlertsService);
 
-var sessionStore  = Components.classes["@mozilla.org/browser/sessionstore;1"]
-                    .getService(Components.interfaces.nsISessionStore);
+//var sessionStore  = Components.classes["@mozilla.org/browser/sessionstore;1"]
+//                    .getService(Components.interfaces.nsISessionStore);
+
 // ---
 
 const STATE_START = Components.interfaces.nsIWebProgressListener.STATE_START;
@@ -73,15 +74,7 @@ Socialite.onLoad = function() {
   this.tabBars = [];
 
   this.sites = new SiteCollection(this);
-  this.sites.initialize();
-  
-  var reddit = new RedditSite("reddit", "www.reddit.com");
-  reddit.initialize();
-  this.sites.addSite(reddit);
-  
-  var fuddit = new RedditSite("fuddit", "www.fuddit.com");
-  fuddit.initialize();
-  this.sites.addSite(fuddit);
+  this.sites.loadFromPreferences();
   
   this.tabBrowser.addEventListener("DOMContentLoaded", hitchHandler(this, "contentLoad"), false);
   

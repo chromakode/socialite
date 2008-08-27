@@ -1,12 +1,20 @@
 pref("extensions.socialite.debug", false);
 pref("extensions.socialite.debugInErrorConsole", false);
 
+// Global preferences
 pref("extensions.socialite.persistmode", 2);
 
-pref("extensions.socialite.showlink", true);
-pref("extensions.socialite.showscore", true);
-pref("extensions.socialite.showsection", true);
-pref("extensions.socialite.showcomments", true);
-pref("extensions.socialite.showsave", true);
-pref("extensions.socialite.showhide", false);
-pref("extensions.socialite.showrandom", false);
+// Sites
+pref("extensions.socialite.sites", '["reddit"]');
+
+// Default reddit site
+pref("extensions.socialite.sites.reddit.siteClass", "RedditSite");
+pref("extensions.socialite.sites.reddit.siteName", "reddit");
+pref("extensions.socialite.sites.reddit.siteURL", "www.reddit.com");
+
+pref("extensions.socialite.sites.reddit.showScore", true);
+pref("extensions.socialite.sites.reddit.showSubreddit", true);
+pref("extensions.socialite.sites.reddit.showComments", true);
+pref("extensions.socialite.sites.reddit.showSave", true);
+pref("extensions.socialite.sites.reddit.showHide", false);
+pref("extensions.socialite.sites.reddit.showRandom", false);

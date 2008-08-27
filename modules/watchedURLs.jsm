@@ -16,8 +16,8 @@ WatchedURLs.prototype.watch = function(href, site, linkInfo, replace) {
     this.watches[href] = {};
   }
   
-  if (!this.watches[href][site.siteName] || replace) {
-    this.watches[href][site.siteName] = entry;
+  if (!this.watches[href][site.siteID] || replace) {
+    this.watches[href][site.siteID] = entry;
   }
 
   logger.log("WatchedURLs", "Watching: " + href);
@@ -39,5 +39,5 @@ WatchedURLs.prototype.getWatches = function(href) {
 WatchedURLs.prototype.isWatchedBy = function(href, site) {
   return (href in this.watches && 
           this.watches[href] && 
-          this.watches[href][site.siteName]);
+          this.watches[href][site.siteID]);
 }

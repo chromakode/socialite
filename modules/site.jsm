@@ -1,3 +1,4 @@
+Components.utils.import("resource://socialite/preferences.jsm");
 logger = Components.utils.import("resource://socialite/utils/log.jsm");
 Components.utils.import("resource://socialite/utils/strUtils.jsm");
 Components.utils.import("resource://socialite/watchedURLs.jsm");
@@ -8,12 +9,29 @@ var faviconService = Components.classes["@mozilla.org/browser/favicon-service;1"
 var IOService = Components.classes["@mozilla.org/network/io-service;1"]
                                    .getService(Components.interfaces.nsIIOService);
 
-var EXPORTED_SYMBOLS = ["SocialiteSite", "SiteCollection"];
+var nativeJSON = Components.classes["@mozilla.org/dom/json;1"]
+                                    .createInstance(Components.interfaces.nsIJSON);
+
+var EXPORTED_SYMBOLS = ["SocialiteSite", "SiteCollection", "siteClassRegistry"];
 
 function SocialiteSite() {
   this.parent = null;
+  this.siteID = null;
   this.siteName = null;
   this.siteURL = null;
+  this.preferences = null;
+}
+
+SocialiteSite.prototype.initialize = function() {
+  this.preferences = Components.classes["@mozilla.org/preferences-service;1"]
+                    .getService(Components.interfaces.nsIPrefService)
+                    .getBranch("extensions.socialite.sites." + this.siteID + ".");
+  this.preferences.QueryInterface(Components.interfaces.nsIPrefBranch2);
+}
+
+SocialiteSite.prototype.getIconURI = function() {
+  var siteURI = IOService.newURI("http://"+this.siteURL, null, null);
+  return faviconService.getFaviconImageForPage(siteURI).spec;
 }
 
 SocialiteSite.prototype.onAddToCollection = function(collection) {
@@ -21,11 +39,6 @@ SocialiteSite.prototype.onAddToCollection = function(collection) {
 }
 SocialiteSite.prototype.onRemoveFromCollection = function(collection) {
   this.parent = null;
-}
-
-SocialiteSite.prototype.getIconURI = function() {
-  var siteURI = IOService.newURI("http://"+this.siteURL, null, null);
-  return faviconService.getFaviconImageForPage(siteURI).spec;
 }
 
 SocialiteSite.prototype.onSitePageLoad = logger.makeStubFunction("SocialiteSite", "onSitePageLoad");
@@ -55,10 +68,21 @@ SiteCollection.prototype.removeSite = function(site) {
   site.onRemoveFromCollection(this);
 }
 
-SiteCollection.prototype.initialize = function() {
-  this.sites.forEach(function(site, index, array) {
-    site.initialize();
-  });
+SiteCollection.prototype.loadFromPreferences = function() {
+  var siteIDs = nativeJSON.decode(SocialitePrefs.getCharPref("sites"));
+  
+  siteIDs.forEach(function(siteID, index, array) {
+    var siteName = SocialitePrefs.getCharPref("sites."+siteID+".siteName");
+    var siteURL = SocialitePrefs.getCharPref("sites."+siteID+".siteURL")
+    var siteClassName = SocialitePrefs.getCharPref("sites."+siteID+".siteClass")
+    
+    logger.log("SiteCollection", "Initializing site: \"" + siteName + "\" (" + siteClassName + ")");
+    
+    var siteClass = siteClassRegistry.getClass(siteClassName);
+    var newSite = new siteClass(siteID, siteName, siteURL);
+    newSite.initialize();
+    this.addSite(newSite);    
+  }, this);
 }
 
 SiteCollection.prototype.onContentLoad = function(doc, win) {
@@ -76,3 +100,19 @@ SiteCollection.prototype.failureMessage = function(message) {
 SiteCollection.prototype.openUILink = function(url, e) {
   this.socialite.openUILink(url, e);
 }
+
+//---
+
+function SiteClassRegistry() {
+  this.classes = {};
+}
+
+SiteClassRegistry.prototype.setClass = function(name, constructor) {
+  this.classes[name] = constructor;
+}
+
+SiteClassRegistry.prototype.getClass = function(name) {
+  return this.classes[name];
+}
+
+siteClassRegistry = new SiteClassRegistry();

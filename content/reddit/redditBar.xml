@@ -33,6 +33,7 @@
 			<field name="afterBound"/>
 			
 			<constructor>
+				this.labelScore = document.getAnonymousElementByAttribute(this, "anonid", "labelScore");
 				this.buttonLike = document.getAnonymousElementByAttribute(this, "anonid", "buttonLike");
 				this.buttonDislike = document.getAnonymousElementByAttribute(this, "anonid", "buttonDislike");
 				this.labelSubreddit = document.getAnonymousElementByAttribute(this, "anonid", "labelSubreddit");

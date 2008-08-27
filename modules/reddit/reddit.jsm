@@ -11,7 +11,8 @@ var EXPORTED_SYMBOLS = ["RedditSite"];
 
 var XPathResult = Components.interfaces.nsIDOMXPathResult;
 
-function RedditSite(siteName, siteURL) {
+function RedditSite(siteID, siteName, siteURL) {
+  this.siteID = siteID;
   this.siteName = siteName;
   this.siteURL = siteURL;
   
@@ -29,9 +30,10 @@ function RedditSite(siteName, siteURL) {
   });
 }
 
-RedditSite.prototype = new SocialiteSite();
+RedditSite.prototype.__proto__ = SocialiteSite.prototype;
 
 RedditSite.prototype.initialize = function() {
+  SocialiteSite.prototype.initialize.apply(this, arguments);
   this.authenticate().perform();
 }
 
@@ -155,6 +157,16 @@ RedditSite.prototype.createBarContent = function(document, linkInfo) {
   var site = this;
   barContent.afterBound = function() {
     
+    this.updateDisplayPreferences = function() {
+      barContent.labelScore.hidden = !site.preferences.getBoolPref("showScore");
+      barContent.labelSubreddit.hidden = !site.preferences.getBoolPref("showSubreddit");
+      barContent.buttonComments.hidden = !site.preferences.getBoolPref("showComments");
+      barContent.buttonSave.hidden = !site.preferences.getBoolPref("showSave");
+      barContent.buttonHide.hidden = !site.preferences.getBoolPref("showHide");
+      barContent.buttonRandom.hidden = !site.preferences.getBoolPref("showRandom");
+    }
+    this.updateDisplayPreferences();
+    
     var failureHandler = hitchHandler(site, "actionFailureHandler", barContent.linkInfo);
     var voteUpdateHandler = function() {
       barContent.linkInfo.update(
@@ -264,3 +276,6 @@ RedditSite.prototype.actionFailureHandler = function(linkInfo, r, action) {
   
   this.parent.failureMessage(text);
 }
+
+// Register this class for instantiation
+siteClassRegistry.setClass("RedditSite", RedditSite);
