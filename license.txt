@@ -1,5 +1,8 @@
-The following license applies to all files unless noted within the file,
-and excepting images beginning with "reddit_":
+Images in the directory "content/reddit/" are (C) 2008 CondeNet, Inc. All rights reserved.
+
+The icon in "skin/general-preferences.png" uses a wrench icon from the Tango Project (http://tango.freedesktop.org) licensed under Creative Commons Attribution Share-Alike 2.5. The icon is thus also Creative Commons Attribution Share-Alike 2.5.
+
+The following license applies to all other files unless noted within the file:
 
 /* ***** BEGIN LICENSE BLOCK *****
  * Version: MPL 1.1/GPL 2.0/LGPL 2.1
@@ -36,5 +39,3 @@ and excepting images beginning with "reddit_":
  * the terms of any one of the MPL, the GPL or the LGPL.
  *
  * ***** END LICENSE BLOCK ***** */
-
-Reddit icons are (C) 2008 CondeNet, Inc. All rights reserved.
