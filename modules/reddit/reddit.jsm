@@ -18,8 +18,9 @@ function RedditSite(siteID, siteName, siteURL) {
   this.siteURL = siteURL;
   
   this.API = new RedditAPI();
-  //this.bookmarkletAPI = new BookmarkletAPI(this);
   
+  /*
+  this.bookmarkletAPI = new BookmarkletAPI(this);
   this.authenticate = Action("reddit.authenticate", function(action) {
     getAuthHash(
       hitchThis(this, function success(auth) {
@@ -29,13 +30,14 @@ function RedditSite(siteID, siteName, siteURL) {
       function failure() { action.failure(); }
     ).perform(this.siteURL);
   });
+  */
 }
 
 RedditSite.prototype.__proto__ = SocialiteSite.prototype;
 
 RedditSite.prototype.initialize = function() {
   SocialiteSite.prototype.initialize.apply(this, arguments);
-  this.authenticate().perform();
+  this.API.auth = new RedditAuth(this.siteURL);
 }
 
 RedditSite.prototype.onSitePageLoad = function(doc, win) {
