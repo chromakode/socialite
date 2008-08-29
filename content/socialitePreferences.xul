@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet href="chrome://global/skin/" type="text/css"?>
+<!DOCTYPE prefwindow SYSTEM "chrome://socialite/locale/prefwindow.dtd">
+<prefwindow id="socialitePreferences" xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul" title="&prefwindow.title;" style="width: 425px; min-height: 375px;" onload="socialiteSitePreferences.init();">
+  <prefpane id="socialitePreferencesGeneralPane" label="&general.title;" image="chrome://socialite/skin/general-preferences.png">
+    <preferences>
+      <preference id="persistmode" name="extensions.socialite.persistmode" type="int"/>
+    </preferences>
+    
+    <groupbox flex="1">      <caption label="&persistgroup.caption;"/>
+      <radiogroup id="clrPrefs" preference="persistmode">
+				<radio id="donotpersist_pref" label="&donotpersist.label;" accesskey="&donotpersist.accesskey;" value="0" />
+				<radio id="sitepersist_pref" label="&sitepersist.label;" accesskey="&sitepersist.accesskey;" value="1"/>
+        <radio id="sectionpersist_pref" label="&sectionpersist.label;" accesskey="&sectionpersist.accesskey;" value="2"/>
+				<radio id="alwayspersist_pref" label="&alwayspersist.label;" accesskey="&alwayspersist.accesskey;" value="3"/>
+			</radiogroup>
+    </groupbox>
+  </prefpane>
+  
+  <prefpane id="socialitePreferencesSitesPane" label="&sites.title;" image="chrome://socialite/skin/site-preferences.png">
+	
+		<groupbox flex="1">
+      <caption label="&sitesGroup.caption;"/>
+      <description>
+	      &sitesGroup.description;
+      </description>
+      
+      <hbox flex="1">
+	      <listbox id="socialiteSiteListbox" flex="1">
+				  <listhead>
+				    <listheader label="&siteListbox.header.site;"/>
+				    <listheader label="&siteListbox.header.url;"/>
+				  </listhead>
+				  <listcols>
+				    <listcol flex="1"/>
+				    <listcol flex="1"/>
+				  </listcols>
+				</listbox>
+				<vbox>
+				  <button id="addSite" label="&addSite.label;" icon="add" accesskey="&addSite.accesskey;"/>
+				  <button id="propertiesSite" label="&propertiesSite.label;" icon="properties" accesskey="&propertiesSite.accesskey;"/>
+				  <button id="removeSite" label="&removeSite.label;" icon="remove" accesskey="&removeSite.accesskey;"/>
+				  <spacer flex="1"/>
+			  </vbox>
+			</hbox>
+    </groupbox>
+  </prefpane>
+  
+  <script type="application/javascript" src="chrome://socialite/content/socialitePreferences.js"/>  
+  <script type="application/javascript" src="chrome://browser/content/utilityOverlay.js"/>
+  
+</prefwindow>

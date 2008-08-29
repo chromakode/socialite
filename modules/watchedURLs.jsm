@@ -41,3 +41,11 @@ WatchedURLs.prototype.isWatchedBy = function(href, site) {
           this.watches[href] && 
           this.watches[href][site.siteID]);
 }
+
+WatchedURLs.prototype.removeSite = function(site) {
+  for each (linkWatches in this.watches) {
+    if (linkWatches[site.siteID]) {
+      linkWatches[site.siteID] = null;
+    }
+  };
+}

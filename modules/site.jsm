@@ -1,4 +1,3 @@
-Components.utils.import("resource://socialite/preferences.jsm");
 logger = Components.utils.import("resource://socialite/utils/log.jsm");
 Components.utils.import("resource://socialite/utils/strUtils.jsm");
 
@@ -7,9 +6,6 @@ var faviconService = Components.classes["@mozilla.org/browser/favicon-service;1"
 
 var IOService = Components.classes["@mozilla.org/network/io-service;1"]
                                    .getService(Components.interfaces.nsIIOService);
-
-var nativeJSON = Components.classes["@mozilla.org/dom/json;1"]
-                                    .createInstance(Components.interfaces.nsIJSON);
 
 var EXPORTED_SYMBOLS = ["SocialiteSite", "SiteCollection", "siteClassRegistry"];
 
@@ -47,43 +43,26 @@ SocialiteSite.prototype.setupBarContent = logger.makeStubFunction("SocialiteSite
 // ---
 
 function SiteCollection(socialite) {
-  this.sites = [];
+  this.siteList = [];
 }
 
 SiteCollection.prototype.addSite = function(site) {
-  this.sites.push(site);
+  this.siteList.push(site);
   site.onAddToCollection(this);
 }
 
 SiteCollection.prototype.removeSite = function(site) {
-  for (var i=1; i<this.sites.length; i++) {
-    if (this.sites[i] == site) {
-      this.sites.splice(i, 1);
+  for (var i=1; i<this.siteList.length; i++) {
+    if (this.siteList[i] == site) {
+      this.siteList.splice(i, 1);
       break;
     }
   }
-  site.onRemoveFromCollection(this);
-}
-
-SiteCollection.prototype.loadFromPreferences = function() {
-  var siteIDs = nativeJSON.decode(SocialitePrefs.getCharPref("sites"));
-  
-  siteIDs.forEach(function(siteID, index, array) {
-    var siteName = SocialitePrefs.getCharPref("sites."+siteID+".siteName");
-    var siteURL = SocialitePrefs.getCharPref("sites."+siteID+".siteURL")
-    var siteClassName = SocialitePrefs.getCharPref("sites."+siteID+".siteClass")
-    
-    logger.log("SiteCollection", "Initializing site: \"" + siteName + "\" (" + siteClassName + ")");
-    
-    var siteClass = siteClassRegistry.getClass(siteClassName);
-    var newSite = new siteClass(siteID, siteName, siteURL);
-    newSite.initialize();
-    this.addSite(newSite);    
-  }, this);
+  Socialite.watchedURLs.removeSite(site);
 }
 
 SiteCollection.prototype.onContentLoad = function(doc, win) {
-  this.sites.forEach(function(site, index, array) {
+  this.siteList.forEach(function(site, index, array) {
     if (strEndsWith(doc.location.hostname, site.siteURL)) {
       site.onSitePageLoad(doc, win);
     }

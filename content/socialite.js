@@ -71,7 +71,7 @@ var SocialiteWindow =
     gBrowser.addEventListener("TabClose", function(event) {
       var tab = event.originalTarget;
       SocialiteWindow.tabBars[tab._tPos] = null;
-      logger.log("main", "Tab closed: " + browser.contentWindow.location.href);
+      logger.log("main", "Tab closed: " + event.originalTarget.linkedBrowser.currentURI);
     }, false);
     
     // Add progress listener to tabbrowser. This fires progress events for the current tab.

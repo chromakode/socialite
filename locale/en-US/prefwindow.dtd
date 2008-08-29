@@ -1,5 +1,7 @@
 <!ENTITY prefwindow.title "Socialite Preferences">
 
+<!ENTITY general.title "General">
+
 <!ENTITY persistgroup.caption     "Info Bar Persistence">
 <!ENTITY donotpersist.label       "Info bar closes upon navigation to another page">
 <!ENTITY donotpersist.accesskey   "n">
@@ -10,19 +12,14 @@
 <!ENTITY alwayspersist.label      "Retain info bar indefinitely">
 <!ENTITY alwayspersist.accesskey  "i">
 
-
-<!ENTITY showgroup.caption        "Info Bar Fields">
-<!ENTITY showlink.label           "Display reddit link">
-<!ENTITY showlink.accesskey       "l">
-<!ENTITY showscore.label          "Display score">
-<!ENTITY showscore.accesskey      "o">
-<!ENTITY showsection.label        "Display subreddit">
-<!ENTITY showsection.accesskey    "u">
-<!ENTITY showcomments.label       "Show comments button">
-<!ENTITY showcomments.accesskey   "c">
-<!ENTITY showsave.label           "Show save/unsave button">
-<!ENTITY showsave.accesskey       "s">
-<!ENTITY showhide.label           "Show hide/unhide button">
-<!ENTITY showhide.accesskey       "h">
-<!ENTITY showrandom.label         "Show random link button">
-<!ENTITY showrandom.accesskey     "r">
+<!ENTITY sites.title "Sites">
+<!ENTITY sitesGroup.caption "Content Sites">
+<!ENTITY sitesGroup.description "Socialite will provide social bookmarking functionality to the following sites when you browse them.">
+<!ENTITY siteListbox.header.site "Site">
+<!ENTITY siteListbox.header.url "URL">
+<!ENTITY addSite.label "Add">
+<!ENTITY addSite.accesskey "A">
+<!ENTITY propertiesSite.label "Properties">
+<!ENTITY propertiesSite.accesskey "P">
+<!ENTITY removeSite.label "Remove">
+<!ENTITY removeSite.accesskey "R">
