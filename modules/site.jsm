@@ -1,7 +1,6 @@
 Components.utils.import("resource://socialite/preferences.jsm");
 logger = Components.utils.import("resource://socialite/utils/log.jsm");
 Components.utils.import("resource://socialite/utils/strUtils.jsm");
-Components.utils.import("resource://socialite/watchedURLs.jsm");
 
 var faviconService = Components.classes["@mozilla.org/browser/favicon-service;1"]
                                         .getService(Components.interfaces.nsIFaviconService);
@@ -48,9 +47,7 @@ SocialiteSite.prototype.setupBarContent = logger.makeStubFunction("SocialiteSite
 // ---
 
 function SiteCollection(socialite) {
-  this.socialite = socialite;
   this.sites = [];
-  this.watchedURLs = new WatchedURLs();
 }
 
 SiteCollection.prototype.addSite = function(site) {
@@ -91,14 +88,6 @@ SiteCollection.prototype.onContentLoad = function(doc, win) {
       site.onSitePageLoad(doc, win);
     }
   });
-}
-
-SiteCollection.prototype.failureMessage = function(message) {
-  this.socialite.failureMessage(message);
-}
-
-SiteCollection.prototype.openUILink = function(url, e) {
-  this.socialite.openUILink(url, e);
 }
 
 //---

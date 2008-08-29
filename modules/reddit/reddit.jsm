@@ -1,3 +1,4 @@
+Components.utils.import("resource://socialite/socialite.jsm");
 logger = Components.utils.import("resource://socialite/utils/log.jsm");
 Components.utils.import("resource://socialite/site.jsm");
 Components.utils.import("resource://socialite/utils/action/action.jsm");
@@ -63,7 +64,7 @@ RedditSite.prototype.linkClicked = function(e) {
   
   var linkURL   = link.href;
   
-  if (!this.parent.watchedURLs.isWatchedBy(linkURL, this)) {
+  if (!Socialite.watchedURLs.isWatchedBy(linkURL, this)) {
     try {
       // Remove title_ from title_XX_XXXXX
       var linkID    = link.id.slice(6);
@@ -142,7 +143,7 @@ RedditSite.prototype.linkClicked = function(e) {
     }
     
     // Add the information we collected to the watch list  
-    this.parent.watchedURLs.watch(linkInfo.url, this, linkInfo);
+    Socialite.watchedURLs.watch(linkInfo.url, this, linkInfo);
   }
 }
 
@@ -184,7 +185,7 @@ RedditSite.prototype.createBarContent = function(document, linkInfo) {
     this.refreshCallback = updateHandler;
     
     this.labelSubreddit.addEventListener("click", function(e) {
-      site.parent.openUILink("http://"+site.siteURL+"/r/"+barContent.linkInfo.localState.subreddit+"/", e);
+      Socialite.openUILink("http://"+site.siteURL+"/r/"+barContent.linkInfo.localState.subreddit+"/", e);
     }, false);
         
     this.buttonLike.addEventListener("click", function(e) {
@@ -214,7 +215,7 @@ RedditSite.prototype.createBarContent = function(document, linkInfo) {
     }, false);
     
     this.buttonComments.addEventListener("click", function(e) {
-      site.parent.openUILink("http://"+site.siteURL+"/info/"+barContent.linkInfo.getID()+"/comments/", e);
+      Socialite.openUILink("http://"+site.siteURL+"/info/"+barContent.linkInfo.getID()+"/comments/", e);
     }, false);
     
     this.buttonSave.addEventListener("click", function(e) {
@@ -253,8 +254,8 @@ RedditSite.prototype.createBarContent = function(document, linkInfo) {
       site.API.randomrising(
         function (r, json) {
           var linkInfo = RedditLinkInfoFromJSON(site.API, json);
-          site.parent.watchedURLs.watch(linkInfo.url, site, linkInfo);
-          site.parent.openUILink(linkInfo.url, e);
+          Socialite.watchedURLs.watch(linkInfo.url, site, linkInfo);
+          Socialite.openUILink(linkInfo.url, e);
         },
         failureHandler
       ).perform();
