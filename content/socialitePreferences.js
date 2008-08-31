@@ -1,11 +1,14 @@
 Components.utils.import("resource://socialite/socialite.jsm");
 
-var socialiteSitePreferences = {
+var siteListbox;
+
+var SocialiteSitePreferences = {
 
   init: function() {
-    var siteListbox = document.getElementById("socialiteSiteListbox"); 
+    siteListbox = document.getElementById("socialiteSiteListbox"); 
     Socialite.sites.siteList.forEach(function(site, index, array) {
       var newItem = document.createElement("listitem");
+      newItem.value = site;
       
       var siteCell = document.createElement("listcell");
       siteCell.setAttribute("class", "listcell-iconic");
@@ -21,16 +24,22 @@ var socialiteSitePreferences = {
     });
   },
 
-  addSite: function(event) {
-   
-  },
-  
-  editSite: function(event) {
+  siteAdd: function(event) {
     
   },
   
-  removeSite: function(event) {
-    
+  siteProperties: function(event) {
+    var item = siteListbox.selectedItem
+    var site = item.value;
+    document.documentElement.openSubDialog("chrome://socialite/content/socialiteSiteProperties.xul", "", site)
+  },
+  
+  siteRemove: function(event) {
+    var item = siteListbox.selectedItem
+    var site = item.value;
+    Socialite.sites.deleteSite(site);
+    Socialite.sites.saveConfiguredSites();
+    siteListbox.removeChild(item);
   }
 
 };

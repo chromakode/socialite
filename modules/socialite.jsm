@@ -1,21 +1,8 @@
-Components.utils.import("resource://socialite/preferences.jsm");
-logger = Components.utils.import("resource://socialite/utils/log.jsm");
-logger.init("Socialite", {
-  enabled:    SocialitePrefs.getBoolPref("debug"),
-  useConsole: SocialitePrefs.getBoolPref("debugInErrorConsole")
-});
-
-Components.utils.import("resource://socialite/site.jsm");
-Components.utils.import("resource://socialite/watchedURLs.jsm");
-
 var alertsService = Components.classes["@mozilla.org/alerts-service;1"]
                     .getService(Components.interfaces.nsIAlertsService);
 
 var windowManager = Components.classes['@mozilla.org/appshell/window-mediator;1']
                     .getService(Components.interfaces.nsIWindowMediator);
-
-var nativeJSON = Components.classes["@mozilla.org/dom/json;1"]
-                                    .createInstance(Components.interfaces.nsIJSON);
 
 var EXPORTED_SYMBOLS = ["Socialite"];
 
@@ -25,37 +12,16 @@ var Socialite =
 {  
   init: function() {
     Socialite.loaded = false;
+    
     Socialite.sites = new SiteCollection();
     Socialite.watchedURLs = new WatchedURLs();
   },
   
   load: function() {
     if (!Socialite.loaded) {
-      Socialite.loadConfiguredSites();
+      Socialite.sites.loadConfiguredSites();
       Socialite.loaded = true;
     }
-  },
-  
-  loadConfiguredSites: function() {
-    var siteIDs = nativeJSON.decode(SocialitePrefs.getCharPref("sites"));
-    
-    siteIDs.forEach(function(siteID, index, array) {
-      var siteName = SocialitePrefs.getCharPref("sites."+siteID+".siteName");
-      var siteURL = SocialitePrefs.getCharPref("sites."+siteID+".siteURL")
-      var siteClassName = SocialitePrefs.getCharPref("sites."+siteID+".siteClass")
-      
-      logger.log("SiteCollection", "Initializing site: \"" + siteName + "\" (" + siteClassName + ")");
-      
-      var siteClass = siteClassRegistry.getClass(siteClassName);
-      var newSite = new siteClass(siteID, siteName, siteURL);
-      newSite.initialize();
-      Socialite.sites.addSite(newSite);    
-    }, this);
-  },
-  
-  unloadSite: function(site) {
-    Socialite.watchedURLs.removeSite(site);
-    Socialite.sites.removeSite(site);
   },
 
   failureMessage: function(message) {
@@ -76,4 +42,22 @@ var Socialite =
 
 }
 
+// Bring up the preferences first thing
+Socialite.preferences = Components.classes["@mozilla.org/preferences-service;1"]
+                                           .getService(Components.interfaces.nsIPrefService)
+                                           .getBranch("extensions.socialite.");
+Socialite.preferences.QueryInterface(Components.interfaces.nsIPrefBranch2);
+
+// Now, initialize the logging system
+logger = Components.utils.import("resource://socialite/utils/log.jsm");
+logger.init("Socialite", {
+  enabled:    Socialite.preferences.getBoolPref("debug"),
+  useConsole: Socialite.preferences.getBoolPref("debugInErrorConsole")
+});
+
+// Import application components now that we're initialized and Socialite is defined
+Components.utils.import("resource://socialite/site.jsm");
+Components.utils.import("resource://socialite/watchedURLs.jsm");
+
+// Finish initialization (now that the environment is set up)
 Socialite.init();

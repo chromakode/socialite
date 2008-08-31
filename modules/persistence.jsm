@@ -1,4 +1,4 @@
-Components.utils.import("resource://socialite/preferences.jsm");
+Components.utils.import("resource://socialite/socialite.jsm");
 logger = Components.utils.import("resource://socialite/utils/log.jsm");
 Components.utils.import("resource://socialite/utils/strUtils.jsm");
 
@@ -38,7 +38,7 @@ function dropPathLevels(path, levels) {
 }
 
 function onLocationChange(oldURL, newURL) {
-  var persistMode = SocialitePrefs.getIntPref("persistmode");
+  var persistMode = Socialite.preferences.getIntPref("persistmode");
   
   if (persistMode == PERSIST_NONE) {
     return false;

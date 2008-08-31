@@ -1,5 +1,4 @@
 Components.utils.import("resource://socialite/socialite.jsm");
-Components.utils.import("resource://socialite/preferences.jsm");
 logger = Components.utils.import("resource://socialite/utils/log.jsm");
 persistence = Components.utils.import("resource://socialite/persistence.jsm");
 

@@ -1,7 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <?xml-stylesheet href="chrome://global/skin/" type="text/css"?>
-<!DOCTYPE prefwindow SYSTEM "chrome://socialite/locale/prefwindow.dtd">
-<prefwindow id="socialitePreferences" xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul" title="&prefwindow.title;" style="width: 425px; min-height: 375px;" onload="socialiteSitePreferences.init();">
+<!DOCTYPE preferences SYSTEM "chrome://socialite/locale/preferences.dtd">
+<prefwindow id="socialitePreferences" xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul" 
+						title="&prefwindow.title;" 
+						style="width: 425px; min-height: 375px;" 
+						onload="SocialiteSitePreferences.init();">
   <prefpane id="socialitePreferencesGeneralPane" label="&general.title;" image="chrome://socialite/skin/general-preferences.png">
     <preferences>
       <preference id="persistmode" name="extensions.socialite.persistmode" type="int"/>
@@ -37,9 +40,9 @@
 				  </listcols>
 				</listbox>
 				<vbox>
-				  <button id="addSite" label="&addSite.label;" icon="add" accesskey="&addSite.accesskey;"/>
-				  <button id="propertiesSite" label="&propertiesSite.label;" icon="properties" accesskey="&propertiesSite.accesskey;"/>
-				  <button id="removeSite" label="&removeSite.label;" icon="remove" accesskey="&removeSite.accesskey;"/>
+				  <button id="addSite" onclick="SocialiteSitePreferences.siteAdd();" label="&addSite.label;" icon="add" accesskey="&addSite.accesskey;"/>
+				  <button id="propertiesSite" onclick="SocialiteSitePreferences.siteProperties();" label="&propertiesSite.label;" icon="properties" accesskey="&propertiesSite.accesskey;"/>
+				  <button id="removeSite" onclick="SocialiteSitePreferences.siteRemove();" label="&removeSite.label;" icon="remove" accesskey="&removeSite.accesskey;"/>
 				  <spacer flex="1"/>
 			  </vbox>
 			</hbox>

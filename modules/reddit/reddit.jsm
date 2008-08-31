@@ -13,10 +13,7 @@ var EXPORTED_SYMBOLS = ["RedditSite"];
 var XPathResult = Components.interfaces.nsIDOMXPathResult;
 
 function RedditSite(siteID, siteName, siteURL) {
-  this.siteID = siteID;
-  this.siteName = siteName;
-  this.siteURL = siteURL;
-  
+  SocialiteSite.apply(this, arguments);
   this.API = new RedditAPI();
   
   /*
@@ -36,8 +33,17 @@ function RedditSite(siteID, siteName, siteURL) {
 RedditSite.prototype.__proto__ = SocialiteSite.prototype;
 
 RedditSite.prototype.initialize = function() {
-  SocialiteSite.prototype.initialize.apply(this, arguments);
   this.API.auth = new RedditAuth(this.siteURL);
+}
+
+RedditSite.prototype.onCreate = function() {
+  // Initialize preference defaults
+  this.preferences.setBoolPref("showScore", true);
+  this.preferences.setBoolPref("showSubreddit", true);
+  this.preferences.setBoolPref("showComments", true);
+  this.preferences.setBoolPref("showSave", true);
+  this.preferences.setBoolPref("showHide", false);
+  this.preferences.setBoolPref("showRandom", false);
 }
 
 RedditSite.prototype.onSitePageLoad = function(doc, win) {
@@ -52,7 +58,7 @@ RedditSite.prototype.onSitePageLoad = function(doc, win) {
     //siteLink.style.color = "red";
   }
   
-  logger.log("reddit", "Added click handlers to " + res.snapshotLength + " links on " + win.location.href);
+  logger.log("RedditSite", "Added click handlers to " + res.snapshotLength + " links on " + win.location.href);
   
   // Snarf the authentication hash using wrappedJSObject
   // This should be safe, since Firefox 3 uses a XPCSafeJSObjectWrapper
@@ -124,7 +130,7 @@ RedditSite.prototype.linkClicked = function(e) {
         linkInfo.localState.isSaved = (linkUnsave.style.display != "none");
       } else {
         // No save or unsave link present -- this shouldn't happen, as far as I know.
-        logger.log(linkInfo.fullname, "Unexpected save link absence.");
+        logger.log("RedditSite", "Unexpected save link absence.");
       }
       
       // You'd think the link was hidden, the user couldn't have clicked on it
@@ -138,10 +144,10 @@ RedditSite.prototype.linkClicked = function(e) {
         linkInfo.localState.isHidden = true;
       } else {
         // No hide or unhide link present -- this shouldn't happen, as far as I know.
-        logger.log(linkInfo.fullname, "Unexpected hide link absence.");
+        logger.log("RedditSite", "Unexpected hide link absence.");
       }
     } catch (e) {
-      logger.log(linkInfo.fullname, "Caught exception while reading data from DOM: " + e.toString());
+      logger.log("RedditSite", "Caught exception while reading data from DOM: " + e.toString());
     }
     
     // Add the information we collected to the watch list  
@@ -281,4 +287,5 @@ RedditSite.prototype.actionFailureHandler = function(linkInfo, r, action) {
 }
 
 // Register this class for instantiation
-siteClassRegistry.setClass("RedditSite", RedditSite);
+RedditSite.prototype.siteClassName = "RedditSite";
+siteClassRegistry.addClass(RedditSite);

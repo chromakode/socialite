@@ -1,0 +1,31 @@
+<!ENTITY prefwindow.title "Socialite Preferences">
+
+<!ENTITY general.title "General">
+<!ENTITY persistgroup.caption "Info Bar Persistence">
+<!ENTITY donotpersist.label "Info bar closes upon navigation to another page">
+<!ENTITY donotpersist.accesskey "n">
+<!ENTITY sitepersist.label "Retain info bar for the current site">
+<!ENTITY sitepersist.accesskey "t">
+<!ENTITY sectionpersist.label "Retain info bar for the current site section">
+<!ENTITY sectionpersist.accesskey "e">
+<!ENTITY alwayspersist.label "Retain info bar indefinitely">
+<!ENTITY alwayspersist.accesskey "i">
+
+<!ENTITY sites.title "Sites">
+<!ENTITY sitesGroup.caption "Content Sites">
+<!ENTITY sitesGroup.description "Socialite will provide social bookmarking functionality to the following sites when you browse them.">
+<!ENTITY siteListbox.header.site "Site">
+<!ENTITY siteListbox.header.url "URL">
+<!ENTITY addSite.label "Add">
+<!ENTITY addSite.accesskey "A">
+<!ENTITY propertiesSite.label "Properties">
+<!ENTITY propertiesSite.accesskey "P">
+<!ENTITY removeSite.label "Remove">
+<!ENTITY removeSite.accesskey "R">
+
+
+<!ENTITY sitepropwindow.title "Site Properties">
+
+<!ENTITY siteName.label "Name">
+<!ENTITY siteURL.label "URL">
+<!ENTITY siteClass.label "Type">
