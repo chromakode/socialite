@@ -5,7 +5,8 @@
 						type="child"
 						title="&sitepropwindow.title;"
 		        dlgbuttons="accept,cancel"
-		        onload="SocialiteSiteProperties.init()">
+		        onload="SocialiteSiteProperties.init()"
+		        ondialogaccept="SocialiteSiteProperties.onAccept();">
 
 	<prefpane id="socialiteSitePropertiesPane">
     <preferences id="preferencesSocialite"/>

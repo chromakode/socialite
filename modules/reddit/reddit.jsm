@@ -158,6 +158,7 @@ RedditSite.prototype.linkClicked = function(e) {
 RedditSite.prototype.createBarContent = function(document, linkInfo) {
   var barContent = document.createElement("hbox");
   
+  barContent.siteID = this.siteID;
   barContent.linkInfo = linkInfo;
   
   // We define behaviors here since I intend the RedditBarContent XBL to only be responsible for the display of a RedditLinkInfo instance.
