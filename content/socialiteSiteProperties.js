@@ -20,8 +20,8 @@ var SocialiteSiteProperties = {
   },
   
   onAccept: function(event) {
-    this.site.siteName = site.prefSiteName.value;
-    
+    this.site.siteName = this.prefSiteName.value;
+    return true;
   }
 
 };

@@ -139,18 +139,60 @@
 			<stylesheet src="chrome://global/skin/notification.css"/>
 		</resources>
 		
-		<implementation>
+		<implementation implements="nsIObserver">
+			<field name="menuItems"/>
 			<field name="selectedSite"/>
+		  <field name="preferences"/>
 		
 			<constructor>
+				this.preferences = Components.classes["@mozilla.org/preferences-service;1"]
+	          .getService(Components.interfaces.nsIPrefService)
+	          .getBranch("extensions.socialite.sites.");
+		    this.preferences.QueryInterface(Components.interfaces.nsIPrefBranch2);
+		    this.preferences.addObserver("", this, false);
+		    
+		    this.menuItems = {};
+
 				var labelSite = document.getAnonymousElementByAttribute(this, "anonid", "labelSite");
-				
 				var self = this;
 				labelSite.addEventListener("click", function(event) {
 					openUILink(self.selectedSite.siteURL);
 				}, false);
 			</constructor>
-		
+			
+			<destructor>
+        this.preferences.removeObserver("", this);
+      </destructor>
+			
+		  <method name="observe">
+        <parameter name="subject"/>
+        <parameter name="topic"/>
+        <parameter name="data"/>
+        <body>
+	        <![CDATA[
+	          // data is of the form siteID.preference
+		        splitData = data.split(".");
+		        var siteID = splitData[0];
+		        var prefName = splitData[1];
+		        
+		        // Update the UI if the site name changes.
+		        if (prefName == "siteName") {
+			        var newSiteName = this.preferences.getCharPref(data);
+		        
+			        var menuItem = this.menuItems[siteID];
+		          if (menuItem) {
+			          menuItem.setAttribute("label", newSiteName);
+		          }
+		          
+		          if (this.selectedSite.siteID == siteID) {
+			          var siteName = document.getAnonymousElementByAttribute(this, "anonid", "labelSite");
+			          siteName.value = newSiteName;
+		          }
+	          }
+	        ]]>
+        </body>
+      </method>
+
 			<method name="addSite">
 				<parameter name="site"/>
 				<body>
@@ -162,14 +204,14 @@
 						// For some reason, the properties don't work?
 						menuItem.setAttribute("label", site.siteName);
 						menuItem.setAttribute("image", site.getIconURI());
-						menuItem.value = site.siteID;
-						
+												
 						var self = this;
 						menuItem.addEventListener("command", function(event) {
 							self.selectSite(site);
 							event.stopPropagation();
 						}, false);
 						
+						this.menuItems[site.siteID] = menuItem;
 						menuSites.appendChild(menuItem);
 						
 						if (menuSites.childNodes.length == 1) {
@@ -187,12 +229,8 @@
 				<body>
           <![CDATA[
 						var menuSites = document.getAnonymousElementByAttribute(this, "anonid", "menuSites");
-						for (var i=0; i<menuSites.childNodes.length; i++) {
-							var menuItem = menuSites.childNodes[i];
-              if (menuItem.value == site.siteID) {
-                menuSites.removeChild(menuItem);
-              }
-            }
+            menuSites.removeChild(this.menuItems[site.siteID]);
+            delete this.menuItems[site.siteID];
           ]]>
 				</body>
 			</method>
