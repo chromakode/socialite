@@ -2,7 +2,10 @@ Components.utils.import("resource://socialite/socialite.jsm");
 logger = Components.utils.import("resource://socialite/utils/log.jsm");
 persistence = Components.utils.import("resource://socialite/persistence.jsm");
 
-// Sites
+var observerService = Components.classes["@mozilla.org/observer-service;1"]
+                                         .getService(Ci.nsIObserverService);
+
+//Sites
 Components.utils.import("resource://socialite/reddit/reddit.jsm");
 
 // ---
@@ -47,6 +50,8 @@ var SocialiteWindow =
     Socialite.load();
     
     SocialiteWindow.tabBars = [];
+    
+    observerService.addObserver(SocialiteWindow, "socialite-unload-site", false);
   
     gBrowser.addEventListener("DOMContentLoaded", function(event) {
       var doc = event.originalTarget;
@@ -63,14 +68,14 @@ var SocialiteWindow =
     gBrowser.addEventListener("TabOpen", function(event) {
       var browser = event.originalTarget.linkedBrowser;
       var win = browser.contentWindow;
-      logger.log("main", "Tab opened: " + win.location.href);    
+      logger.log("main", "Tab opened: " + browser.currentURI.spec);    
       SocialiteWindow.linkStartLoad(win, true)
     }, false);
     
     gBrowser.addEventListener("TabClose", function(event) {
       var tab = event.originalTarget;
       SocialiteWindow.tabBars[tab._tPos] = null;
-      logger.log("main", "Tab closed: " + event.originalTarget.linkedBrowser.currentURI);
+      logger.log("main", "Tab closed: " + event.originalTarget.linkedBrowser.currentURI.spec);
     }, false);
     
     // Add progress listener to tabbrowser. This fires progress events for the current tab.
@@ -78,6 +83,7 @@ var SocialiteWindow =
   },
   
   onUnload: function() {
+    observerService.removeObserver(this, "socialite-unload-site");
     // Remove remaining progress listeners.
     SocialiteWindow.unsetProgressListener(gBrowser);
   },
@@ -147,7 +153,22 @@ var SocialiteWindow =
     
     logger.log("Socialite", "Notification created");
     return notification;
+  },
+  
+  observe: function(subject, topic, data) {
+    if (topic == "socialite-unload-site") {
+      SocialiteWindow.tabBars.forEach(function(socialiteBar, index, array) {
+        if (socialiteBar) {
+          socialiteBar.removeSiteContent(Socialite.sites.byID[data]);
+          
+          if (socialiteBar.contentCount == 0) {
+             socialiteBar.close(); 
+          }
+        }
+      });
+    }
   }
+
 }
 
 SocialiteWindow.init();

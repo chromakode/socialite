@@ -6,7 +6,7 @@ var SocialiteSitePreferences = {
 
   init: function() {
     siteListbox = document.getElementById("socialiteSiteListbox"); 
-    Socialite.sites.siteList.forEach(function(site, index, array) {
+    for each (var site in Socialite.sites.byID) {
       var newItem = document.createElement("listitem");
       newItem.value = site;
       
@@ -21,25 +21,32 @@ var SocialiteSitePreferences = {
       newItem.appendChild(urlCell);
       
       siteListbox.appendChild(newItem);
-    });
+    };
   },
 
   siteAdd: function(event) {
-    
+    var item = siteListbox.selectedItem;
+    if (item) {
+      
+    }
   },
   
   siteProperties: function(event) {
-    var item = siteListbox.selectedItem
-    var site = item.value;
-    document.documentElement.openSubDialog("chrome://socialite/content/socialiteSiteProperties.xul", "", site)
+    var item = siteListbox.selectedItem;
+    if (item) {
+      var site = item.value;
+      document.documentElement.openSubDialog("chrome://socialite/content/socialiteSiteProperties.xul", "", site)
+    }
   },
   
   siteRemove: function(event) {
-    var item = siteListbox.selectedItem
-    var site = item.value;
-    Socialite.sites.deleteSite(site);
-    Socialite.sites.saveConfiguredSites();
-    siteListbox.removeChild(item);
+    var item = siteListbox.selectedItem;
+    if (item) {
+      var site = item.value;
+      Socialite.sites.deleteSite(site);
+      Socialite.sites.saveConfiguredSites();
+      siteListbox.removeChild(item);
+    }
   }
 
 };

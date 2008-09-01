@@ -36,6 +36,15 @@
 				}, false);
 			</constructor>
 			
+			<property name="contentCount">
+				<getter>
+					<![CDATA[
+						var deckContent = document.getAnonymousElementByAttribute(this, "anonid", "deckContent");
+	          return deckContent.childNodes.length;
+          ]]>
+				</getter>
+			</property>
+			
 			<method name="addSiteContent">
 				<parameter name="site"/>
 				<parameter name="siteContent"/>
@@ -54,11 +63,14 @@
 				<parameter name="site"/>
 				<body>
           <![CDATA[
-	          var deckContent = document.getAnonymousElementByAttribute(this, "anonid", "deckContent");
-						deckContent.removeChild(this.getContentIndex(site));
-						
-						var siteSelector = document.getAnonymousElementByAttribute(this, "anonid", "siteSelector");
-						siteSelector.removeSite(site);
+	          var index = this.getContentIndex(site);
+	          if (index != -1) {
+		          var deckContent = document.getAnonymousElementByAttribute(this, "anonid", "deckContent");
+							deckContent.removeChild(deckContent.childNodes[index]);
+							
+							var siteSelector = document.getAnonymousElementByAttribute(this, "anonid", "siteSelector");
+							siteSelector.removeSite(site);
+						}
           ]]>
 				</body>
 			</method>

@@ -11,12 +11,16 @@ var IOService = Components.classes["@mozilla.org/network/io-service;1"]
 var nativeJSON = Components.classes["@mozilla.org/dom/json;1"]
                                     .createInstance(Components.interfaces.nsIJSON);
 
+var observerService = Components.classes["@mozilla.org/observer-service;1"]
+                                         .getService(Components.interfaces.nsIObserverService);
+
 var EXPORTED_SYMBOLS = ["SocialiteSite", "SiteCollection", "siteClassRegistry"];
 
 function SocialiteSite(siteID, siteName, siteURL) {
   this.siteID = siteID;
   this.siteName = siteName;
   this.siteURL = siteURL;
+  this.loaded = false;
   
   this.preferences = Components.classes["@mozilla.org/preferences-service;1"]
                                         .getService(Components.interfaces.nsIPrefService)
@@ -24,11 +28,17 @@ function SocialiteSite(siteID, siteName, siteURL) {
   this.preferences.QueryInterface(Components.interfaces.nsIPrefBranch2);
 }
 
-SocialiteSite.prototype.initialize = logger.makeStubFunction("SocialiteSite", "initialize");
-
 SocialiteSite.prototype.getIconURI = function() {
   var siteURI = IOService.newURI("http://"+this.siteURL, null, null);
   return faviconService.getFaviconImageForPage(siteURI).spec;
+}
+
+SocialiteSite.prototype.onLoad = function() {
+  this.loaded = true;  
+};
+
+SocialiteSite.prototype.onUnload = function() {
+  this.loaded = false;
 }
 
 SocialiteSite.prototype.onCreate = logger.makeStubFunction("SocialiteSite", "onCreate");
@@ -40,7 +50,7 @@ SocialiteSite.prototype.setupBarContent = logger.makeStubFunction("SocialiteSite
 // ---
 
 function SiteCollection() {
-  this.siteList = [];
+  this.byID = {};
   this.nextID = 0;
 }
 
@@ -50,27 +60,34 @@ SiteCollection.prototype.loadSite = function(site) {
     // Keep nextID in sync with loaded sites
     this.nextID = site.siteID + 1; 
   }
-  this.siteList.push(site);
-  site.initialize();
+  
+  if (!this.byID[site.siteID]) {
+    this.byID[site.siteID] = site;
+  } else {
+    throw "Site with id \""+site.siteID+"\" already loaded";
+  }
+  site.onLoad();
+  observerService.notifyObservers(this, "socialite-load-site", site.siteID);
 }
 
 SiteCollection.prototype.unloadSite = function(site) {
   logger.log("SiteCollection", "Unloading site: \"" + site.siteName + "\" (" + site.siteClassName + ")");
-  for (var i=0; i<this.siteList.length; i++) {
-    if (this.siteList[i] == site) {
-      this.siteList.splice(i, 1);
-      break;
-    }
-  }
+  observerService.notifyObservers(this, "socialite-unload-site", site.siteID);
+  site.onUnload();
+  delete this.byID[site.siteID];
   Socialite.watchedURLs.removeSite(site);
 }
 
+SiteCollection.prototype.isLoaded = function(site) {
+  return (site && this.byID[site.siteID] == site);
+}
+
 SiteCollection.prototype.onContentLoad = function(doc, win) {
-  this.siteList.forEach(function(site, index, array) {
+  for each (var site in this.byID) {
     if (strEndsWith(doc.location.hostname, site.siteURL)) {
       site.onSitePageLoad(doc, win);
     }
-  });
+  };
 }
 
 SiteCollection.prototype.loadConfiguredSites = function() {
