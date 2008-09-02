@@ -14,6 +14,11 @@
   opacity: 0.25;
 }
 
+.socialite-menulist-iconic > menupopup > .menuitem-iconic  > .menu-iconic-left {
+	/* Why on earth do I have to do this? */
+	display: -moz-box;
+}
+
 hbox[anonid="siteSelector"] {
 	-moz-binding: url(chrome://socialite/content/socialiteBar.xml#socialitesiteselector);
 }

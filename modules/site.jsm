@@ -28,6 +28,10 @@ function SocialiteSite(siteID, siteName, siteURL) {
   this.preferences.QueryInterface(Components.interfaces.nsIPrefBranch2);
 }
 
+SocialiteSite.prototype.siteClassID = "SocialiteSite";
+SocialiteSite.prototype.siteClassName = "Socialite Site";
+SocialiteSite.prototype.siteClassIconURI = "";
+
 SocialiteSite.prototype.getIconURI = function() {
   var siteURI = IOService.newURI("http://"+this.siteURL, null, null);
   return faviconService.getFaviconImageForPage(siteURI).spec;
@@ -54,8 +58,16 @@ function SiteCollection() {
   this.nextID = 0;
 }
 
+SiteCollection.prototype.onContentLoad = function(doc, win) {
+  for each (var site in this.byID) {
+    if (strEndsWith(doc.location.hostname, site.siteURL)) {
+      site.onSitePageLoad(doc, win);
+    }
+  };
+}
+
 SiteCollection.prototype.loadSite = function(site) {
-  logger.log("SiteCollection", "Loading site: \"" + site.siteName + "\" (" + site.siteClassName + ")");
+  logger.log("SiteCollection", "Loading site: \"" + site.siteName + "\" (" + site.siteClassID + ")");
   if ((Number(site.siteID) != NaN) && (site.siteID >= this.nextID)) {
     // Keep nextID in sync with loaded sites
     this.nextID = site.siteID + 1; 
@@ -71,23 +83,21 @@ SiteCollection.prototype.loadSite = function(site) {
 }
 
 SiteCollection.prototype.unloadSite = function(site) {
-  logger.log("SiteCollection", "Unloading site: \"" + site.siteName + "\" (" + site.siteClassName + ")");
+  logger.log("SiteCollection", "Unloading site: \"" + site.siteName + "\" (" + site.siteClassID + ")");
   observerService.notifyObservers(this, "socialite-unload-site", site.siteID);
   site.onUnload();
   delete this.byID[site.siteID];
   Socialite.watchedURLs.removeSite(site);
 }
 
-SiteCollection.prototype.isLoaded = function(site) {
-  return (site && this.byID[site.siteID] == site);
+SiteCollection.prototype.reloadSite = function(site) {
+  logger.log("SiteCollection", "Reloading site: \"" + site.siteName + "\" (" + site.siteClassID + ")");
+  this.unloadSite(site);
+  this.loadSite(site);  
 }
 
-SiteCollection.prototype.onContentLoad = function(doc, win) {
-  for each (var site in this.byID) {
-    if (strEndsWith(doc.location.hostname, site.siteURL)) {
-      site.onSitePageLoad(doc, win);
-    }
-  };
+SiteCollection.prototype.isLoaded = function(site) {
+  return (site && this.byID[site.siteID] == site);
 }
 
 SiteCollection.prototype.loadConfiguredSites = function() {
@@ -96,11 +106,11 @@ SiteCollection.prototype.loadConfiguredSites = function() {
   siteIDs.forEach(function(siteID, index, array) {
     var siteName = Socialite.preferences.getCharPref("sites."+siteID+".siteName");
     var siteURL = Socialite.preferences.getCharPref("sites."+siteID+".siteURL")
-    var siteClassName = Socialite.preferences.getCharPref("sites."+siteID+".siteClass")
+    var siteClassID = Socialite.preferences.getCharPref("sites."+siteID+".siteClassID")
     
-    logger.log("SiteCollection", "Loading site from preferences: \"" + siteName + "\" (" + siteClassName + ")");
+    logger.log("SiteCollection", "Loading site from preferences: \"" + siteName + "\" (" + siteClassID + ")");
     
-    var siteClass = siteClassRegistry.getClass(siteClassName);
+    var siteClass = siteClassRegistry.getClass(siteClassID);
     var newSite = new siteClass(siteID, siteName, siteURL);
     this.loadSite(newSite);    
   }, this);
@@ -111,7 +121,7 @@ SiteCollection.prototype.saveConfiguredSites = function() {
 }
 
 SiteCollection.prototype.createSite = function(siteClass, siteName, siteURL) {
-  logger.log("SiteCollection", "Creating site: \"" + site.siteName + "\" (" + site.siteClassName + ")");
+  logger.log("SiteCollection", "Creating site: \"" + site.siteName + "\" (" + site.siteClassID + ")");
   var newSite = new siteClass(this.nextID, siteName, siteURL);
   this.nextID += 1;
   newSite.onCreate();
@@ -119,7 +129,7 @@ SiteCollection.prototype.createSite = function(siteClass, siteName, siteURL) {
 }
 
 SiteCollection.prototype.deleteSite = function(site) {
-  logger.log("SiteCollection", "Deleting site: \"" + site.siteName + "\" (" + site.siteClassName + ")");
+  logger.log("SiteCollection", "Deleting site: \"" + site.siteName + "\" (" + site.siteClassID + ")");
   site.onDelete();
   Socialite.preferences.deleteBranch("sites."+site.siteID);
   this.unloadSite(site);
@@ -132,11 +142,11 @@ function SiteClassRegistry() {
 }
 
 SiteClassRegistry.prototype.addClass = function(constructor) {
-  this.classes[constructor.prototype.siteClassName] = constructor;
+  this.classes[constructor.prototype.siteClassID] = constructor;
 }
 
-SiteClassRegistry.prototype.getClass = function(name) {
-  return this.classes[name];
+SiteClassRegistry.prototype.getClass = function(classID) {
+  return this.classes[classID];
 }
 
 siteClassRegistry = new SiteClassRegistry();

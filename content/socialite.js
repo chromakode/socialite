@@ -83,7 +83,7 @@ var SocialiteWindow =
   },
   
   onUnload: function() {
-    observerService.removeObserver(this, "socialite-unload-site");
+    observerService.removeObserver(SocialiteWindow, "socialite-unload-site");
     // Remove remaining progress listeners.
     SocialiteWindow.unsetProgressListener(gBrowser);
   },

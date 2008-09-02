@@ -14,7 +14,6 @@ var XPathResult = Components.interfaces.nsIDOMXPathResult;
 
 function RedditSite(siteID, siteName, siteURL) {
   SocialiteSite.apply(this, arguments);
-  this.API = new RedditAPI();
     
   /*
   this.bookmarkletAPI = new BookmarkletAPI(this);
@@ -34,6 +33,7 @@ RedditSite.prototype.__proto__ = SocialiteSite.prototype;
 
 RedditSite.prototype.onLoad = function() {
   SocialiteSite.prototype.onLoad.apply(this, arguments);
+  this.API = new RedditAPI();
   this.API.auth = new RedditAuth(this.siteURL);
 }
 
@@ -297,5 +297,7 @@ RedditSite.prototype.actionFailureHandler = function(linkInfo, r, action) {
 }
 
 // Register this class for instantiation
-RedditSite.prototype.siteClassName = "RedditSite";
+RedditSite.prototype.siteClassID = "RedditSite";
+RedditSite.prototype.siteClassName = "Reddit";
+RedditSite.prototype.siteClassIconURI = "chrome://socialite/content/reddit/reddit.ico";
 siteClassRegistry.addClass(RedditSite);

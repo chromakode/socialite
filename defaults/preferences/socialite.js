@@ -8,7 +8,7 @@ pref("extensions.socialite.persistmode", 2);
 pref("extensions.socialite.sites", '["reddit"]');
 
 // Default reddit site
-pref("extensions.socialite.sites.reddit.siteClass", "RedditSite");
+pref("extensions.socialite.sites.reddit.siteClassID", "RedditSite");
 pref("extensions.socialite.sites.reddit.siteName", "reddit");
 pref("extensions.socialite.sites.reddit.siteURL", "www.reddit.com");
 

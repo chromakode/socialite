@@ -1,11 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <?xml-stylesheet href="chrome://global/skin/" type="text/css"?>
+<?xml-stylesheet href="chrome://socialite/skin/socialite.css" type="text/css"?>
 <!DOCTYPE preferences SYSTEM "chrome://socialite/locale/preferences.dtd">
 <prefwindow id="socialiteSiteProperties" xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul" 
 						type="child"
 						title="&sitepropwindow.title;"
 		        dlgbuttons="accept,cancel"
-		        onload="SocialiteSiteProperties.init()"
+		        onload="SocialiteSiteProperties.setAcceptButton(); SocialiteSiteProperties.init()"
 		        ondialogaccept="SocialiteSiteProperties.onAccept();">
 
 	<prefpane id="socialiteSitePropertiesPane">
@@ -27,9 +28,9 @@
 			    </row>
 			    <row id="rowSiteClass" align="center">
 			      <hbox pack="end"><label control="buttonSiteClass" value="&siteClass.label;:"/></hbox>
-			      <button id="buttonSiteClass" type="menu" flex="1">
+			      <menulist id="buttonSiteClass" preference="siteClassID" class="socialite-menulist-iconic" flex="1">
 				      <menupopup id="menuSiteClass"/>
-			      </button>
+			      </menulist>
 			    </row>
 			  </rows>
 			</grid>
@@ -41,5 +42,16 @@
 	</prefpane>
 	
 	<script type="application/javascript" src="chrome://socialite/content/socialiteSiteProperties.js"/>  
+	<script type="text/javascript">
+		SocialiteSiteProperties.setAcceptButton = function SSProps_setAcceptButton() {
+			if (window.arguments[0].isNewSite) {
+				var prefWindow = document.getElementById("socialiteSiteProperties");
+				var buttonAccept = prefWindow._buttons.accept
+				buttonAccept.setAttribute('label', '&addSite.label;');
+				buttonAccept.setAttribute('accesskey','&addSite.accesskey;');
+				buttonAccept.setAttribute('icon','add');
+			}
+		}
+	</script>
 	
 </prefwindow>

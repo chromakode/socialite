@@ -20,7 +20,7 @@
     </groupbox>
   </prefpane>
   
-  <prefpane id="socialitePreferencesSitesPane" label="&sites.title;" image="chrome://socialite/skin/site-preferences.png">
+  <prefpane id="socialitePreferencesSitesPane" label="&sites.title;" image="chrome://socialite/skin/site-preferences.png" flex="1">
 	
 		<groupbox flex="1">
       <caption label="&sitesGroup.caption;"/>
@@ -49,7 +49,10 @@
     </groupbox>
   </prefpane>
   
+  <stringbundleset>
+		<stringbundle id="socialitePreferencesStrings" src="chrome://socialite/locale/preferences.properties"/>
+	</stringbundleset>
+  
   <script type="application/javascript" src="chrome://socialite/content/socialitePreferences.js"/>  
-  <script type="application/javascript" src="chrome://browser/content/utilityOverlay.js"/>
   
 </prefwindow>
