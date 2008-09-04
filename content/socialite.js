@@ -3,7 +3,7 @@ logger = Components.utils.import("resource://socialite/utils/log.jsm");
 persistence = Components.utils.import("resource://socialite/persistence.jsm");
 
 var observerService = Components.classes["@mozilla.org/observer-service;1"]
-                                         .getService(Ci.nsIObserverService);
+                                         .getService(Components.interfaces.nsIObserverService);
 
 //Sites
 Components.utils.import("resource://socialite/reddit/reddit.jsm");

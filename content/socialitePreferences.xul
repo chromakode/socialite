@@ -4,7 +4,8 @@
 <prefwindow id="socialitePreferences" xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul" 
 						title="&prefwindow.title;" 
 						style="width: 425px; min-height: 375px;" 
-						onload="SocialiteSitePreferences.init();">
+						onload="SocialiteSitePreferences.load();"
+						onunload="SocialiteSitePreferences.unload();">
   <prefpane id="socialitePreferencesGeneralPane" label="&general.title;" image="chrome://socialite/skin/general-preferences.png">
     <preferences>
       <preference id="persistmode" name="extensions.socialite.persistmode" type="int"/>

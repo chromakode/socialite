@@ -26,11 +26,21 @@ function init(appname, settings) {
 }
 
 function formatEntry(entry) {
-  return "["+logSettings.appName+"] " + entry.section + " -- " + entry.msg + "\n";
+  var identifier;
+  if (entry.identifier) {
+    identifier = "("+entry.identifier+") "; 
+  } else {
+    identifier = "";
+  }
+  return "["+logSettings.appName+"] " + entry.section + identifier + " -- " + entry.msg + "\n";
 }
 
-function log(section, msg) {
-  entry = {section: section, msg: msg};
+function log() {
+  if (arguments.length == 2) {
+    entry = {section: arguments[0], msg: arguments[1]};
+  } else if (arguments.length == 3) {
+    entry = {section: arguments[0], identifier: arguments[1], msg: arguments[2]};
+  }
 
   if (logSettings.enabled) {
     logText = formatEntry(entry);

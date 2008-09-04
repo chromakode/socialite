@@ -56,7 +56,7 @@ RedditLinkInfo.prototype.update = Action("RedditLinkInfo.update", function(omitt
         this.setFromJSON(json);
         this.updateLocalState(omittedFields, action.startTime);
       } else {
-        logger.log(this.fullname, "State updated since update request, not updating state");
+        logger.log("RedditLinkInfo", this.fullname, "State updated since update request, not updating state");
       }
       action.success(r, json);
     }),
@@ -192,7 +192,7 @@ RedditLinkInfo.prototype.setFromJSON = function(json) {
   this.state.isSaved      = linkData.saved;
   this.state.isHidden     = linkData.hidden;
   
-  logger.log(this.fullname, "Updated from JSON info: " +
+  logger.log("RedditLinkInfo", this.fullname, "Updated from JSON info: " +
                      "liked: "    + this.state.isLiked + ", "      +
                      "score: "    + this.state.score + ", "        +
                      "subreddit: "+ this.state.subreddit + ", "    +

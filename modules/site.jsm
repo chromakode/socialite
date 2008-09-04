@@ -55,12 +55,11 @@ SocialiteSite.prototype.setupBarContent = logger.makeStubFunction("SocialiteSite
 
 function SiteCollection() {
   this.byID = {};
-  this.nextID = 0;
 }
 
 SiteCollection.prototype.onContentLoad = function(doc, win) {
   for each (var site in this.byID) {
-    if (strEndsWith(doc.location.hostname, site.siteURL)) {
+    if (site && strEndsWith(doc.location.hostname, site.siteURL)) {
       site.onSitePageLoad(doc, win);
     }
   };
@@ -68,10 +67,6 @@ SiteCollection.prototype.onContentLoad = function(doc, win) {
 
 SiteCollection.prototype.loadSite = function(site) {
   logger.log("SiteCollection", "Loading site: \"" + site.siteName + "\" (" + site.siteClassID + ")");
-  if ((Number(site.siteID) != NaN) && (site.siteID >= this.nextID)) {
-    // Keep nextID in sync with loaded sites
-    this.nextID = site.siteID + 1; 
-  }
   
   if (!this.byID[site.siteID]) {
     this.byID[site.siteID] = site;
@@ -86,7 +81,7 @@ SiteCollection.prototype.unloadSite = function(site) {
   logger.log("SiteCollection", "Unloading site: \"" + site.siteName + "\" (" + site.siteClassID + ")");
   observerService.notifyObservers(this, "socialite-unload-site", site.siteID);
   site.onUnload();
-  delete this.byID[site.siteID];
+  this.byID[site.siteID] = null;
   Socialite.watchedURLs.removeSite(site);
 }
 
@@ -117,22 +112,56 @@ SiteCollection.prototype.loadConfiguredSites = function() {
 }
 
 SiteCollection.prototype.saveConfiguredSites = function() {
-  Socialite.preferences.setCharPref("sites", nativeJSON.encode([site.siteID for each (site in this.siteList)]));
+  var siteIDs = [];
+  for each (var site in this.byID) {
+    if (site) {
+      siteIDs.push(site.siteID);
+    }
+  }
+  Socialite.preferences.setCharPref("sites", nativeJSON.encode(siteIDs));
 }
 
-SiteCollection.prototype.createSite = function(siteClass, siteName, siteURL) {
-  logger.log("SiteCollection", "Creating site: \"" + site.siteName + "\" (" + site.siteClassID + ")");
-  var newSite = new siteClass(this.nextID, siteName, siteURL);
-  this.nextID += 1;
+SiteCollection.prototype.requestID = function() {
+  for (var i=0; i<Number.MAX_VALUE; i++) {
+    if (!(i in this.byID)) {
+      // Reserve this ID
+      this.byID[i] = null;
+      
+      // Clear any existing preferences
+      Socialite.preferences.deleteBranch("sites."+i+".");
+      
+      return i;
+    }
+  }
+  throw "Unexpected ID search failure, unable to find free ID";
+}
+
+SiteCollection.prototype.releaseID = function(id) {
+  if ((id in this.byID) && (this.byID[id] == null)) {
+    delete this.byID[id];
+    
+    // Delete preferences
+    Socialite.preferences.deleteBranch("sites."+id+".");
+  } else {
+    throw "Cannot release ID, ID in use";  
+  }
+}
+
+SiteCollection.prototype.createSite = function(siteClassID, siteID, siteName, siteURL) {
+  logger.log("SiteCollection", "Creating site: \"" + siteName + "\" (" + siteClassID + ")");
+  var siteClass = siteClassRegistry.getClass(siteClassID);
+  var newSite = new siteClass(siteID, siteName, siteURL);
   newSite.onCreate();
+  this.loadSite(newSite);
+  this.saveConfiguredSites();
   return newSite;
 }
 
 SiteCollection.prototype.deleteSite = function(site) {
   logger.log("SiteCollection", "Deleting site: \"" + site.siteName + "\" (" + site.siteClassID + ")");
   site.onDelete();
-  Socialite.preferences.deleteBranch("sites."+site.siteID);
   this.unloadSite(site);
+  this.releaseID(site.siteID);
 }
 
 //---
