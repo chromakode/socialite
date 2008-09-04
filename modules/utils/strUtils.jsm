@@ -9,7 +9,8 @@ String.prototype.startsWith = function(strCheck) {
 }
 
 function strEndsWith(str1, str2) {
-  return str1.lastIndexOf(str2) == (str1.length - str2.length)
+  var occurence = str1.lastIndexOf(str2); 
+  return (occurence != -1) && (occurence == (str1.length - str2.length));
 }
 
 String.prototype.endsWith = function(strCheck) {

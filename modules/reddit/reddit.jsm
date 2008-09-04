@@ -278,12 +278,12 @@ RedditSite.prototype.createBarContent = function(document, linkInfo) {
 RedditSite.prototype.actionFailureHandler = function(linkInfo, r, action) {
   // 5xx error codes
   if (r.status >= 500 && r.status < 600) {
-    text = "Reddit was unable to perform the requested action (" + action.name + "). Please try again later.";
+    text = "Unable to perform the requested action (" + action.name + "). Please try again later.";
   } else {
     text = "Unexpected HTTP status " + r.status + " recieved (" + action.name + ")";
   }
   
-  this.parent.failureMessage(text);
+  Socialite.failureMessage(this.siteName + ": " + text);
 }
 
 // Register this class for instantiation
