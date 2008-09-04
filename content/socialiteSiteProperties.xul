@@ -7,7 +7,8 @@
 						title="&sitepropwindow.title;"
 		        dlgbuttons="accept,cancel"
 		        onload="SocialiteSiteProperties.setAcceptButton(); SocialiteSiteProperties.init()"
-		        ondialogaccept="SocialiteSiteProperties.onAccept();">
+		        ondialogaccept="SocialiteSiteProperties.onAccept();"
+		        ondialogcancel="SocialiteSiteProperties.onCancel();">
 
 	<prefpane id="socialiteSitePropertiesPane">
     <preferences id="preferencesSocialite"/>
@@ -20,17 +21,17 @@
 			  <rows>
 				  <row id="rowSiteClass" align="center">
 			      <hbox pack="end"><label control="buttonSiteClass" value="&siteClass.label;:"/></hbox>
-			      <menulist id="buttonSiteClass" preference="siteClassID" class="socialite-menulist-iconic" flex="1">
+			      <menulist id="buttonSiteClass" preference="prefSiteClassID" class="socialite-menulist-iconic" flex="1">
 				      <menupopup id="menuSiteClass"/>
 			      </menulist>
 			    </row>
 			    <row align="center">
 			      <hbox pack="end"><label control="textboxSiteName" value="&siteName.label;:"/></hbox>
-			      <textbox id="textboxSiteName" flex="1" preference="siteName"/>
+			      <textbox id="textboxSiteName" flex="1" preference="prefSiteName"/>
 			    </row>
 			    <row align="center">
 			      <hbox pack="end"><label control="textboxSiteURL" value="&siteURL.label;"/></hbox>
-			      <textbox id="textboxSiteURL" flex="1" preference="siteURL"/>
+			      <textbox id="textboxSiteURL" flex="1" preference="prefSiteURL"/>
 			    </row>
 			  </rows>
 			</grid>

@@ -49,7 +49,8 @@ SocialiteSite.prototype.onCreate = logger.makeStubFunction("SocialiteSite", "onC
 SocialiteSite.prototype.onDelete = logger.makeStubFunction("SocialiteSite", "onDelete");
 
 SocialiteSite.prototype.onSitePageLoad = logger.makeStubFunction("SocialiteSite", "onSitePageLoad");
-SocialiteSite.prototype.setupBarContent = logger.makeStubFunction("SocialiteSite", "setupBarContent");
+SocialiteSite.prototype.createBarContentUI = logger.makeStubFunction("SocialiteSite", "createBarContentUI");
+SocialiteSite.prototype.createPreferencesUI = logger.makeStubFunction("SocialiteSite", "createPreferencesUI");
 
 // ---
 

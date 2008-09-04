@@ -5,17 +5,17 @@ var SocialiteSiteProperties = {
 
   init: function SSProps_init() {
   
-    this.newSite = window.arguments[0].isNewSite;
-    if (this.newSite) {
+    this.isNewSite = window.arguments[0].isNewSite;
+    if (this.isNewSite) {
       this.siteID = Socialite.sites.requestID();
     } else {
       this.site = window.arguments[0].site;
       this.siteID = this.site.siteID
     }
     
-    var preferencesSocialite = document.getElementById("preferencesSocialite");
-    this.prefSiteName = this.addPreference(preferencesSocialite, this.siteID, "siteName", "string");
-    this.prefSiteURL = this.addPreference(preferencesSocialite, this.siteID, "siteURL", "string");
+    this.preferences = document.getElementById("preferencesSocialite");
+    this.prefSiteName = this.addSitePreference("prefSiteName", "siteName", "string");
+    this.prefSiteURL = this.addSitePreference("prefSiteURL", "siteURL", "string");
     
     var buttonSiteClass = document.getElementById("buttonSiteClass");
     var menuSiteClass = document.getElementById("menuSiteClass");
@@ -27,15 +27,29 @@ var SocialiteSiteProperties = {
       menuItem.setAttribute("image", siteClass.prototype.siteClassIconURI);
       menuItem.setAttribute("value", siteClass.prototype.siteClassID);
       
-      menuItem.addEventListener("command", function(event) {
-        
-      }, false);
-      
       menuSiteClass.appendChild(menuItem);
     }
     
-    this.prefSiteClassID = this.addPreference(preferencesSocialite, this.siteID, "siteClassID", "string");
-    if (this.newSite) {
+    this.boxSiteProperties = document.getElementById("boxSiteProperties");
+    
+    // Handler to update preferences pane 
+    buttonSiteClass.addEventListener("ValueChange", function(event) {
+      var container = SocialiteSiteProperties.boxSiteProperties;
+      
+      // Remove old pane
+      if (container.hasChildNodes()) {
+        container.removeChild(container.childNodes[0]);
+      }
+      
+      // Add new pane
+      var siteClassID = buttonSiteClass.selectedItem.value;
+      var siteClass = siteClassRegistry.getClass(siteClassID);
+      var pane = siteClass.prototype.createPreferencesUI(document, SocialiteSiteProperties);
+      container.appendChild(pane);
+    }, false);
+    
+    this.prefSiteClassID = this.addSitePreference("prefSiteClassID", "siteClassID", "string");
+    if (this.isNewSite) {
       this.prefSiteClassID.value = menuSiteClass.childNodes.item(0).value;
     } else {
       this.prefSiteClassID.disabled = true; 
@@ -43,17 +57,17 @@ var SocialiteSiteProperties = {
     
   },
   
-  addPreference: function SSProps_addPreference(preferences, siteID, prefName, prefType) {
+  addSitePreference: function SSProps_addSitePreference(prefID, prefName, prefType) {
     var preference = document.createElement("preference");
-    preference.setAttribute("id", prefName);
-    preference.setAttribute("name", "extensions.socialite.sites."+siteID+"."+prefName);
+    preference.setAttribute("id", prefID);
+    preference.setAttribute("name", "extensions.socialite.sites."+this.siteID+"."+prefName);
     preference.setAttribute("type", prefType);    
-    preferences.appendChild(preference);
+    this.preferences.appendChild(preference);
     return preference;
   },
   
   onAccept: function SSProps_onAccept(event) {
-    if (this.newSite) {
+    if (this.isNewSite) {
       this.site = Socialite.sites.createSite(this.prefSiteClassID.value, this.siteID, this.prefSiteName.value, this.prefSiteURL.value)
       return true;
     } else {
@@ -69,6 +83,14 @@ var SocialiteSiteProperties = {
         Socialite.sites.reloadSite(this.site); 
       }
       
+      return true;
+    }
+  },
+  
+  onCancel: function SSProps_onCancel(event) {
+    // If we we're cancelling adding a new site, we need to release the ID we requested
+    if (this.isNewSite) {
+      Socialite.sites.releaseID(this.siteID);
       return true;
     }
   }

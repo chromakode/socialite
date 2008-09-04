@@ -1,15 +1,15 @@
 <!ENTITY prefwindow.title "Socialite Preferences">
 
 <!ENTITY general.title "General">
-<!ENTITY persistgroup.caption "Info Bar Persistence">
-<!ENTITY donotpersist.label "Info bar closes upon navigation to another page">
-<!ENTITY donotpersist.accesskey "n">
-<!ENTITY sitepersist.label "Retain info bar for the current site">
-<!ENTITY sitepersist.accesskey "t">
-<!ENTITY sectionpersist.label "Retain info bar for the current site section">
-<!ENTITY sectionpersist.accesskey "e">
-<!ENTITY alwayspersist.label "Retain info bar indefinitely">
-<!ENTITY alwayspersist.accesskey "i">
+<!ENTITY persistGroup.caption "Info Bar Persistence">
+<!ENTITY doNotPersist.label "Info bar closes upon navigation to another page">
+<!ENTITY doNotPersist.accesskey "n">
+<!ENTITY sitePersist.label "Retain info bar for the current site">
+<!ENTITY sitePersist.accesskey "t">
+<!ENTITY sectionPersist.label "Retain info bar for the current site section">
+<!ENTITY sectionPersist.accesskey "e">
+<!ENTITY alwaysPersist.label "Retain info bar indefinitely">
+<!ENTITY alwaysPersist.accesskey "i">
 
 <!ENTITY sites.title "Sites">
 <!ENTITY sitesGroup.caption "Content Sites">

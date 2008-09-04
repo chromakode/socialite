@@ -10,6 +10,10 @@ Components.utils.import("resource://socialite/reddit/redditLinkInfo.jsm");
 
 var EXPORTED_SYMBOLS = ["RedditSite"];
 
+stringBundle = Components.classes["@mozilla.org/intl/stringbundle;1"]
+                                  .getService(Components.interfaces.nsIStringBundleService)
+                                  .createBundle("chrome://socialite/locale/reddit.properties")
+
 var XPathResult = Components.interfaces.nsIDOMXPathResult;
 
 function RedditSite(siteID, siteName, siteURL) {
@@ -154,7 +158,7 @@ RedditSite.prototype.linkClicked = function(event) {
   }
 }
 
-RedditSite.prototype.createBarContent = function(document, linkInfo) {
+RedditSite.prototype.createBarContentUI = function(document, linkInfo) {
   var barContent = document.createElement("hbox");
   
   barContent.siteID = this.siteID;
@@ -284,6 +288,33 @@ RedditSite.prototype.actionFailureHandler = function(linkInfo, r, action) {
   }
   
   Socialite.failureMessage(this.siteName + ": " + text);
+}
+
+RedditSite.prototype.createPreferencesUI = function(document, propertiesWindow) {
+  var propertiesBox = document.createElement("vbox");
+  
+  function addBooleanPreferenceUI(prefName, defaultValue) {
+    var capitalizedName = prefName[0].toUpperCase() + prefName.substr(1);
+    var prefID = "pref"+capitalizedName;
+    var preference = propertiesWindow.addSitePreference(prefID, prefName, "bool");
+    checkbox = document.createElement("checkbox");
+    checkbox.setAttribute("label", stringBundle.GetStringFromName(prefName+"Preference.label"));
+    checkbox.setAttribute("accesskey", stringBundle.GetStringFromName(prefName+"Preference.accesskey"));
+    checkbox.setAttribute("preference", prefID);
+    if (propertiesWindow.isNewSite) {
+      preference.value = defaultValue;
+    }
+    propertiesBox.appendChild(checkbox);
+  }
+  
+  addBooleanPreferenceUI("showScore", true);
+  addBooleanPreferenceUI("showSubreddit", true);
+  addBooleanPreferenceUI("showComments", true);
+  addBooleanPreferenceUI("showSave", true);
+  addBooleanPreferenceUI("showHide", false);
+  addBooleanPreferenceUI("showRandom", false);
+  
+  return propertiesBox;  
 }
 
 // Register this class for instantiation

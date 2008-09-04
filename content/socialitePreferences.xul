@@ -8,15 +8,15 @@
 						onunload="SocialiteSitePreferences.unload();">
   <prefpane id="socialitePreferencesGeneralPane" label="&general.title;" image="chrome://socialite/skin/general-preferences.png">
     <preferences>
-      <preference id="persistmode" name="extensions.socialite.persistmode" type="int"/>
+      <preference id="prefPersistMode" name="extensions.socialite.persistmode" type="int"/>
     </preferences>
     
-    <groupbox flex="1">      <caption label="&persistgroup.caption;"/>
-      <radiogroup id="clrPrefs" preference="persistmode">
-				<radio id="donotpersist_pref" label="&donotpersist.label;" accesskey="&donotpersist.accesskey;" value="0" />
-				<radio id="sitepersist_pref" label="&sitepersist.label;" accesskey="&sitepersist.accesskey;" value="1"/>
-        <radio id="sectionpersist_pref" label="&sectionpersist.label;" accesskey="&sectionpersist.accesskey;" value="2"/>
-				<radio id="alwayspersist_pref" label="&alwayspersist.label;" accesskey="&alwayspersist.accesskey;" value="3"/>
+    <groupbox flex="1">      <caption label="&persistGroup.caption;"/>
+      <radiogroup id="clrPrefs" preference="prefPersistMode">
+				<radio id="donotpersist_pref" label="&doNotPersist.label;" accesskey="&doNotPersist.accesskey;" value="0" />
+				<radio id="sitepersist_pref" label="&sitePersist.label;" accesskey="&sitePersist.accesskey;" value="1"/>
+        <radio id="sectionpersist_pref" label="&sectionPersist.label;" accesskey="&sectionPersist.accesskey;" value="2"/>
+				<radio id="alwayspersist_pref" label="&alwaysPersist.label;" accesskey="&alwaysPersist.accesskey;" value="3"/>
 			</radiogroup>
     </groupbox>
   </prefpane>
