@@ -297,12 +297,14 @@ RedditSite.prototype.createPreferencesUI = function(document, propertiesWindow) 
     var capitalizedName = prefName[0].toUpperCase() + prefName.substr(1);
     var prefID = "pref"+capitalizedName;
     var preference = propertiesWindow.addSitePreference(prefID, prefName, "bool");
+    
     checkbox = document.createElement("checkbox");
     checkbox.setAttribute("label", stringBundle.GetStringFromName(prefName+"Preference.label"));
     checkbox.setAttribute("accesskey", stringBundle.GetStringFromName(prefName+"Preference.accesskey"));
     checkbox.setAttribute("preference", prefID);
+    
     if (propertiesWindow.isNewSite) {
-      preference.value = defaultValue;
+      checkbox.setAttribute("checked", defaultValue);
     }
     propertiesBox.appendChild(checkbox);
   }
@@ -313,7 +315,7 @@ RedditSite.prototype.createPreferencesUI = function(document, propertiesWindow) 
   addBooleanPreferenceUI("showSave", true);
   addBooleanPreferenceUI("showHide", false);
   addBooleanPreferenceUI("showRandom", false);
-  
+    
   return propertiesBox;  
 }
 
