@@ -170,16 +170,6 @@ RedditSite.prototype.createBarContentUI = function(document, linkInfo) {
   var site = this;
   barContent.afterBound = function() {
     
-    this.updateDisplayPreferences = function() {
-      barContent.labelScore.hidden = !site.preferences.getBoolPref("showScore");
-      barContent.labelSubreddit.hidden = !site.preferences.getBoolPref("showSubreddit");
-      barContent.buttonComments.hidden = !site.preferences.getBoolPref("showComments");
-      barContent.buttonSave.hidden = !site.preferences.getBoolPref("showSave");
-      barContent.buttonHide.hidden = !site.preferences.getBoolPref("showHide");
-      barContent.buttonRandom.hidden = !site.preferences.getBoolPref("showRandom");
-    }
-    this.updateDisplayPreferences();
-    
     var failureHandler = hitchHandler(site, "actionFailureHandler", barContent.linkInfo);
     var voteUpdateHandler = function() {
       barContent.linkInfo.update(

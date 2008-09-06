@@ -22,10 +22,10 @@ function SocialiteSite(siteID, siteName, siteURL) {
   this.siteURL = siteURL;
   this.loaded = false;
   
-  this.preferences = Components.classes["@mozilla.org/preferences-service;1"]
-                                        .getService(Components.interfaces.nsIPrefService)
-                                        .getBranch("extensions.socialite.sites." + this.siteID + ".");
-  this.preferences.QueryInterface(Components.interfaces.nsIPrefBranch2);
+  this.sitePreferences = Components.classes["@mozilla.org/preferences-service;1"]
+                                            .getService(Components.interfaces.nsIPrefService)
+                                            .getBranch("extensions.socialite.sites." + this.siteID + ".");
+  this.sitePreferences.QueryInterface(Components.interfaces.nsIPrefBranch2);
 }
 
 SocialiteSite.prototype.siteClassID = "SocialiteSite";

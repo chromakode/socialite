@@ -29,7 +29,7 @@
 			<stylesheet src="chrome://socialite/skin/reddit.css"/>
 		</resources>
 		
-		<implementation>
+		<implementation implements="nsIObserver">
 			<field name="afterBound"/>
 			
 			<constructor>
@@ -41,9 +41,53 @@
 				this.buttonSave = document.getAnonymousElementByAttribute(this, "anonid", "buttonSave");
 				this.buttonHide = document.getAnonymousElementByAttribute(this, "anonid", "buttonHide");
 				this.buttonRandom = document.getAnonymousElementByAttribute(this, "anonid", "buttonRandom");
+				
+				// Display preferences
+				this.labelScore.hidden = !this.sitePreferences.getBoolPref("showScore");
+	      this.labelSubreddit.hidden = !this.sitePreferences.getBoolPref("showSubreddit");
+	      this.buttonComments.hidden = !this.sitePreferences.getBoolPref("showComments");
+	      this.buttonSave.hidden = !this.sitePreferences.getBoolPref("showSave");
+	      this.buttonHide.hidden = !this.sitePreferences.getBoolPref("showHide");
+        this.buttonRandom.hidden = !this.sitePreferences.getBoolPref("showRandom");
+        this.sitePreferences.addObserver("", this, false);
+				
 				this.update();
 				this.afterBound();
 			</constructor>
+			
+			<destructor>
+				this.sitePreferences.removeObserver("", this);
+			</destructor>
+			
+			<method name="observe">
+        <parameter name="subject"/>
+        <parameter name="topic"/>
+        <parameter name="data"/>
+        <body>
+	        <![CDATA[
+	          switch (data) {
+		          case "showScore":
+			          this.labelScore.hidden = !this.sitePreferences.getBoolPref("showScore");
+			          break;
+			        case "showSubreddit":
+				        this.labelSubreddit.hidden = !this.sitePreferences.getBoolPref("showSubreddit");
+				        break;
+		          case "showComments":
+				        this.buttonComments.hidden = !this.sitePreferences.getBoolPref("showComments");
+				        break;
+				      case "showSave":
+				        this.buttonSave.hidden = !this.sitePreferences.getBoolPref("showSave");
+				        break;
+				      case "showHide":
+				        this.buttonHide.hidden = !this.sitePreferences.getBoolPref("showHide");
+				        break;
+				      case "showRandom":
+				        this.buttonRandom.hidden = !this.sitePreferences.getBoolPref("showRandom");
+				        break;
+	          }
+	        ]]>
+        </body>
+      </method>
 			
      	<method name="update">
         <body>
