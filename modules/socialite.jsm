@@ -61,3 +61,6 @@ Components.utils.import("resource://socialite/watchedURLs.jsm");
 
 // Finish initialization (now that the environment is set up)
 Socialite.init();
+
+// Load built-in sites
+Components.utils.import("resource://socialite/reddit/reddit.jsm");

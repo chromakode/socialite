@@ -5,8 +5,7 @@ persistence = Components.utils.import("resource://socialite/persistence.jsm");
 var observerService = Components.classes["@mozilla.org/observer-service;1"]
                                          .getService(Components.interfaces.nsIObserverService);
 
-//Sites
-Components.utils.import("resource://socialite/reddit/reddit.jsm");
+SOCIALITE_NOTIFICATION_VALUE = "socialitebar-notification"; 
 
 // ---
 
@@ -48,9 +47,7 @@ var SocialiteWindow =
   
   onLoad: function() {
     Socialite.load();
-    
-    SocialiteWindow.tabBars = [];
-    
+
     observerService.addObserver(SocialiteWindow, "socialite-unload-site", false);
   
     gBrowser.addEventListener("DOMContentLoaded", function(event) {
@@ -74,7 +71,6 @@ var SocialiteWindow =
     
     gBrowser.addEventListener("TabClose", function(event) {
       var tab = event.originalTarget;
-      SocialiteWindow.tabBars[tab._tPos] = null;
       logger.log("main", "Tab closed: " + event.originalTarget.linkedBrowser.currentURI.spec);
     }, false);
     
@@ -100,32 +96,21 @@ var SocialiteWindow =
 
   linkStartLoad: function(win, isLoading) {
     var href = win.location.href;
-    var tabIndex = gBrowser.getBrowserIndexForDocument(win.document);
-    var browser = gBrowser.getBrowserAtIndex(tabIndex);  // Use tabbrowser's cached tab position property
+    var browser = gBrowser.getBrowserForDocument(win.document);  // Use tabbrowser's cached tab position property
     var notificationBox = gBrowser.getNotificationBox(browser);
   
-    var bar = SocialiteWindow.tabBars[tabIndex];
-    if (bar) {
+    socialiteBar = notificationBox.getNotificationWithValue(SOCIALITE_NOTIFICATION_VALUE);
+    if (socialiteBar) {
       // Handle persistence changes, if any.
-      if (!persistence.onLocationChange(bar.url, href)) {
-        notificationBox.removeNotification(bar);
+      if (!persistence.onLocationChange(socialiteBar.url, href)) {
+        notificationBox.removeNotification(socialiteBar);
       } else { 
-        bar.refresh();
+        socialiteBar.refresh();
       }
     } else if (Socialite.watchedURLs.isWatched(href)) {
       // This is a watched link. Create a notification box and initialize.
       var newBar = SocialiteWindow.createNotificationBar(notificationBox);
       newBar.url = href;
-      
-      SocialiteWindow.tabBars[tabIndex] = newBar;
-      
-      // Notification close handler
-      newBar.addEventListener("DOMNodeRemoved", function(event) {
-        if (event.relatedNode == notificationBox) {
-          SocialiteWindow.tabBars[tabIndex] = null;
-          logger.log("Socialite", "Notification closed");
-        }
-      }, false);
       
       // Populate the bar
       for each (entry in Socialite.watchedURLs.getWatches(href)) {
@@ -136,11 +121,9 @@ var SocialiteWindow =
   },
   
   createNotificationBar: function(notificationBox) {
-    var notificationName = "socialite-header";
-  
     var notification = notificationBox.appendNotification(
       "",
-      notificationName,
+      SOCIALITE_NOTIFICATION_VALUE,
       "",
       notificationBox.PRIORITY_INFO_MEDIUM,
       []
@@ -157,7 +140,9 @@ var SocialiteWindow =
   
   observe: function(subject, topic, data) {
     if (topic == "socialite-unload-site") {
-      SocialiteWindow.tabBars.forEach(function(socialiteBar, index, array) {
+      for (var i=0; i<gBrowser.browsers.length; i++) {
+        browser = gBrowser.browsers[i];
+        socialiteBar = gBrowser.getNotificationBox(browser).getNotificationWithValue(SOCIALITE_NOTIFICATION_VALUE);
         if (socialiteBar) {
           socialiteBar.removeSiteContent(Socialite.sites.byID[data]);
           
@@ -165,7 +150,7 @@ var SocialiteWindow =
              socialiteBar.close(); 
           }
         }
-      });
+      };
     }
   }
 

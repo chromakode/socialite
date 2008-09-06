@@ -23,6 +23,6 @@ hbox[anonid="siteSelector"] {
 	-moz-binding: url(chrome://socialite/content/socialiteBar.xml#socialitesiteselector);
 }
 
-notification[value="socialite-header"] {
+notification[value="socialitebar-notification"] {
   -moz-binding: url(chrome://socialite/content/socialiteBar.xml#socialitebar);
 }
