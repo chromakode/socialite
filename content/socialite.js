@@ -104,10 +104,13 @@ var SocialiteWindow =
       // Handle persistence changes, if any.
       if (!persistence.onLocationChange(socialiteBar.url, href)) {
         notificationBox.removeNotification(socialiteBar);
+        socialiteBar = null;
       } else { 
         socialiteBar.refresh();
       }
-    } else if (Socialite.watchedURLs.isWatched(href)) {
+    } 
+    
+    if (!socialiteBar && Socialite.watchedURLs.isWatched(href)) {
       // This is a watched link. Create a notification box and initialize.
       var newBar = SocialiteWindow.createNotificationBar(notificationBox);
       newBar.url = href;
