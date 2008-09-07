@@ -36,24 +36,22 @@ function sameLinkID(func1, arg1, func2, arg2) {
 function RedditAPI(auth) {
   this.auth = auth;
   
-  // Replace (hook in) this instances' action functions with quantized versions.
-  // This way, we need only create the actions once, in the RedditAPI prototype, yet can get instance-specific quantization upon instantiation.
   this.infoQuantizer = new Quantizer("reddit.info.quantizer", QUANTIZE_TIME, sameURL);
-  this.info.actionClass.prototype.func = this.infoQuantizer.quantize(this.info.actionClass.prototype.func);
+  this.info = Action("reddit.info", this.infoQuantizer.quantize(this._info));
   
   this.voteQuantizer = new Quantizer("reddit.vote.quantizer", QUANTIZE_TIME, sameLinkID);
-  this.vote.actionClass.prototype.func = this.voteQuantizer.quantize(this.vote.actionClass.prototype.func);
+  this.vote = Action("reddit.vote", this.voteQuantizer.quantize(this._vote));
   
   this.saveQuantizer = new Quantizer("reddit.save.quantizer", QUANTIZE_TIME, sameLinkID);
-  this.save.actionClass.prototype.func = this.saveQuantizer.quantize(this.save.actionClass.prototype.func);
-  this.unsave.actionClass.prototype.func = this.saveQuantizer.quantize(this.unsave.actionClass.prototype.func);
+  this.save = Action("reddit.save", this.saveQuantizer.quantize(this._save));
+  this.unsave = Action("reddit.unsave", this.saveQuantizer.quantize(this._unsave));
   
   this.hideQuantizer = new Quantizer("reddit.hide.quantizer", QUANTIZE_TIME, sameLinkID);
-  this.hide.actionClass.prototype.func = this.hideQuantizer.quantize(this.hide.actionClass.prototype.func);
-  this.unhide.actionClass.prototype.func = this.hideQuantizer.quantize(this.unhide.actionClass.prototype.func);
+  this.hide = Action("reddit.hide", this.hideQuantizer.quantize(this._hide));
+  this.unhide = Action("reddit.unhide", this.hideQuantizer.quantize(this._unhide));
 }
 
-RedditAPI.prototype.info = Action("reddit.info", function(url, action) {
+RedditAPI.prototype._info = function(url, action) {
   logger.log("reddit", "Making ajax info call");
   
   var params = {
@@ -72,7 +70,7 @@ RedditAPI.prototype.info = Action("reddit.info", function(url, action) {
     },
     function failure(r) { action.failure(); }
   ).perform();
-});
+};
 
 RedditAPI.prototype.randomrising = Action("reddit.randomrising", function(action) {
   logger.log("reddit", "Making ajax randomrising call");
@@ -93,7 +91,7 @@ RedditAPI.prototype.randomrising = Action("reddit.randomrising", function(action
   ).perform();
 });
 
-RedditAPI.prototype.vote = Action("reddit.vote", function(linkID, isLiked, action) {
+RedditAPI.prototype._vote = function(linkID, isLiked, action) {
   logger.log("reddit", "Making ajax vote call");
   
   var dir;
@@ -114,10 +112,10 @@ RedditAPI.prototype.vote = Action("reddit.vote", function(linkID, isLiked, actio
   var act = http.PostAction(APIURL(this.auth.siteURL, "vote"), params);
   act.chainTo(action);
   act.perform();
-});
+};
 
 
-RedditAPI.prototype.save = Action("reddit.save", function(linkID, action) {
+RedditAPI.prototype._save = function(linkID, action) {
   logger.log("reddit", "Making ajax save call");
   
   var params = {
@@ -128,9 +126,9 @@ RedditAPI.prototype.save = Action("reddit.save", function(linkID, action) {
   var act = http.PostAction(APIURL(this.auth.siteURL, "save"), params);
   act.chainTo(action);
   act.perform();
-});
+};
 
-RedditAPI.prototype.unsave = Action("reddit.unsave", function(linkID, action) {
+RedditAPI.prototype._unsave = function(linkID, action) {
   logger.log("reddit", "Making ajax unsave call");
   
   var params = {
@@ -141,10 +139,10 @@ RedditAPI.prototype.unsave = Action("reddit.unsave", function(linkID, action) {
   var act = http.PostAction(APIURL(this.auth.siteURL, "unsave"), params);
   act.chainTo(action);
   act.perform();
-});
+};
 
 
-RedditAPI.prototype.hide = Action("reddit.hide", function(linkID, action) {
+RedditAPI.prototype._hide = function(linkID, action) {
   logger.log("reddit", "Making ajax hide call");
   
   var params = {
@@ -155,10 +153,10 @@ RedditAPI.prototype.hide = Action("reddit.hide", function(linkID, action) {
   var act = http.PostAction(APIURL(this.auth.siteURL, "hide"), params);
   act.chainTo(action);
   act.perform();
-});
+};
 
 
-RedditAPI.prototype.unhide = Action("reddit.unhide", function(linkID, action) {
+RedditAPI.prototype._unhide = function(linkID, action) {
   logger.log("reddit", "Making ajax unhide call");
   
   var params = {
@@ -169,4 +167,4 @@ RedditAPI.prototype.unhide = Action("reddit.unhide", function(linkID, action) {
   var act = http.PostAction(APIURL(this.auth.siteURL, "unhide"), params);
   act.chainTo(action);
   act.perform();
-});
+};
