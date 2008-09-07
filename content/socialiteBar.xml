@@ -32,6 +32,7 @@
 					var index = self.getContentIndex(siteSelector.selectedSite);
 					if (index != -1) {
 						deckContent.selectedIndex = index
+						deckContent.childNodes[index].refresh();
 					}
 				}, false);
 			</constructor>
