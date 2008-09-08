@@ -28,7 +28,7 @@ function init(appname, settings) {
 function formatEntry(entry) {
   var identifier;
   if (entry.identifier) {
-    identifier = "("+entry.identifier+") "; 
+    identifier = "("+entry.identifier+")"; 
   } else {
     identifier = "";
   }

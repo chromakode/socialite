@@ -13,7 +13,7 @@
 
 <!ENTITY sites.title "Sites">
 <!ENTITY sitesGroup.caption "Content Sites">
-<!ENTITY sitesGroup.description "Socialite will provide social bookmarking functionality to the following sites when you browse them.">
+<!ENTITY sitesGroup.description "Socialite will provide social bookmarking functionality for the following sites as you browse them.">
 <!ENTITY siteListbox.header.site "Site">
 <!ENTITY siteListbox.header.url "URL">
 <!ENTITY addSite.label "Add">
