@@ -119,7 +119,6 @@ var SocialiteWindow =
       for each (entry in Socialite.watchedURLs.getWatches(href)) {
         newBar.addSiteContent(entry.site, entry.site.createBarContentUI(document, entry.linkInfo));
       };
-      newBar.refresh();
     }
   },
   
