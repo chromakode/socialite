@@ -5,6 +5,9 @@ var SocialiteSiteProperties = {
 
   init: function SSProps_init() {
   
+    this.prefWindow = document.getElementById("socialiteSiteProperties");
+    this.buttonAccept = this.prefWindow._buttons.accept;
+  
     this.isNewSite = window.arguments[0].isNewSite;
     if (this.isNewSite) {
       this.siteID = Socialite.sites.requestID();
@@ -13,10 +16,17 @@ var SocialiteSiteProperties = {
       this.siteID = this.site.siteID
     }
     
+    // Set up preferences for the site
     this.preferences = document.getElementById("preferencesSocialite");
+    
+    // Site name and URL preferences
+    this.textboxSiteName = document.getElementById("textboxSiteName");    
+    this.textboxSiteURL = document.getElementById("textboxSiteURL");
+    
     this.prefSiteName = this.addSitePreference("prefSiteName", "siteName", "string");
     this.prefSiteURL = this.addSitePreference("prefSiteURL", "siteURL", "string");
     
+    // Site class dropdown menu initialization (populate)
     var buttonSiteClass = document.getElementById("buttonSiteClass");
     var menuSiteClass = document.getElementById("menuSiteClass");
     for each (var siteClass in siteClassRegistry.classes) {
@@ -29,10 +39,9 @@ var SocialiteSiteProperties = {
       
       menuSiteClass.appendChild(menuItem);
     }
-    
+       
+    // Handler to update preferences pane for site class
     this.boxSiteProperties = document.getElementById("boxSiteProperties");
-    
-    // Handler to update preferences pane 
     buttonSiteClass.addEventListener("ValueChange", function(event) {
       var container = SocialiteSiteProperties.boxSiteProperties;
       
@@ -48,6 +57,7 @@ var SocialiteSiteProperties = {
       container.appendChild(pane);
     }, false);
     
+    // Site class preference initialization
     this.prefSiteClassID = this.addSitePreference("prefSiteClassID", "siteClassID", "string");
     if (this.isNewSite) {
       this.prefSiteClassID.value = menuSiteClass.childNodes.item(0).value;
@@ -55,6 +65,10 @@ var SocialiteSiteProperties = {
       this.prefSiteClassID.disabled = true; 
     }
     
+    // Initial validation and form setup
+    this.setSampleValue(this.textboxSiteName, "Example");
+    this.setSampleValue(this.textboxSiteURL, "http://www.example.com");
+    this.validate();
   },
   
   addSitePreference: function SSProps_addSitePreference(prefID, prefName, prefType) {
@@ -64,6 +78,28 @@ var SocialiteSiteProperties = {
     preference.setAttribute("type", prefType);    
     this.preferences.appendChild(preference);
     return preference;
+  },
+  
+  setSampleValue: function SSProps_setSampleValue(element, value) {
+    if (element.value == "") {
+      // We'll create a span to stick inside the element instead of modifying the value, which is associated with a preference.
+      var spanSample = document.createElement("span");
+      spanSample.setAttribute("class", "socialite-sample-input");
+      spanSample.textContent = value;
+      
+      element.appendChild(spanSample);    
+  
+      var clearSample = function() {
+        element.removeChild(spanSample);
+        element.removeEventListener("focus", clearSample, false);
+      };
+      element.addEventListener("focus", clearSample, false);
+      
+      // When the span is clicked on, we must focus the textbox manually.
+      spanSample.addEventListener("click", function() {
+        element.focus();
+      }, false);
+    }
   },
   
   onAccept: function SSProps_onAccept(event) {
@@ -93,6 +129,10 @@ var SocialiteSiteProperties = {
       Socialite.sites.releaseID(this.siteID);
       return true;
     }
+  },
+  
+  validate: function SSProps_validate(event) {
+    this.buttonAccept.disabled = ((this.textboxSiteName.value == "") || (this.textboxSiteURL.value == "")); 
   }
 
 };

@@ -19,6 +19,10 @@
 	display: -moz-box;
 }
 
+.socialite-sample-input {
+	color: #777;
+}
+
 hbox[anonid="siteSelector"] {
 	-moz-binding: url(chrome://socialite/content/socialiteBar.xml#socialitesiteselector);
 }

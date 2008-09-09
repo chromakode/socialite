@@ -14,9 +14,9 @@ var EXPORTED_SYMBOLS = ["RedditAPI"];
 QUANTIZE_TIME = 1000;
 
 var REDDIT_API_PATH = "/api/";
-function APIURL(site, op) {
+function APIURL(siteURL, op) {
   // Note: vote calls will 404 without the 'www.' (included in site URL)
-  return "http://" + site + REDDIT_API_PATH + op;
+  return siteURL + REDDIT_API_PATH + op;
 }
 
 function sameURL(func1, arg1, func2, arg2) {

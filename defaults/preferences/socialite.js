@@ -10,7 +10,7 @@ pref("extensions.socialite.sites", '["reddit"]');
 // Default reddit site
 pref("extensions.socialite.sites.reddit.siteClassID", "RedditSite");
 pref("extensions.socialite.sites.reddit.siteName", "reddit");
-pref("extensions.socialite.sites.reddit.siteURL", "www.reddit.com");
+pref("extensions.socialite.sites.reddit.siteURL", "http://www.reddit.com");
 
 pref("extensions.socialite.sites.reddit.showScore", true);
 pref("extensions.socialite.sites.reddit.showSubreddit", true);

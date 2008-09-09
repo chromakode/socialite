@@ -33,7 +33,7 @@ SocialiteSite.prototype.siteClassName = "Socialite Site";
 SocialiteSite.prototype.siteClassIconURI = "";
 
 SocialiteSite.prototype.getIconURI = function() {
-  var siteURI = IOService.newURI("http://"+this.siteURL, null, null);
+  var siteURI = IOService.newURI(this.siteURL, null, null);
   return faviconService.getFaviconImageForPage(siteURI).spec;
 }
 

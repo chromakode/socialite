@@ -5,8 +5,9 @@
 <prefwindow id="socialiteSiteProperties" xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul" 
 						type="child"
 						title="&sitepropwindow.title;"
+						style="width: 300px;" 
 		        dlgbuttons="accept,cancel"
-		        onload="SocialiteSiteProperties.setAcceptButton(); SocialiteSiteProperties.init()"
+		        onload="SocialiteSiteProperties.init(); SocialiteSiteProperties.setAcceptButton();"
 		        ondialogaccept="SocialiteSiteProperties.onAccept();"
 		        ondialogcancel="SocialiteSiteProperties.onCancel();">
 
@@ -27,11 +28,11 @@
 			    </row>
 			    <row align="center">
 			      <hbox pack="end"><label control="textboxSiteName" value="&siteName.label;:"/></hbox>
-			      <textbox id="textboxSiteName" flex="1" preference="prefSiteName"/>
+			      <textbox id="textboxSiteName" flex="1" preference="prefSiteName" oninput="SocialiteSiteProperties.validate();"/>
 			    </row>
 			    <row align="center">
 			      <hbox pack="end"><label control="textboxSiteURL" value="&siteURL.label;"/></hbox>
-			      <textbox id="textboxSiteURL" flex="1" preference="prefSiteURL"/>
+			      <textbox id="textboxSiteURL" flex="1" preference="prefSiteURL" oninput="SocialiteSiteProperties.validate();"/>
 			    </row>
 			  </rows>
 			</grid>
@@ -46,11 +47,10 @@
 	<script type="text/javascript">
 		SocialiteSiteProperties.setAcceptButton = function SSProps_setAcceptButton() {
 			if (window.arguments[0].isNewSite) {
-				var prefWindow = document.getElementById("socialiteSiteProperties");
-				var buttonAccept = prefWindow._buttons.accept
-				buttonAccept.setAttribute('label', '&addSite.label;');
-				buttonAccept.setAttribute('accesskey','&addSite.accesskey;');
-				buttonAccept.setAttribute('icon','add');
+			  // SocialiteSiteProperties.buttonAccept is initialized by SocialiteSiteProperties.init()
+				SocialiteSiteProperties.buttonAccept.setAttribute('label', '&addSite.label;');
+				SocialiteSiteProperties.buttonAccept.setAttribute('accesskey','&addSite.accesskey;');
+				SocialiteSiteProperties.buttonAccept.setAttribute('icon','add');
 			}
 		}
 	</script>
