@@ -240,6 +240,18 @@
             var menuSites = document.getAnonymousElementByAttribute(this, "anonid", "menuSites");
             menuSites.removeChild(this.menuItems[site.siteID]);
             delete this.menuItems[site.siteID];
+            
+            if (menuSites.childNodes.length == 1) {
+              var buttonSiteSelector = document.getAnonymousElementByAttribute(this, "anonid", "buttonSiteSelector");
+              buttonSiteSelector.hidden = true;
+            }
+            
+            if (this.selectedSite == site) {
+              // Select the first site
+              if (menuSites.hasChildNodes()) {
+                menuSites.firstChild.doCommand();
+              }
+            }
           ]]>
         </body>
       </method>
