@@ -294,7 +294,9 @@ RedditSite.prototype.createPreferencesUI = function(document, propertiesWindow) 
     checkbox.setAttribute("preference", prefID);
     
     if (propertiesWindow.isNewSite) {
+      // FIXME: why isn't it enough to set the preference value?
       checkbox.setAttribute("checked", defaultValue);
+      preference.value = defaultValue;
     }
     propertiesBox.appendChild(checkbox);
   }
