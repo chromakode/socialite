@@ -1,168 +1,166 @@
 <?xml version="1.0"?>
 <!DOCTYPE reddit SYSTEM "chrome://socialite/locale/reddit.dtd">
 <bindings xmlns="http://www.mozilla.org/xbl" xmlns:xbl="http://www.mozilla.org/xbl"
-	xmlns:xul="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul">
+  xmlns:xul="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul">
 
-	<binding id="redditbarcontent" extends="chrome://socialite/content/socialiteBar.xml#socialitebarcontent">
-		<content>
-			<xul:hbox anonid="container" flex="1" align="center">
-				<xul:box tooltip="_child">
-					<!-- A parent box element seems to be necessary to make tooltips work. -->
-					<xul:tooltip anonid="tooltipScore" class="reddit-score-tooltip"/>
-					<xul:label anonid="labelScore" value="?" class="reddit-score"/>
-				</xul:box>
-				<xul:description anonid="descriptionTitle" class="socialite-title" flex="1"/>
-				<xul:label anonid="labelSubreddit" class="reddit-subreddit"/>
-				<xul:spacer flex="9999"/>
-				<xul:button anonid="buttonLike" type="checkbox" label="&like.label;" accesskey="&like.accesskey;" autoCheck="false"/>
-				<xul:button anonid="buttonDislike" type="checkbox" label="&dislike.label;" accesskey="&dislike.accesskey;" autoCheck="false"/>
-				<xul:button anonid="buttonComments" label="&comments.label;" accesskey="&comments.accesskey;"/>
-				<xul:button anonid="buttonSave" label="&save.label;" accesskey="&save.accesskey;"/>
-				<xul:button anonid="buttonHide" label="&hide.label;" accesskey="&hide.accesskey;"/>
-				<xul:button anonid="buttonRandom" label="&random.label;" accesskey="&random.accesskey;"/>
-				<children/>
-			</xul:hbox>
-		</content>
-		
-		<resources>
-			<stylesheet src="chrome://socialite/skin/socialite.css"/>
-			<stylesheet src="chrome://socialite/skin/reddit.css"/>
-		</resources>
-		
-		<implementation implements="nsIObserver">
-			<field name="afterBound"/>
-			
-			<constructor>
-				this.labelScore = document.getAnonymousElementByAttribute(this, "anonid", "labelScore");
-				this.buttonLike = document.getAnonymousElementByAttribute(this, "anonid", "buttonLike");
-				this.buttonDislike = document.getAnonymousElementByAttribute(this, "anonid", "buttonDislike");
-				this.labelSubreddit = document.getAnonymousElementByAttribute(this, "anonid", "labelSubreddit");
-				this.buttonComments = document.getAnonymousElementByAttribute(this, "anonid", "buttonComments");
-				this.buttonSave = document.getAnonymousElementByAttribute(this, "anonid", "buttonSave");
-				this.buttonHide = document.getAnonymousElementByAttribute(this, "anonid", "buttonHide");
-				this.buttonRandom = document.getAnonymousElementByAttribute(this, "anonid", "buttonRandom");
-				
-				// Display preferences
-				this.labelScore.hidden = !this.sitePreferences.getBoolPref("showScore");
-	      this.labelSubreddit.hidden = !this.sitePreferences.getBoolPref("showSubreddit");
-	      this.buttonComments.hidden = !this.sitePreferences.getBoolPref("showComments");
-	      this.buttonSave.hidden = !this.sitePreferences.getBoolPref("showSave");
-	      this.buttonHide.hidden = !this.sitePreferences.getBoolPref("showHide");
+  <binding id="redditbarcontent" extends="chrome://socialite/content/socialiteBar.xml#socialitebarcontent">
+    <content>
+      <xul:hbox anonid="container" flex="1" align="center">
+        <xul:box tooltip="_child">
+          <!-- A parent box element seems to be necessary to make tooltips work.-->
+          <xul:tooltip anonid="tooltipScore" class="reddit-score-tooltip"/>
+          <xul:label anonid="labelScore" value="?" class="reddit-score"/>
+        </xul:box>
+        <xul:description anonid="descriptionTitle" class="socialite-title" flex="1"/>
+        <xul:label anonid="labelSubreddit" class="reddit-subreddit"/>
+        <xul:spacer flex="9999"/>
+        <xul:button anonid="buttonLike" type="checkbox" label="&like.label;" accesskey="&like.accesskey;" autoCheck="false"/>
+        <xul:button anonid="buttonDislike" type="checkbox" label="&dislike.label;" accesskey="&dislike.accesskey;" autoCheck="false"/>
+        <xul:button anonid="buttonComments" label="&comments.label;" accesskey="&comments.accesskey;"/>
+        <xul:button anonid="buttonSave" label="&save.label;" accesskey="&save.accesskey;"/>
+        <xul:button anonid="buttonHide" label="&hide.label;" accesskey="&hide.accesskey;"/>
+        <xul:button anonid="buttonRandom" label="&random.label;" accesskey="&random.accesskey;"/>
+        <children/>
+      </xul:hbox>
+    </content>
+    
+    <resources>
+      <stylesheet src="chrome://socialite/skin/socialite.css"/>
+      <stylesheet src="chrome://socialite/skin/reddit.css"/>
+    </resources>
+    
+    <implementation implements="nsIObserver">
+      <field name="afterBound"/>
+      
+      <constructor>
+        this.labelScore = document.getAnonymousElementByAttribute(this, "anonid", "labelScore");
+        this.buttonLike = document.getAnonymousElementByAttribute(this, "anonid", "buttonLike");
+        this.buttonDislike = document.getAnonymousElementByAttribute(this, "anonid", "buttonDislike");
+        this.labelSubreddit = document.getAnonymousElementByAttribute(this, "anonid", "labelSubreddit");
+        this.buttonComments = document.getAnonymousElementByAttribute(this, "anonid", "buttonComments");
+        this.buttonSave = document.getAnonymousElementByAttribute(this, "anonid", "buttonSave");
+        this.buttonHide = document.getAnonymousElementByAttribute(this, "anonid", "buttonHide");
+        this.buttonRandom = document.getAnonymousElementByAttribute(this, "anonid", "buttonRandom");
+        
+        // Display preferences
+        this.labelScore.hidden = !this.sitePreferences.getBoolPref("showScore");
+        this.labelSubreddit.hidden = !this.sitePreferences.getBoolPref("showSubreddit");
+        this.buttonComments.hidden = !this.sitePreferences.getBoolPref("showComments");
+        this.buttonSave.hidden = !this.sitePreferences.getBoolPref("showSave");
+        this.buttonHide.hidden = !this.sitePreferences.getBoolPref("showHide");
         this.buttonRandom.hidden = !this.sitePreferences.getBoolPref("showRandom");
         this.sitePreferences.addObserver("", this, false);
-				
-				this.update();
-				this.afterBound();
-			</constructor>
-			
-			<destructor>
-				this.sitePreferences.removeObserver("", this);
-			</destructor>
-			
-			<method name="observe">
-        <parameter name="subject"/>
-        <parameter name="topic"/>
-        <parameter name="data"/>
+        
+        this.update();
+        this.afterBound();
+      </constructor>
+      
+      <destructor>
+        this.sitePreferences.removeObserver("", this);
+      </destructor>
+      
+      <method name="observe">
+      <parameter name="subject"/>
+      <parameter name="topic"/>
+      <parameter name="data"/>
         <body>
-	        <![CDATA[
-	          switch (data) {
-		          case "showScore":
-			          this.labelScore.hidden = !this.sitePreferences.getBoolPref("showScore");
-			          break;
-			        case "showSubreddit":
-				        this.labelSubreddit.hidden = !this.sitePreferences.getBoolPref("showSubreddit");
-				        break;
-		          case "showComments":
-				        this.buttonComments.hidden = !this.sitePreferences.getBoolPref("showComments");
-				        break;
-				      case "showSave":
-				        this.buttonSave.hidden = !this.sitePreferences.getBoolPref("showSave");
-				        break;
-				      case "showHide":
-				        this.buttonHide.hidden = !this.sitePreferences.getBoolPref("showHide");
-				        break;
-				      case "showRandom":
-				        this.buttonRandom.hidden = !this.sitePreferences.getBoolPref("showRandom");
-				        break;
-	          }
-	        ]]>
-        </body>
-      </method>
-			
-     	<method name="update">
-        <body>
-					// Score label
-				  var labelScore = document.getAnonymousElementByAttribute(this, "anonid", "labelScore");
-				  labelScore.value = this.linkInfo.localState.score || "?";
-				  if (this.linkInfo.localState.isLiked == true) {
-				    labelScore.setAttribute("class", "reddit-score reddit-liked");
-				  } else if (this.linkInfo.localState.isLiked == false) {
-				    labelScore.setAttribute("class", "reddit-score reddit-disliked");
-				  } else {
-				    labelScore.setAttribute("class", "reddit-score");
-				  }
-         
-					// Title description
-					var descriptionTitle = document.getAnonymousElementByAttribute(this, "anonid", "descriptionTitle");
-					descriptionTitle.textContent = this.linkInfo.localState.title;
-					
-					// Section label
-					var labelSubreddit = document.getAnonymousElementByAttribute(this, "anonid", "labelSubreddit");
-					if (this.linkInfo.localState.subreddit) {
-				    labelSubreddit.value = "["+this.linkInfo.localState.subreddit+"]";
-				  } else {
-				    labelSubreddit.value = "";
-				  }
-					
-					// Like/Dislike buttons
-					var REDDIT_LIKE_INACTIVE_IMAGE = "chrome://socialite/content/reddit/upgray.png";
-					var REDDIT_LIKE_ACTIVE_IMAGE = "chrome://socialite/content/reddit/upmod.png";
-					var REDDIT_DISLIKE_INACTIVE_IMAGE = "chrome://socialite/content/reddit/downgray.png";
-					var REDDIT_DISLIKE_ACTIVE_IMAGE = "chrome://socialite/content/reddit/downmod.png";
-					
-					// Like button
-					if (this.linkInfo.localState.isLiked == true) {
-				    this.buttonLike.image = REDDIT_LIKE_ACTIVE_IMAGE;
-				    this.buttonLike.checked = true;
-				  } else {
-				    this.buttonLike.image = REDDIT_LIKE_INACTIVE_IMAGE;
-				    this.buttonLike.checked = false;
-				  }
-				  
-				  // Dislike button
-				  if (this.linkInfo.localState.isLiked == false) {
-				    this.buttonDislike.image = REDDIT_DISLIKE_ACTIVE_IMAGE;
-				    this.buttonDislike.checked = true;
-				  } else {
-				    this.buttonDislike.image = REDDIT_DISLIKE_INACTIVE_IMAGE;
-				    this.buttonDislike.checked = false;
-				  }
-				  
-				  // Comments button
-				  this.buttonComments.label = this.linkInfo.localState.commentCount + " &comments.label;";
-				  
-				  // Save button
-				  if (this.linkInfo.localState.isSaved) {
-				    this.buttonSave.label = "&unsave.label;";
-				    this.buttonSave.accesskey = "&unsave.accesskey;";
-				  } else {
-				    this.buttonSave.label = "&save.label;";
-				    this.buttonSave.accesskey = "&save.accesskey;";
-				  }
-				  
-				  // Hide button
-				  if (this.linkInfo.localState.isHidden) {
-				    this.buttonHide.label = "&unhide.label;";
-				    this.buttonHide.accesskey = "&unhide.accesskey;";
-				  } else {
-				    this.buttonHide.label = "&hide.label;";
-				    this.buttonHide.accesskey = "&hide.accesskey;";
-				  }
+          <![CDATA[
+            switch (data) {
+              case "showScore":
+                this.labelScore.hidden = !this.sitePreferences.getBoolPref("showScore");
+                break;
+              case "showSubreddit":
+                this.labelSubreddit.hidden = !this.sitePreferences.getBoolPref("showSubreddit");
+                break;
+              case "showComments":
+                this.buttonComments.hidden = !this.sitePreferences.getBoolPref("showComments");
+                break;
+              case "showSave":
+                this.buttonSave.hidden = !this.sitePreferences.getBoolPref("showSave");
+                break;
+              case "showHide":
+                this.buttonHide.hidden = !this.sitePreferences.getBoolPref("showHide");
+                break;
+              case "showRandom":
+                this.buttonRandom.hidden = !this.sitePreferences.getBoolPref("showRandom");
+                break;
+            }
+          ]]>
         </body>
       </method>
       
-		</implementation>
-		
-	</binding>
-	
+       <method name="update">
+        <body>
+          // Score label
+          var labelScore = document.getAnonymousElementByAttribute(this, "anonid", "labelScore");
+          labelScore.value = this.linkInfo.localState.score || "?";
+          if (this.linkInfo.localState.isLiked == true) {
+            labelScore.setAttribute("class", "reddit-score reddit-liked");
+          } else if (this.linkInfo.localState.isLiked == false) {
+            labelScore.setAttribute("class", "reddit-score reddit-disliked");
+          } else {
+            labelScore.setAttribute("class", "reddit-score");
+          }
+         
+          // Title description
+          var descriptionTitle = document.getAnonymousElementByAttribute(this, "anonid", "descriptionTitle");
+          descriptionTitle.textContent = this.linkInfo.localState.title;
+          
+          // Section label
+          var labelSubreddit = document.getAnonymousElementByAttribute(this, "anonid", "labelSubreddit");
+          if (this.linkInfo.localState.subreddit) {
+            labelSubreddit.value = "["+this.linkInfo.localState.subreddit+"]";
+          } else {
+            labelSubreddit.value = "";
+          }
+          
+          // Like/Dislike buttons
+          var REDDIT_LIKE_INACTIVE_IMAGE = "chrome://socialite/content/reddit/upgray.png";
+          var REDDIT_LIKE_ACTIVE_IMAGE = "chrome://socialite/content/reddit/upmod.png";
+          var REDDIT_DISLIKE_INACTIVE_IMAGE = "chrome://socialite/content/reddit/downgray.png";
+          var REDDIT_DISLIKE_ACTIVE_IMAGE = "chrome://socialite/content/reddit/downmod.png";
+          
+          // Like button
+          if (this.linkInfo.localState.isLiked == true) {
+            this.buttonLike.image = REDDIT_LIKE_ACTIVE_IMAGE;
+            this.buttonLike.checked = true;
+          } else {
+            this.buttonLike.image = REDDIT_LIKE_INACTIVE_IMAGE;
+            this.buttonLike.checked = false;
+          }
+          
+          // Dislike button
+          if (this.linkInfo.localState.isLiked == false) {
+            this.buttonDislike.image = REDDIT_DISLIKE_ACTIVE_IMAGE;
+            this.buttonDislike.checked = true;
+          } else {
+            this.buttonDislike.image = REDDIT_DISLIKE_INACTIVE_IMAGE;
+            this.buttonDislike.checked = false;
+          }
+          
+          // Comments button
+          this.buttonComments.label = this.linkInfo.localState.commentCount + " &comments.label;";
+          
+          // Save button
+          if (this.linkInfo.localState.isSaved) {
+            this.buttonSave.label = "&unsave.label;";
+            this.buttonSave.accesskey = "&unsave.accesskey;";
+          } else {
+            this.buttonSave.label = "&save.label;";
+            this.buttonSave.accesskey = "&save.accesskey;";
+          }
+          
+          // Hide button
+          if (this.linkInfo.localState.isHidden) {
+            this.buttonHide.label = "&unhide.label;";
+            this.buttonHide.accesskey = "&unhide.accesskey;";
+          } else {
+            this.buttonHide.label = "&hide.label;";
+            this.buttonHide.accesskey = "&hide.accesskey;";
+          }
+        </body>
+      </method>
+    </implementation>
+  </binding>
+  
 </bindings>

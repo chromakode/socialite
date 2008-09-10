@@ -33,11 +33,11 @@
     
     <handlers>
       <handler event="popupshowing">
-      	if (this.linkInfo) {
-      		var linkInfo = this.linkInfo; 
-      	} else {
-      		var linkInfo = document.getBindingParent(this).linkInfo;
-      	}
+        if (this.linkInfo) {
+          var linkInfo = this.linkInfo; 
+        } else {
+          var linkInfo = document.getBindingParent(this).linkInfo;
+        }
         this.setAttribute("likeCount", linkInfo.localState.likeCount || "&unknown;");
         this.setAttribute("dislikeCount", linkInfo.localState.dislikeCount || "&unknown;");
       </handler>

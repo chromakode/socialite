@@ -2,10 +2,10 @@
 <?xml-stylesheet href="chrome://global/skin/" type="text/css"?>
 <!DOCTYPE preferences SYSTEM "chrome://socialite/locale/preferences.dtd">
 <prefwindow id="socialitePreferences" xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul" 
-						title="&prefwindow.title;" 
-						style="width: 425px; min-height: 375px;" 
-						onload="SocialiteSitePreferences.load();"
-						onunload="SocialiteSitePreferences.unload();">
+            title="&prefwindow.title;" 
+            style="width: 425px; min-height: 375px;" 
+            onload="SocialiteSitePreferences.load();"
+            onunload="SocialiteSitePreferences.unload();">
   <prefpane id="socialitePreferencesGeneralPane" label="&general.title;" image="chrome://socialite/skin/general-preferences.png">
     <preferences>
       <preference id="prefPersistMode" name="extensions.socialite.persistmode" type="int"/>
@@ -13,46 +13,46 @@
     
     <groupbox flex="1">      <caption label="&persistGroup.caption;"/>
       <radiogroup id="clrPrefs" preference="prefPersistMode">
-				<radio id="donotpersist_pref" label="&doNotPersist.label;" accesskey="&doNotPersist.accesskey;" value="0" />
-				<radio id="sitepersist_pref" label="&sitePersist.label;" accesskey="&sitePersist.accesskey;" value="1"/>
+        <radio id="donotpersist_pref" label="&doNotPersist.label;" accesskey="&doNotPersist.accesskey;" value="0" />
+        <radio id="sitepersist_pref" label="&sitePersist.label;" accesskey="&sitePersist.accesskey;" value="1"/>
         <radio id="sectionpersist_pref" label="&sectionPersist.label;" accesskey="&sectionPersist.accesskey;" value="2"/>
-				<radio id="alwayspersist_pref" label="&alwaysPersist.label;" accesskey="&alwaysPersist.accesskey;" value="3"/>
-			</radiogroup>
+        <radio id="alwayspersist_pref" label="&alwaysPersist.label;" accesskey="&alwaysPersist.accesskey;" value="3"/>
+      </radiogroup>
     </groupbox>
   </prefpane>
   
   <prefpane id="socialitePreferencesSitesPane" label="&sites.title;" image="chrome://socialite/skin/site-preferences.png" flex="1">
-	
-		<groupbox flex="1">
+  
+    <groupbox flex="1">
       <caption label="&sitesGroup.caption;"/>
       <description>
-	      &sitesGroup.description;
+        &sitesGroup.description;
       </description>
       
       <hbox flex="1">
-	      <listbox id="socialiteSiteListbox" flex="1">
-				  <listhead>
-				    <listheader label="&siteListbox.header.site;"/>
-				    <listheader label="&siteListbox.header.url;"/>
-				  </listhead>
-				  <listcols>
-				    <listcol flex="1"/>
-				    <listcol flex="1"/>
-				  </listcols>
-				</listbox>
-				<vbox>
-				  <button id="addSite" onclick="SocialiteSitePreferences.siteAdd();" label="&addSite.label;" icon="add" accesskey="&addSite.accesskey;"/>
-				  <button id="propertiesSite" onclick="SocialiteSitePreferences.siteProperties();" label="&propertiesSite.label;" icon="properties" accesskey="&propertiesSite.accesskey;"/>
-				  <button id="removeSite" onclick="SocialiteSitePreferences.siteRemove();" label="&removeSite.label;" icon="remove" accesskey="&removeSite.accesskey;"/>
-				  <spacer flex="1"/>
-			  </vbox>
-			</hbox>
+        <listbox id="socialiteSiteListbox" flex="1">
+          <listhead>
+            <listheader label="&siteListbox.header.site;"/>
+            <listheader label="&siteListbox.header.url;"/>
+          </listhead>
+          <listcols>
+            <listcol flex="1"/>
+            <listcol flex="1"/>
+          </listcols>
+        </listbox>
+        <vbox>
+          <button id="addSite" onclick="SocialiteSitePreferences.siteAdd();" label="&addSite.label;" icon="add" accesskey="&addSite.accesskey;"/>
+          <button id="propertiesSite" onclick="SocialiteSitePreferences.siteProperties();" label="&propertiesSite.label;" icon="properties" accesskey="&propertiesSite.accesskey;"/>
+          <button id="removeSite" onclick="SocialiteSitePreferences.siteRemove();" label="&removeSite.label;" icon="remove" accesskey="&removeSite.accesskey;"/>
+          <spacer flex="1"/>
+        </vbox>
+      </hbox>
     </groupbox>
   </prefpane>
   
   <stringbundleset>
-		<stringbundle id="socialitePreferencesStrings" src="chrome://socialite/locale/preferences.properties"/>
-	</stringbundleset>
+    <stringbundle id="socialitePreferencesStrings" src="chrome://socialite/locale/preferences.properties"/>
+  </stringbundleset>
   
   <script type="application/javascript" src="chrome://socialite/content/socialitePreferences.js"/>  
   

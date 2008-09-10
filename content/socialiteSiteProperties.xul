@@ -3,56 +3,56 @@
 <?xml-stylesheet href="chrome://socialite/skin/socialite.css" type="text/css"?>
 <!DOCTYPE preferences SYSTEM "chrome://socialite/locale/preferences.dtd">
 <prefwindow id="socialiteSiteProperties" xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul" 
-						type="child"
-						title="&sitepropwindow.title;"
-						style="width: 300px;" 
-		        dlgbuttons="accept,cancel"
-		        onload="SocialiteSiteProperties.init(); SocialiteSiteProperties.setAcceptButton();"
-		        ondialogaccept="SocialiteSiteProperties.onAccept();"
-		        ondialogcancel="SocialiteSiteProperties.onCancel();">
+            type="child"
+            title="&sitepropwindow.title;"
+            style="width: 300px;" 
+            dlgbuttons="accept,cancel"
+            onload="SocialiteSiteProperties.init(); SocialiteSiteProperties.setAcceptButton();"
+            ondialogaccept="SocialiteSiteProperties.onAccept();"
+            ondialogcancel="SocialiteSiteProperties.onCancel();">
 
-	<prefpane id="socialiteSitePropertiesPane">
+  <prefpane id="socialiteSitePropertiesPane">
     <preferences id="preferencesSocialite"/>
-		<vbox>
-			<grid align="center">
-			  <columns>
-			    <column/>
-			    <column flex="1"/>
-			  </columns>
-			  <rows>
-				  <row id="rowSiteClass" align="center">
-			      <hbox pack="end"><label control="buttonSiteClass" value="&siteClass.label;:"/></hbox>
-			      <menulist id="buttonSiteClass" preference="prefSiteClassID" class="socialite-menulist-iconic" flex="1">
-				      <menupopup id="menuSiteClass"/>
-			      </menulist>
-			    </row>
-			    <row align="center">
-			      <hbox pack="end"><label control="textboxSiteName" value="&siteName.label;:"/></hbox>
-			      <textbox id="textboxSiteName" flex="1" preference="prefSiteName" oninput="SocialiteSiteProperties.validate();"/>
-			    </row>
-			    <row align="center">
-			      <hbox pack="end"><label control="textboxSiteURL" value="&siteURL.label;"/></hbox>
-			      <textbox id="textboxSiteURL" flex="1" preference="prefSiteURL" oninput="SocialiteSiteProperties.validate();"/>
-			    </row>
-			  </rows>
-			</grid>
-			
-			<separator dir="horizontal" class="groove"/>
-			
-			<vbox id="boxSiteProperties"/>
-		</vbox>
-	</prefpane>
-	
-	<script type="application/javascript" src="chrome://socialite/content/socialiteSiteProperties.js"/>  
-	<script type="text/javascript">
-		SocialiteSiteProperties.setAcceptButton = function SSProps_setAcceptButton() {
-			if (window.arguments[0].isNewSite) {
-			  // SocialiteSiteProperties.buttonAccept is initialized by SocialiteSiteProperties.init()
-				SocialiteSiteProperties.buttonAccept.setAttribute('label', '&addSite.label;');
-				SocialiteSiteProperties.buttonAccept.setAttribute('accesskey','&addSite.accesskey;');
-				SocialiteSiteProperties.buttonAccept.setAttribute('icon','add');
-			}
-		}
-	</script>
-	
+    <vbox>
+      <grid align="center">
+        <columns>
+          <column/>
+          <column flex="1"/>
+        </columns>
+        <rows>
+          <row id="rowSiteClass" align="center">
+            <hbox pack="end"><label control="buttonSiteClass" value="&siteClass.label;:"/></hbox>
+            <menulist id="buttonSiteClass" preference="prefSiteClassID" class="socialite-menulist-iconic" flex="1">
+              <menupopup id="menuSiteClass"/>
+            </menulist>
+          </row>
+          <row align="center">
+            <hbox pack="end"><label control="textboxSiteName" value="&siteName.label;:"/></hbox>
+            <textbox id="textboxSiteName" flex="1" preference="prefSiteName" oninput="SocialiteSiteProperties.validate();"/>
+          </row>
+          <row align="center">
+            <hbox pack="end"><label control="textboxSiteURL" value="&siteURL.label;"/></hbox>
+            <textbox id="textboxSiteURL" flex="1" preference="prefSiteURL" oninput="SocialiteSiteProperties.validate();"/>
+          </row>
+        </rows>
+      </grid>
+      
+      <separator dir="horizontal" class="groove"/>
+      
+      <vbox id="boxSiteProperties"/>
+    </vbox>
+  </prefpane>
+  
+  <script type="application/javascript" src="chrome://socialite/content/socialiteSiteProperties.js"/>  
+  <script type="text/javascript">
+    SocialiteSiteProperties.setAcceptButton = function SSProps_setAcceptButton() {
+      if (window.arguments[0].isNewSite) {
+        // SocialiteSiteProperties.buttonAccept is initialized by SocialiteSiteProperties.init()
+        SocialiteSiteProperties.buttonAccept.setAttribute('label', '&addSite.label;');
+        SocialiteSiteProperties.buttonAccept.setAttribute('accesskey','&addSite.accesskey;');
+        SocialiteSiteProperties.buttonAccept.setAttribute('icon','add');
+      }
+    }
+  </script>
+  
 </prefwindow>

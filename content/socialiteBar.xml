@@ -1,86 +1,86 @@
 <?xml version="1.0"?>
 <!DOCTYPE notificationDTD SYSTEM "chrome://global/locale/notification.dtd">
 <bindings xmlns="http://www.mozilla.org/xbl" xmlns:xbl="http://www.mozilla.org/xbl"
-	xmlns:xul="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul">
-	
-	<binding id="socialitebar" extends="chrome://global/content/bindings/notification.xml#notification">
-		<content>
-			<xul:hbox class="notification-inner outset" flex="1" xbl:inherits="type">
-				<xul:hbox anonid="details" flex="1" align="center">
-					<xul:hbox anonid="siteSelector"/>
-					<xul:separator width="0px" height="18px" orient="vertical" class="socialite-separator"/>
-					<xul:deck anonid="deckContent" flex="1" align="center"/>
-				</xul:hbox>
-				<xul:toolbarbutton ondblclick="event.stopPropagation();"
-					class="messageCloseButton tabbable" xbl:inherits="hidden=hideclose"
-					tooltiptext="&closeNotification.tooltip;" oncommand="document.getBindingParent(this).close();"/>
-			</xul:hbox>
-		</content>
-		
-		<resources>
-			<stylesheet src="chrome://socialite/skin/socialite.css"/>
-		</resources>
-		
-		<implementation>
-			<field name="url"/>
-						
-			<constructor>
-				var siteSelector = document.getAnonymousElementByAttribute(this, "anonid", "siteSelector");
-				var deckContent = document.getAnonymousElementByAttribute(this, "anonid", "deckContent");
-				var self = this;
-				siteSelector.addEventListener("command", function(event) {
-					var index = self.getContentIndex(siteSelector.selectedSite);
-					if (index != -1) {
-						deckContent.selectedIndex = index
-						deckContent.childNodes[index].refresh();
-					}
-				}, false);
-			</constructor>
-			
-			<property name="contentCount">
-				<getter>
-					<![CDATA[
-						var deckContent = document.getAnonymousElementByAttribute(this, "anonid", "deckContent");
-	          return deckContent.childNodes.length;
-          ]]>
-				</getter>
-			</property>
-			
-			<method name="addSiteContent">
-				<parameter name="site"/>
-				<parameter name="siteContent"/>
-				<body>
+  xmlns:xul="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul">
+  
+  <binding id="socialitebar" extends="chrome://global/content/bindings/notification.xml#notification">
+    <content>
+      <xul:hbox class="notification-inner outset" flex="1" xbl:inherits="type">
+        <xul:hbox anonid="details" flex="1" align="center">
+          <xul:hbox anonid="siteSelector"/>
+          <xul:separator width="0px" height="18px" orient="vertical" class="socialite-separator"/>
+          <xul:deck anonid="deckContent" flex="1" align="center"/>
+        </xul:hbox>
+        <xul:toolbarbutton ondblclick="event.stopPropagation();"
+          class="messageCloseButton tabbable" xbl:inherits="hidden=hideclose"
+          tooltiptext="&closeNotification.tooltip;" oncommand="document.getBindingParent(this).close();"/>
+      </xul:hbox>
+    </content>
+    
+    <resources>
+      <stylesheet src="chrome://socialite/skin/socialite.css"/>
+    </resources>
+    
+    <implementation>
+      <field name="url"/>
+            
+      <constructor>
+        var siteSelector = document.getAnonymousElementByAttribute(this, "anonid", "siteSelector");
+        var deckContent = document.getAnonymousElementByAttribute(this, "anonid", "deckContent");
+        var self = this;
+        siteSelector.addEventListener("command", function(event) {
+          var index = self.getContentIndex(siteSelector.selectedSite);
+          if (index != -1) {
+            deckContent.selectedIndex = index
+            deckContent.childNodes[index].refresh();
+          }
+        }, false);
+      </constructor>
+      
+      <property name="contentCount">
+        <getter>
           <![CDATA[
-	          var deckContent = document.getAnonymousElementByAttribute(this, "anonid", "deckContent");
+            var deckContent = document.getAnonymousElementByAttribute(this, "anonid", "deckContent");
+            return deckContent.childNodes.length;
+          ]]>
+        </getter>
+      </property>
+      
+      <method name="addSiteContent">
+        <parameter name="site"/>
+        <parameter name="siteContent"/>
+        <body>
+          <![CDATA[
+            var deckContent = document.getAnonymousElementByAttribute(this, "anonid", "deckContent");
             deckContent.appendChild(siteContent);
-						
-						var siteSelector = document.getAnonymousElementByAttribute(this, "anonid", "siteSelector");
-						siteSelector.addSite(site);
+            
+            var siteSelector = document.getAnonymousElementByAttribute(this, "anonid", "siteSelector");
+            siteSelector.addSite(site);
           ]]>
-				</body>
-			</method>
-			
-			<method name="removeSiteContent">
-				<parameter name="site"/>
-				<body>
+        </body>
+      </method>
+      
+      <method name="removeSiteContent">
+        <parameter name="site"/>
+        <body>
           <![CDATA[
-	          var index = this.getContentIndex(site);
-	          if (index != -1) {
-		          var deckContent = document.getAnonymousElementByAttribute(this, "anonid", "deckContent");
-							deckContent.removeChild(deckContent.childNodes[index]);
-							
-							var siteSelector = document.getAnonymousElementByAttribute(this, "anonid", "siteSelector");
-							siteSelector.removeSite(site);
-						}
+            var index = this.getContentIndex(site);
+            if (index != -1) {
+              var deckContent = document.getAnonymousElementByAttribute(this, "anonid", "deckContent");
+              deckContent.removeChild(deckContent.childNodes[index]);
+              
+              var siteSelector = document.getAnonymousElementByAttribute(this, "anonid", "siteSelector");
+              siteSelector.removeSite(site);
+            }
           ]]>
-				</body>
-			</method>
-			
-			<method name="getContentIndex">
-				<parameter name="site"/>
-				<body>
+        </body>
+      </method>
+      
+      <method name="getContentIndex">
+        <parameter name="site"/>
+        <body>
           <![CDATA[
-	          var deckContent = document.getAnonymousElementByAttribute(this, "anonid", "deckContent");
+            var deckContent = document.getAnonymousElementByAttribute(this, "anonid", "deckContent");
             for (var i=0; i<deckContent.childNodes.length; i++) {
               if (deckContent.childNodes[i].siteID == site.siteID) {
                 return i;
@@ -88,182 +88,182 @@
             }
             return -1;
           ]]>
-				</body>
-			</method>
-			
-			<method name="refresh">
-				<body>
+        </body>
+      </method>
+      
+      <method name="refresh">
+        <body>
           <![CDATA[
-	          // Refresh the top (currently displayed) content.
-	          var deckContent = document.getAnonymousElementByAttribute(this, "anonid", "deckContent");
-	          deckContent.selectedPanel.refresh();
+            // Refresh the top (currently displayed) content.
+            var deckContent = document.getAnonymousElementByAttribute(this, "anonid", "deckContent");
+            deckContent.selectedPanel.refresh();
           ]]>
-				</body>
-			</method>
-		</implementation>
-	</binding>
-	
-	<binding id="socialitebarcontent">
-		<content>
-		</content>
-		
-		<implementation>
-			<field name="linkInfo"/>
-			<field name="siteID"/>
-			<field name="sitePreferences"/>
-			<field name="refreshCallback"/>
-			
-			<constructor>
-				this.sitePreferences = Components.classes["@mozilla.org/preferences-service;1"]
-	          .getService(Components.interfaces.nsIPrefService)
-	          .getBranch("extensions.socialite.sites."+this.siteID+".");
-		    this.sitePreferences.QueryInterface(Components.interfaces.nsIPrefBranch2);
-			</constructor>
+        </body>
+      </method>
+    </implementation>
+  </binding>
+  
+  <binding id="socialitebarcontent">
+    <content>
+    </content>
+    
+    <implementation>
+      <field name="linkInfo"/>
+      <field name="siteID"/>
+      <field name="sitePreferences"/>
+      <field name="refreshCallback"/>
+      
+      <constructor>
+        this.sitePreferences = Components.classes["@mozilla.org/preferences-service;1"]
+            .getService(Components.interfaces.nsIPrefService)
+            .getBranch("extensions.socialite.sites."+this.siteID+".");
+        this.sitePreferences.QueryInterface(Components.interfaces.nsIPrefBranch2);
+      </constructor>
 
-			<method name="refresh">
-				<body>
+      <method name="refresh">
+        <body>
           <![CDATA[
-						if (this.refreshCallback) {
-							this.refreshCallback();
-						}
+            if (this.refreshCallback) {
+              this.refreshCallback();
+            }
           ]]>
-				</body>
-			</method>
-		</implementation>
-	</binding>
-	
-	<binding id="socialitesiteselector">
-		<content>
-			<xul:hbox align="center">
-				<xul:image anonid="imageSite" class="messageImage"/>
-				<xul:label anonid="labelSite" class="socialite-site-name text-link"/>
-				<xul:toolbarbutton anonid="buttonSiteSelector" type="menu" hidden="true">
-				  <xul:menupopup anonid="menuSites" position="after_end"/>
-				</xul:toolbarbutton>
-			</xul:hbox>
-		</content>
-		
-		<resources>
-			<stylesheet src="chrome://socialite/skin/socialite.css"/>
-			<stylesheet src="chrome://global/skin/notification.css"/>
-		</resources>
-		
-		<implementation implements="nsIObserver">
-			<field name="menuItems"/>
-			<field name="selectedSite"/>
-		  <field name="preferences"/>
-		
-			<constructor>
-				this.preferences = Components.classes["@mozilla.org/preferences-service;1"]
-	          .getService(Components.interfaces.nsIPrefService)
-	          .getBranch("extensions.socialite.sites.");
-		    this.preferences.QueryInterface(Components.interfaces.nsIPrefBranch2);
-		    this.preferences.addObserver("", this, false);
-		    
-		    this.menuItems = {};
+        </body>
+      </method>
+    </implementation>
+  </binding>
+  
+  <binding id="socialitesiteselector">
+    <content>
+      <xul:hbox align="center">
+        <xul:image anonid="imageSite" class="messageImage"/>
+        <xul:label anonid="labelSite" class="socialite-site-name text-link"/>
+        <xul:toolbarbutton anonid="buttonSiteSelector" type="menu" hidden="true">
+          <xul:menupopup anonid="menuSites" position="after_end"/>
+        </xul:toolbarbutton>
+      </xul:hbox>
+    </content>
+    
+    <resources>
+      <stylesheet src="chrome://socialite/skin/socialite.css"/>
+      <stylesheet src="chrome://global/skin/notification.css"/>
+    </resources>
+    
+    <implementation implements="nsIObserver">
+      <field name="menuItems"/>
+      <field name="selectedSite"/>
+      <field name="preferences"/>
+    
+      <constructor>
+        this.preferences = Components.classes["@mozilla.org/preferences-service;1"]
+            .getService(Components.interfaces.nsIPrefService)
+            .getBranch("extensions.socialite.sites.");
+        this.preferences.QueryInterface(Components.interfaces.nsIPrefBranch2);
+        this.preferences.addObserver("", this, false);
+        
+        this.menuItems = {};
 
-				var labelSite = document.getAnonymousElementByAttribute(this, "anonid", "labelSite");
-				var self = this;
-				labelSite.addEventListener("click", function(event) {
-					openUILink(self.selectedSite.siteURL);
-				}, false);
-			</constructor>
-			
-			<destructor>
+        var labelSite = document.getAnonymousElementByAttribute(this, "anonid", "labelSite");
+        var self = this;
+        labelSite.addEventListener("click", function(event) {
+          openUILink(self.selectedSite.siteURL);
+        }, false);
+      </constructor>
+      
+      <destructor>
         this.preferences.removeObserver("", this);
       </destructor>
-			
-		  <method name="observe">
+      
+      <method name="observe">
         <parameter name="subject"/>
         <parameter name="topic"/>
         <parameter name="data"/>
         <body>
-	        <![CDATA[
-	          // data is of the form siteID.preference
-		        splitData = data.split(".");
-		        var siteID = splitData[0];
-		        var prefName = splitData[1];
-		        
-		        // Update the UI if the site name changes.
-		        if (prefName == "siteName") {
-			        var newSiteName = this.preferences.getCharPref(data);
-		        
-			        var menuItem = this.menuItems[siteID];
-		          if (menuItem) {
-			          menuItem.setAttribute("label", newSiteName);
-		          }
-		          
-		          if (this.selectedSite.siteID == siteID) {
-			          var siteName = document.getAnonymousElementByAttribute(this, "anonid", "labelSite");
-			          siteName.value = newSiteName;
-		          }
-	          }
-	        ]]>
+          <![CDATA[
+            // data is of the form siteID.preference
+            splitData = data.split(".");
+            var siteID = splitData[0];
+            var prefName = splitData[1];
+            
+            // Update the UI if the site name changes.
+            if (prefName == "siteName") {
+              var newSiteName = this.preferences.getCharPref(data);
+            
+              var menuItem = this.menuItems[siteID];
+              if (menuItem) {
+                menuItem.setAttribute("label", newSiteName);
+              }
+              
+              if (this.selectedSite.siteID == siteID) {
+                var siteName = document.getAnonymousElementByAttribute(this, "anonid", "labelSite");
+                siteName.value = newSiteName;
+              }
+            }
+          ]]>
         </body>
       </method>
 
-			<method name="addSite">
-				<parameter name="site"/>
-				<body>
+      <method name="addSite">
+        <parameter name="site"/>
+        <body>
           <![CDATA[
-						var menuSites = document.getAnonymousElementByAttribute(this, "anonid", "menuSites");
-						
-						var menuItem = document.createElement("menuitem");
-						menuItem.class = "menuitem-iconic";
-						// For some reason, the properties don't work?
-						menuItem.setAttribute("label", site.siteName);
-						menuItem.setAttribute("image", site.getIconURI());
-												
-						var self = this;
-						menuItem.addEventListener("command", function(event) {
-							self.selectSite(site);
-							event.stopPropagation();
-						}, false);
-						
-						this.menuItems[site.siteID] = menuItem;
-						menuSites.appendChild(menuItem);
-						
-						if (menuSites.childNodes.length == 1) {
-							this.selectSite(site);
-						} else {
-							var buttonSiteSelector = document.getAnonymousElementByAttribute(this, "anonid", "buttonSiteSelector");
-							buttonSiteSelector.hidden = false;
-						}
+            var menuSites = document.getAnonymousElementByAttribute(this, "anonid", "menuSites");
+            
+            var menuItem = document.createElement("menuitem");
+            menuItem.class = "menuitem-iconic";
+            // For some reason, the properties don't work?
+            menuItem.setAttribute("label", site.siteName);
+            menuItem.setAttribute("image", site.getIconURI());
+                        
+            var self = this;
+            menuItem.addEventListener("command", function(event) {
+              self.selectSite(site);
+              event.stopPropagation();
+            }, false);
+            
+            this.menuItems[site.siteID] = menuItem;
+            menuSites.appendChild(menuItem);
+            
+            if (menuSites.childNodes.length == 1) {
+              this.selectSite(site);
+            } else {
+              var buttonSiteSelector = document.getAnonymousElementByAttribute(this, "anonid", "buttonSiteSelector");
+              buttonSiteSelector.hidden = false;
+            }
           ]]>
-				</body>
-			</method>
-			
-			<method name="removeSite">
-				<parameter name="site"/>
-				<body>
+        </body>
+      </method>
+      
+      <method name="removeSite">
+        <parameter name="site"/>
+        <body>
           <![CDATA[
-						var menuSites = document.getAnonymousElementByAttribute(this, "anonid", "menuSites");
+            var menuSites = document.getAnonymousElementByAttribute(this, "anonid", "menuSites");
             menuSites.removeChild(this.menuItems[site.siteID]);
             delete this.menuItems[site.siteID];
           ]]>
-				</body>
-			</method>
-			
-			<method name="selectSite">
-				<parameter name="site"/>
-				<body>
-					<![CDATA[
-						var siteImage = document.getAnonymousElementByAttribute(this, "anonid", "imageSite");
-						var siteName = document.getAnonymousElementByAttribute(this, "anonid", "labelSite");
-						
-						siteImage.src = site.getIconURI();
-						siteName.value = site.siteName;
-						
-						this.selectedSite = site;
-						
-						// Fire event
-						var event = document.createEvent("UIEvent");
-						event.initUIEvent("command", true, true, window, site.siteID);
-						this.dispatchEvent(event);
-					]]>
-				</body>
-			</method>
-		</implementation>
-	</binding>
-	
+        </body>
+      </method>
+      
+      <method name="selectSite">
+        <parameter name="site"/>
+        <body>
+          <![CDATA[
+            var siteImage = document.getAnonymousElementByAttribute(this, "anonid", "imageSite");
+            var siteName = document.getAnonymousElementByAttribute(this, "anonid", "labelSite");
+            
+            siteImage.src = site.getIconURI();
+            siteName.value = site.siteName;
+            
+            this.selectedSite = site;
+            
+            // Fire event
+            var event = document.createEvent("UIEvent");
+            event.initUIEvent("command", true, true, window, site.siteID);
+            this.dispatchEvent(event);
+          ]]>
+        </body>
+      </method>
+    </implementation>
+  </binding>
+  
 </bindings>
