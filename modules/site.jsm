@@ -60,10 +60,12 @@ function SiteCollection() {
 
 SiteCollection.prototype.onContentLoad = function(doc, win) {
   for each (var site in this.byID) {
-    // Remove .*://www.
-    var baseSiteURL = site.siteURL.replace(/(.*:\/\/)?(www\.)?/, "");
-    if (site && strEndsWith(doc.location.hostname, baseSiteURL)) {
-      site.onSitePageLoad(doc, win);
+    if (site) {
+      // Remove .*://www.
+      var baseSiteURL = site.siteURL.replace(/(.*:\/\/)?(www\.)?/, "");
+      if (strEndsWith(doc.location.hostname, baseSiteURL)) {
+        site.onSitePageLoad(doc, win);
+      }
     }
   };
 }
