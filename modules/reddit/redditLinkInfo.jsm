@@ -63,7 +63,7 @@ RedditLinkInfo.prototype.update = Action("RedditLinkInfo.update", function(omitt
     function failure(r) { action.failure(r); }
   );
   
-  infoCall.perform(this.url);
+  infoCall.perform(this.url, this.localState.subreddit);
 });
 
 RedditLinkInfo.prototype.vote = Action("RedditLinkInfo.vote", function(isLiked, action) {

@@ -14,16 +14,24 @@ var EXPORTED_SYMBOLS = ["RedditAPI"];
 QUANTIZE_TIME = 1000;
 
 var REDDIT_API_PATH = "/api/";
-function APIURL(siteURL, op) {
+function APIURL(siteURL, op, subreddit) {
   // Note: vote calls will 404 without the 'www.' (included in site URL)
-  return siteURL + REDDIT_API_PATH + op;
+  var subredditPart;
+  if (subreddit) {
+    subredditPart = "/r/" + subreddit;
+  } else {
+    subredditPart = ""; 
+  }
+  return siteURL + subredditPart + REDDIT_API_PATH + op;
 }
 
 function sameURL(func1, arg1, func2, arg2) {
   var url1 = arg1[0];
   var url2 = arg2[0];
+  var subreddit1 = arg1[1];
+  var subreddit2 = arg2[1];
   
-  return (url1 == url2);
+  return (url1 == url2) && (subreddit1 == subreddit2);
 }
 
 function sameLinkID(func1, arg1, func2, arg2) {
@@ -51,17 +59,16 @@ function RedditAPI(auth) {
   this.unhide = Action("reddit.unhide", this.hideQuantizer.quantize(this._unhide));
 }
 
-RedditAPI.prototype._info = function(url, action) {
+RedditAPI.prototype._info = function(url, subreddit, action) {
   logger.log("reddit", "Making ajax info call");
   
   var params = {
     url:    url,
-    sr:     "",
     count:  1
   };
    
   http.GetAction(
-    APIURL(this.auth.siteURL, "info.json"),
+    APIURL(this.auth.siteURL, "info.json", subreddit),
     params,
     
     function success(r) {
