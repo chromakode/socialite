@@ -47,7 +47,7 @@ var SocialiteSiteProperties = {
       
       // Remove old pane
       if (container.hasChildNodes()) {
-        container.removeChild(container.childNodes[0]);
+        container.removeChild(container.firstChild);
       }
       
       // Add new pane
