@@ -65,8 +65,11 @@ var SocialiteWindow =
     gBrowser.addEventListener("TabOpen", function(event) {
       var browser = event.originalTarget.linkedBrowser;
       var win = browser.contentWindow;
-      logger.log("main", "Tab opened: " + browser.currentURI.spec);    
-      SocialiteWindow.linkStartLoad(win, true)
+      // Opening a new tab may not always have a URL set (e.g. CTRL-t)
+      if (browser.currentURI) {
+        logger.log("main", "Tab opened: " + browser.currentURI.spec);    
+        SocialiteWindow.linkStartLoad(win, true)
+      }
     }, false);
     
     gBrowser.addEventListener("TabClose", function(event) {

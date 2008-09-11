@@ -63,8 +63,13 @@ SiteCollection.prototype.onContentLoad = function(doc, win) {
     if (site) {
       // Remove .*://www.
       var baseSiteURL = site.siteURL.replace(/(.*:\/\/)?(www\.)?/, "");
-      if (strEndsWith(doc.location.hostname, baseSiteURL)) {
-        site.onSitePageLoad(doc, win);
+      // If the hostname doesn't exist, an error will be thrown.
+      try {
+        if (strEndsWith(doc.location.hostname, baseSiteURL)) {
+          site.onSitePageLoad(doc, win);
+        }
+      } catch (e) {
+        // We will ignore it, since URLs with no applicable hostname are of no interest.
       }
     }
   };
