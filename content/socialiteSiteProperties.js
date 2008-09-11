@@ -81,25 +81,35 @@ var SocialiteSiteProperties = {
   },
   
   setSampleValue: function SSProps_setSampleValue(element, value) {
-    if (element.value == "") {
-      // We'll create a span to stick inside the element instead of modifying the value, which is associated with a preference.
-      var spanSample = document.createElement("span");
-      spanSample.setAttribute("class", "socialite-sample-input");
-      spanSample.textContent = value;
-      
-      element.appendChild(spanSample);    
-  
-      var clearSample = function() {
-        element.removeChild(spanSample);
-        element.removeEventListener("focus", clearSample, false);
-      };
-      element.addEventListener("focus", clearSample, false);
-      
-      // When the span is clicked on, we must focus the textbox manually.
-      spanSample.addEventListener("click", function() {
-        element.focus();
-      }, false);
+    function setupSampleValue(element, value) {
+      if (element.value == "") {
+        // We'll create a span to stick inside the element instead of modifying the value, which is associated with a preference.
+        var spanSample = document.createElement("span");
+        spanSample.setAttribute("class", "socialite-sample-input");
+        spanSample.textContent = value;
+        
+        element.appendChild(spanSample);    
+    
+        var clearSample = function() {
+          element.removeChild(spanSample);
+          element.removeEventListener("focus", clearSample, false);
+        };
+        element.addEventListener("focus", clearSample, false);
+        
+        // When the span is clicked on, we must focus the textbox manually.
+        spanSample.addEventListener("click", function() {
+          element.focus();
+        }, false);
+      }
     }
+    
+    // Re-add the sample text upon loss of focus
+    element.addEventListener("blur", function() {
+      setupSampleValue(element, value);
+    }, false);
+    
+    // Initial sample value setup
+    setupSampleValue(element, value);
   },
   
   onAccept: function SSProps_onAccept(event) {
