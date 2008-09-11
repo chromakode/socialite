@@ -5,12 +5,12 @@
     <em:id>socialite@chromakode</em:id>
     <em:version>1.1.0</em:version>
     <em:type>2</em:type>
-    <em:creator>Chromakode</em:creator>
     <em:localized>
       <Description>
         <em:locale>en-US</em:locale>
         <em:name>Socialite</em:name>
         <em:description>Displays a social bookmarking toolbar above pages from reddit.com.</em:description>
+        <em:creator>Chromakode</em:creator>
       </Description>
     </em:localized>
     <em:iconURL>chrome://socialite/content/socialite.png</em:iconURL>
