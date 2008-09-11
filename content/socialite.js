@@ -99,7 +99,7 @@ var SocialiteWindow =
 
   linkStartLoad: function(win, isLoading) {
     var href = win.location.href;
-    var browser = gBrowser.getBrowserForDocument(win.document);  // Use tabbrowser's cached tab position property
+    var browser = gBrowser.getBrowserForDocument(win.document);
     var notificationBox = gBrowser.getNotificationBox(browser);
   
     socialiteBar = notificationBox.getNotificationWithValue(SOCIALITE_NOTIFICATION_VALUE);
