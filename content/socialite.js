@@ -6,6 +6,8 @@ var observerService = Components.classes["@mozilla.org/observer-service;1"]
                                          .getService(Components.interfaces.nsIObserverService);
 
 SOCIALITE_NOTIFICATION_VALUE = "socialitebar-notification"; 
+SOCIALITE_URLBARICON_ID = "socialite-urlbar-icon-"; 
+
 
 // ---
 
@@ -52,9 +54,10 @@ var SocialiteWindow =
   },
   
   onLoad: function() {
-    Socialite.load();
-
+    observerService.addObserver(SocialiteWindow, "socialite-load-site", false);
     observerService.addObserver(SocialiteWindow, "socialite-unload-site", false);
+    
+    Socialite.load();
   
     gBrowser.addEventListener("DOMContentLoaded", function(event) {
       var doc = event.originalTarget;
@@ -88,6 +91,7 @@ var SocialiteWindow =
   },
   
   onUnload: function() {
+    observerService.removeObserver(SocialiteWindow, "socialite-load-site");
     observerService.removeObserver(SocialiteWindow, "socialite-unload-site");
     // Remove remaining progress listeners.
     SocialiteWindow.unsetProgressListener(gBrowser);
@@ -149,13 +153,39 @@ var SocialiteWindow =
     return notification;
   },
   
+  createUrlBarIcon: function(site) {
+    var urlBarIcons = document.getElementById("urlbar-icons");
+    var feedButton = document.getElementById("feed-button");
+    var urlBarIcon = document.createElement("image");
+    
+    urlBarIcon.id = SOCIALITE_URLBARICON_ID + site.siteID;
+    urlBarIcon.className = "socialite-urlbar-icon urlbar-icon";
+    urlBarIcon.setAttribute("src", site.getIconURI());
+    //urlBarIcon.addEventListener("click", SocialiteWindow.manuallyOpenBar())
+    
+    urlBarIcons.insertBefore(urlBarIcon, urlBarIcons.childNodes[0]);
+    
+    return urlBarIcon;
+  },
+  
+  removeUrlBarIcon: function(site) {
+    var urlBarIcons = document.getElementById("urlbar-icons");
+    var urlBarIcon = document.getElementById(SOCIALITE_URLBARICON_ID + site.siteID);
+    urlBarIcons.removeChild(urlBarIcon)
+  },
+  
   observe: function(subject, topic, data) {
-    if (topic == "socialite-unload-site") {
+    if (topic == "socialite-load-site") {
+      var site = Socialite.sites.byID[data];
+      SocialiteWindow.createUrlBarIcon(site);
+    } else if (topic == "socialite-unload-site") {
+      var site = Socialite.sites.byID[data];
+      SocialiteWindow.removeUrlBarIcon(site);
       for (var i=0; i<gBrowser.browsers.length; i++) {
-        browser = gBrowser.browsers[i];
+        var browser = gBrowser.browsers[i];
         socialiteBar = gBrowser.getNotificationBox(browser).getNotificationWithValue(SOCIALITE_NOTIFICATION_VALUE);
         if (socialiteBar) {
-          socialiteBar.removeSiteContent(Socialite.sites.byID[data]);
+          socialiteBar.removeSiteContent(site);
           
           if (socialiteBar.contentCount == 0) {
              socialiteBar.close(); 
