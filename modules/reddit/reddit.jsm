@@ -283,7 +283,19 @@ RedditSite.prototype.actionFailureHandler = function(linkInfo, r, action) {
 RedditSite.prototype.createPreferencesUI = function(document, propertiesWindow) {
   var propertiesBox = document.createElement("vbox");
   
-  function addBooleanPreferenceUI(prefName, defaultValue) {
+  function addGroupbox(title) {
+    var groupbox = document.createElement("groupbox");
+    groupbox.setAttribute("flex", "1");
+    
+    var groupboxCaption = document.createElement("caption");
+    groupboxCaption.setAttribute("label", title);
+    groupbox.appendChild(groupboxCaption);
+    
+    propertiesBox.appendChild(groupbox);
+    return groupbox;
+  }
+  
+  function addBooleanPreferenceUI(parent, prefName, defaultValue) {
     var capitalizedName = prefName[0].toUpperCase() + prefName.substr(1);
     var prefID = "pref"+capitalizedName;
     var preference = propertiesWindow.addSitePreference(prefID, prefName, "bool");
@@ -298,15 +310,19 @@ RedditSite.prototype.createPreferencesUI = function(document, propertiesWindow) 
       checkbox.setAttribute("checked", defaultValue);
       preference.value = defaultValue;
     }
-    propertiesBox.appendChild(checkbox);
+    parent.appendChild(checkbox);
   }
   
-  addBooleanPreferenceUI("showScore", true);
-  addBooleanPreferenceUI("showSubreddit", true);
-  addBooleanPreferenceUI("showComments", true);
-  addBooleanPreferenceUI("showSave", true);
-  addBooleanPreferenceUI("showHide", false);
-  addBooleanPreferenceUI("showRandom", false);
+  var generalGroup = addGroupbox(stringBundle.GetStringFromName("generalGroup.caption"));
+  addBooleanPreferenceUI(generalGroup, "compactDisplay", false);
+  
+  var displayGroup = addGroupbox(stringBundle.GetStringFromName("displayGroup.caption"));
+  addBooleanPreferenceUI(displayGroup, "showScore", true);
+  addBooleanPreferenceUI(displayGroup, "showSubreddit", true);
+  addBooleanPreferenceUI(displayGroup, "showComments", true);
+  addBooleanPreferenceUI(displayGroup, "showSave", true);
+  addBooleanPreferenceUI(displayGroup, "showHide", false);
+  addBooleanPreferenceUI(displayGroup, "showRandom", false);
     
   return propertiesBox;  
 }

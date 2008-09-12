@@ -90,7 +90,7 @@ var SocialiteSiteProperties = {
         
         element.appendChild(spanSample);    
     
-        var clearSample = function() {
+        function clearSample() {
           element.removeChild(spanSample);
           element.removeEventListener("focus", clearSample, false);
         };

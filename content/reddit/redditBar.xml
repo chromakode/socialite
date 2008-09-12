@@ -16,7 +16,11 @@
         <xul:spacer flex="9999"/>
         <xul:button anonid="buttonLike" type="checkbox" label="&like.label;" accesskey="&like.accesskey;" autoCheck="false"/>
         <xul:button anonid="buttonDislike" type="checkbox" label="&dislike.label;" accesskey="&dislike.accesskey;" autoCheck="false"/>
-        <xul:button anonid="buttonComments" label="&comments.label;" accesskey="&comments.accesskey;"/>
+        <xul:button anonid="buttonComments" accesskey="&comments.accesskey;">
+          <xul:image anonid="imageComments" class="button-icon" src="chrome://socialite/content/reddit/comments.png" hidden="true" style="margin-right: 4px"/>
+          <xul:label anonid="labelCommentsNum" class="button-text" value="?"/>
+          <xul:label anonid="labelCommentsWord" class="button-text" value="&comments-plural.label;" accesskey="&comments.accesskey;"/>
+        </xul:button>
         <xul:button anonid="buttonSave" label="&save.label;" accesskey="&save.accesskey;"/>
         <xul:button anonid="buttonHide" label="&hide.label;" accesskey="&hide.accesskey;"/>
         <xul:button anonid="buttonRandom" label="&random.label;" accesskey="&random.accesskey;"/>
@@ -25,6 +29,7 @@
     </content>
     
     <resources>
+      <stylesheet src="chrome://global/skin/button.css"/>
       <stylesheet src="chrome://socialite/skin/socialite.css"/>
       <stylesheet src="chrome://socialite/skin/reddit.css"/>
     </resources>
@@ -38,6 +43,9 @@
         this.buttonDislike = document.getAnonymousElementByAttribute(this, "anonid", "buttonDislike");
         this.labelSubreddit = document.getAnonymousElementByAttribute(this, "anonid", "labelSubreddit");
         this.buttonComments = document.getAnonymousElementByAttribute(this, "anonid", "buttonComments");
+        this.imageComments = document.getAnonymousElementByAttribute(this, "anonid", "imageComments");
+        this.labelCommentsNum = document.getAnonymousElementByAttribute(this, "anonid", "labelCommentsNum");
+        this.labelCommentsWord = document.getAnonymousElementByAttribute(this, "anonid", "labelCommentsWord");
         this.buttonSave = document.getAnonymousElementByAttribute(this, "anonid", "buttonSave");
         this.buttonHide = document.getAnonymousElementByAttribute(this, "anonid", "buttonHide");
         this.buttonRandom = document.getAnonymousElementByAttribute(this, "anonid", "buttonRandom");
@@ -49,6 +57,9 @@
         this.buttonSave.hidden = !this.sitePreferences.getBoolPref("showSave");
         this.buttonHide.hidden = !this.sitePreferences.getBoolPref("showHide");
         this.buttonRandom.hidden = !this.sitePreferences.getBoolPref("showRandom");
+        
+        this.compactDisplay = this.sitePreferences.getBoolPref("compactDisplay");
+        
         this.sitePreferences.addObserver("", this, false);
         
         this.update();
@@ -84,6 +95,10 @@
               case "showRandom":
                 this.buttonRandom.hidden = !this.sitePreferences.getBoolPref("showRandom");
                 break;
+              case "compactDisplay":
+                this.compactDisplay = this.sitePreferences.getBoolPref("compactDisplay");
+                this.update();
+                break;
             }
           ]]>
         </body>
@@ -114,50 +129,78 @@
             labelSubreddit.value = "";
           }
           
-          // Like/Dislike buttons
-          var REDDIT_LIKE_INACTIVE_IMAGE = "chrome://socialite/content/reddit/upgray.png";
-          var REDDIT_LIKE_ACTIVE_IMAGE = "chrome://socialite/content/reddit/upmod.png";
-          var REDDIT_DISLIKE_INACTIVE_IMAGE = "chrome://socialite/content/reddit/downgray.png";
-          var REDDIT_DISLIKE_ACTIVE_IMAGE = "chrome://socialite/content/reddit/downmod.png";
-          
           // Like button
           if (this.linkInfo.localState.isLiked == true) {
-            this.buttonLike.image = REDDIT_LIKE_ACTIVE_IMAGE;
+            this.buttonLike.image = "chrome://socialite/content/reddit/upmod.png";
             this.buttonLike.checked = true;
           } else {
-            this.buttonLike.image = REDDIT_LIKE_INACTIVE_IMAGE;
+            this.buttonLike.image = "chrome://socialite/content/reddit/upgray.png";
             this.buttonLike.checked = false;
           }
           
           // Dislike button
           if (this.linkInfo.localState.isLiked == false) {
-            this.buttonDislike.image = REDDIT_DISLIKE_ACTIVE_IMAGE;
+            this.buttonDislike.image = "chrome://socialite/content/reddit/downmod.png";
             this.buttonDislike.checked = true;
           } else {
-            this.buttonDislike.image = REDDIT_DISLIKE_INACTIVE_IMAGE;
+            this.buttonDislike.image = "chrome://socialite/content/reddit/downgray.png";
             this.buttonDislike.checked = false;
           }
           
           // Comments button
-          this.buttonComments.label = this.linkInfo.localState.commentCount + " &comments.label;";
+          this.labelCommentsNum.value = this.linkInfo.localState.commentCount;
+          if (this.linkInfo.localState.commentCount == 1) {
+            this.labelCommentsWord.value = " &comments-single.label;";
+          } else {
+            this.labelCommentsWord.value = " &comments-plural.label;";
+          }
+          if (this.compactDisplay) {
+            this.buttonComments.className = "socialite-button-compact";
+            this.labelCommentsWord.hidden = true;
+            this.imageComments.hidden = false;
+            this.buttonComments.tooltipText = this.labelCommentsNum.value + this.labelCommentsWord.value;
+          } else {
+            this.buttonComments.className = "";
+            this.labelCommentsWord.hidden = false;
+            this.imageComments.hidden = true;
+            this.buttonComments.tooltipText = "";
+          }
+          
+          // Helper for similar buttons to follow
+          var self = this;
+          function updateButton(button, image, text) {
+            if (self.compactDisplay) {
+              button.className = "socialite-button-compact socialite-button-iconic";
+              button.image = image;
+              button.tooltipText = text; 
+            } else {
+              button.className = "";
+              button.label = text;
+              button.image = "";
+              button.tooltipText = "";
+            }
+          }
           
           // Save button
           if (this.linkInfo.localState.isSaved) {
-            this.buttonSave.label = "&unsave.label;";
+            updateButton(this.buttonSave, "chrome://socialite/content/reddit/saved.png", "&unsave.label;");
             this.buttonSave.accesskey = "&unsave.accesskey;";
           } else {
-            this.buttonSave.label = "&save.label;";
+            updateButton(this.buttonSave, "chrome://socialite/content/reddit/savedgray.png", "&save.label;");
             this.buttonSave.accesskey = "&save.accesskey;";
           }
           
           // Hide button
           if (this.linkInfo.localState.isHidden) {
-            this.buttonHide.label = "&unhide.label;";
-            this.buttonHide.accesskey = "&unhide.accesskey;";
+            updateButton(this.buttonHide, "chrome://socialite/content/reddit/hidden.png", "&unhide.label;");
+            this.buttonSave.accesskey = "&unhide.accesskey;";
           } else {
-            this.buttonHide.label = "&hide.label;";
-            this.buttonHide.accesskey = "&hide.accesskey;";
+            updateButton(this.buttonHide, "chrome://socialite/content/reddit/hiddengray.png", "&hide.label;");
+            this.buttonSave.accesskey = "&hide.accesskey;";
           }
+          
+          // Random button
+          updateButton(this.buttonRandom, "chrome://socialite/content/reddit/8ball.png", "&random.label;");
         </body>
       </method>
     </implementation>

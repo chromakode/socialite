@@ -30,3 +30,24 @@ hbox[anonid="siteSelector"] {
 notification[value="socialitebar-notification"] {
   -moz-binding: url(chrome://socialite/content/socialiteBar.xml#socialitebar);
 }
+
+.socialite-button-compact {
+  min-width: 0;
+}
+.socialite-button-compact .button-box {
+  margin-left: 3px;
+  margin-right: 3px;
+}
+
+.socialite-button-iconic .button-text {
+  display: none;
+}
+
+.socialite-urlbar-icon {
+  opacity: .8;
+  margin-right: 2px;
+}
+
+.socialite-urlbar-icon:hover {
+  opacity: 1;
+}

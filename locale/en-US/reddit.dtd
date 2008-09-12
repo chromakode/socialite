@@ -2,7 +2,8 @@
 <!ENTITY like.accesskey "k">
 <!ENTITY dislike.label "Dislike">
 <!ENTITY dislike.accesskey "l">
-<!ENTITY comments.label "comments">
+<!ENTITY comments-single.label "comment">
+<!ENTITY comments-plural.label "comments">
 <!ENTITY comments.accesskey "c">
 <!ENTITY save.label "Save">
 <!ENTITY save.accesskey "S">
