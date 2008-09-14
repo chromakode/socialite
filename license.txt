@@ -9,6 +9,7 @@ The following images in the directory "content/reddit" are (C) 2008 Mark James, 
 	comments.png
 	saved.png
 	savedgray.png
+The following images are derivative works and thus (C) 2008 Chromakode, licensed under the Creative Commons Attribution 2.5 License:
 	hidden.png
 	hiddengray.png
 More silk icons by Mark James can be found at http://www.famfamfam.com/lab/icons/silk/.
