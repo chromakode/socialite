@@ -155,12 +155,10 @@
             this.labelCommentsWord.value = " &comments-plural.label;";
           }
           if (this.compactDisplay) {
-            this.buttonComments.className = "socialite-button-compact";
             this.labelCommentsWord.hidden = true;
             this.imageComments.hidden = false;
             this.buttonComments.tooltipText = this.labelCommentsNum.value + this.labelCommentsWord.value;
           } else {
-            this.buttonComments.className = "";
             this.labelCommentsWord.hidden = false;
             this.imageComments.hidden = true;
             this.buttonComments.tooltipText = "";
