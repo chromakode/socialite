@@ -38,7 +38,9 @@ notification[value="socialitebar-notification"] {
   margin-left: 3px;
   margin-right: 3px;
 }
-
+.socialite-button-iconic .button-icon {
+  margin: 0;
+}
 .socialite-button-iconic .button-text {
   display: none;
 }
