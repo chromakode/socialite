@@ -87,7 +87,7 @@ RedditAPI.prototype.randomrising = Action("reddit.randomrising", function(action
   };
     
   var act = http.GetAction(
-    "http://www.reddit.com/randomrising.json",
+    this.auth.siteURL + "/randomrising.json",
     params,
     
     function success(r) {
