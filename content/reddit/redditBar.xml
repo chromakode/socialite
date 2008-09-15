@@ -19,7 +19,7 @@
         <xul:button anonid="buttonComments" accesskey="&comments.accesskey;">
           <xul:image anonid="imageComments" class="button-icon" src="chrome://socialite/content/reddit/comments.png" hidden="true" style="margin-right: 4px"/>
           <xul:label anonid="labelCommentsNum" class="button-text" value="?"/>
-          <xul:label anonid="labelCommentsWord" class="button-text" value="&comments-plural.label;" accesskey="&comments.accesskey;"/>
+          <xul:label anonid="labelCommentsWord" class="button-text" value=" &comments-plural.label;" accesskey="&comments.accesskey;"/>
         </xul:button>
         <xul:button anonid="buttonSave" label="&save.label;" accesskey="&save.accesskey;"/>
         <xul:button anonid="buttonHide" label="&hide.label;" accesskey="&hide.accesskey;"/>
