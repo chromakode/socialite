@@ -158,6 +158,11 @@ RedditSite.prototype.linkClicked = function(event) {
   }
 }
 
+RedditSite.prototype.getLinkInfo = function(URL, callback) {
+  callback(null);
+}
+
+
 RedditSite.prototype.createBarContentUI = function(document, linkInfo) {
   var barContent = document.createElement("hbox");
   

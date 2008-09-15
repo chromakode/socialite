@@ -125,8 +125,7 @@ var SocialiteWindow =
     
     if (!socialiteBar && Socialite.watchedURLs.isWatched(href)) {
       // This is a watched link. Create a notification box and initialize.
-      var newBar = SocialiteWindow.createNotificationBar(notificationBox);
-      newBar.url = href;
+      var newBar = SocialiteWindow.createNotificationBar(notificationBox, href);
       
       // Populate the bar
       for each (entry in Socialite.watchedURLs.getWatches(href)) {
@@ -135,7 +134,7 @@ var SocialiteWindow =
     }
   },
   
-  createNotificationBar: function(notificationBox) {
+  createNotificationBar: function(notificationBox, url) {
     var notification = notificationBox.appendNotification(
       "",
       SOCIALITE_NOTIFICATION_VALUE,
@@ -149,8 +148,46 @@ var SocialiteWindow =
     // Make the notification immortal -- we'll handle closing it.
     notification.persistence = -1;
     
+    // Set url property so we know the location the bar was originally opened for.
+    notification.url = url;
+    
     logger.log("Socialite", "Notification created");
     return notification;
+  },
+  
+  linkContextAction: function(event) {
+    var selectedBrowser = gBrowser.selectedBrowser;
+    var currentURL = selectedBrowser.currentURI.spec;
+    var notificationBox = gBrowser.getNotificationBox(selectedBrowser);
+    var urlBarIcon = event.target;
+    var site = Socialite.sites.byID[urlBarIcon.siteID];
+    
+    var barUI;
+    var socialiteBar = notificationBox.getNotificationWithValue(SOCIALITE_NOTIFICATION_VALUE);
+    if (socialiteBar) {
+      // If the bar is open, the user intends to submit.
+      socialiteBar.addSiteUI(site, site.createBarSubmitUI(document, currentURL));
+    } else {
+      // We'll open a new bar.
+      socialiteBar = SocialiteWindow.createNotificationBar(notificationBox, currentURL);
+      
+      var watchLinkInfo = Socialite.watchedURLs.getWatchLinkInfo(currentURL, site);
+      if (watchLinkInfo) {
+        // If the site is watched, it is already posted, so we should open the bar for it.
+        socialiteBar.addSiteUI(site, site.createBarContentUI(document, watchLinkInfo));
+      } else {
+        // We have no local information about the URL, so we need to check the socialite site to see if the URL is already submitted.
+        site.getLinkInfo(currentURL, function(linkInfo) {
+          if (linkInfo) {
+            // If the URL is already submitted, open the bar for it.
+            socialiteBar.addSiteUI(site, site.createBarContentUI(document, linkInfo));
+          } else {
+            // If the URL has not already been submitted, open the submit UI.
+            socialiteBar.addSiteUI(site, site.createBarSubmitUI(document, currentURL));
+          }
+        });
+      }
+    }
   },
   
   createUrlBarIcon: function(site) {
@@ -159,11 +196,12 @@ var SocialiteWindow =
     var urlBarIcon = document.createElement("image");
     
     urlBarIcon.id = SOCIALITE_URLBARICON_ID + site.siteID;
+    urlBarIcon.siteID = site.siteID;
     urlBarIcon.className = "socialite-urlbar-icon urlbar-icon";
     urlBarIcon.setAttribute("src", site.getIconURI());
-    //urlBarIcon.addEventListener("click", SocialiteWindow.manuallyOpenBar())
+    urlBarIcon.addEventListener("click", SocialiteWindow.linkContextAction, false);
     
-    urlBarIcons.insertBefore(urlBarIcon, urlBarIcons.childNodes[0]);
+    urlBarIcons.insertBefore(urlBarIcon, feedButton);
     
     return urlBarIcon;
   },

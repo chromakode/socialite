@@ -53,6 +53,14 @@ WatchedURLs.prototype.isWatchedBy = function(href, site) {
           this.watches[href][site.siteID]);
 }
 
+WatchedURLs.prototype.getWatchLinkInfo = function(href, site) {
+  if (this.isWatchedBy(href, site)) {
+    return this.watches[href][site.siteID].linkInfo;
+  } else {
+    return null;
+  }
+}
+
 WatchedURLs.prototype.removeSite = function(site) {
   for each (linkWatches in this.watches) {
     if (linkWatches[site.siteID]) {
