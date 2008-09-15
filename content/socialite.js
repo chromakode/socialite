@@ -130,7 +130,7 @@ var SocialiteWindow =
       
       // Populate the bar
       for each (entry in Socialite.watchedURLs.getWatches(href)) {
-        newBar.addSiteContent(entry.site, entry.site.createBarContentUI(document, entry.linkInfo));
+        newBar.addSiteUI(entry.site, entry.site.createBarContentUI(document, entry.linkInfo));
       };
     }
   },
@@ -185,7 +185,7 @@ var SocialiteWindow =
         var browser = gBrowser.browsers[i];
         socialiteBar = gBrowser.getNotificationBox(browser).getNotificationWithValue(SOCIALITE_NOTIFICATION_VALUE);
         if (socialiteBar) {
-          socialiteBar.removeSiteContent(site);
+          socialiteBar.removeSiteUI(site);
           
           if (socialiteBar.contentCount == 0) {
              socialiteBar.close(); 

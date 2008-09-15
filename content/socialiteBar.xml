@@ -46,7 +46,7 @@
         </getter>
       </property>
       
-      <method name="addSiteContent">
+      <method name="addSiteUI">
         <parameter name="site"/>
         <parameter name="siteContent"/>
         <body>
@@ -60,7 +60,7 @@
         </body>
       </method>
       
-      <method name="removeSiteContent">
+      <method name="removeSiteUI">
         <parameter name="site"/>
         <body>
           <![CDATA[
