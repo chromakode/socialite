@@ -76,6 +76,15 @@
         </body>
       </method>
       
+      <method name="hasSiteUI">
+        <parameter name="site"/>
+        <body>
+          <![CDATA[
+            return this.getContentIndex(site) != -1;
+          ]]>
+        </body>
+      </method>
+      
       <method name="getContentIndex">
         <parameter name="site"/>
         <body>

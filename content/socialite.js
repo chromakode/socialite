@@ -164,31 +164,39 @@ var SocialiteWindow =
     
     var socialiteBar = notificationBox.getNotificationWithValue(SOCIALITE_NOTIFICATION_VALUE);
     if (socialiteBar) {
-      if (socialiteBar.url == currentURL) {
-        // If the bar is open, the user intends to submit.
-        socialiteBar.addSiteUI(site, site.createBarSubmitUI(document, currentURL));
-        return;
-      } else {
+      if (socialiteBar.url != currentURL) {
         // The bar was opened for another URL. We will replace it.
         socialiteBar.close();
+        socialiteBar = null;
       }
     }
-      
-    // We'll open a new bar.
-    socialiteBar = SocialiteWindow.createNotificationBar(notificationBox, currentURL);
+    
+    // Helper function to open the bar with some content.
+    function openBarWith(site, siteUI) {
+      if (!socialiteBar) {
+        socialiteBar = SocialiteWindow.createNotificationBar(notificationBox, currentURL);
+      }
+      socialiteBar.addSiteUI(site, siteUI);
+    }
+
     var watchLinkInfo = Socialite.watchedURLs.getWatchLinkInfo(currentURL, site);
     if (watchLinkInfo) {
-      // If the site is watched, it is already posted, so we should open the bar for it.
-      socialiteBar.addSiteUI(site, site.createBarContentUI(document, watchLinkInfo));
+      if (socialiteBar && socialiteBar.hasSiteUI(site)) {
+        // If the bar is open and the URL is watched by this site, the user intends to submit.
+        socialiteBar.addSiteUI(site, site.createBarSubmitUI(document, currentURL));
+      } else {
+        // If the site is watched, it is already posted, so we should open the bar for it.
+        openBarWith(site, site.createBarContentUI(document, watchLinkInfo));
+      }
     } else {
       // We have no local information about the URL, so we need to check the socialite site to see if the URL is already submitted.
       site.getLinkInfo(currentURL, function(linkInfo) {
         if (linkInfo) {
           // If the URL is already submitted, open the bar for it.
-          socialiteBar.addSiteUI(site, site.createBarContentUI(document, linkInfo));
+          openBarWith(site, site.createBarContentUI(document, linkInfo));
         } else {
           // If the URL has not already been submitted, open the submit UI.
-          socialiteBar.addSiteUI(site, site.createBarSubmitUI(document, currentURL));
+          openBarWith(site, site.createBarSubmitUI(document, currentURL));
         }
       });
     }

@@ -159,7 +159,21 @@ RedditSite.prototype.linkClicked = function(event) {
 }
 
 RedditSite.prototype.getLinkInfo = function(URL, callback) {
-  callback(null);
+  var infoCall = this.API.info(
+    hitchThis(this, function success(r, json) {
+      if (json.data.children.length > 0) {
+        var linkInfo = RedditLinkInfoFromJSON(this.API, json);
+        Socialite.watchedURLs.watch(linkInfo.url, this, linkInfo);
+        callback(linkInfo);
+      } else {
+        callback(null);
+      }
+    }),
+    function failure(r) { callback(null); }
+  );
+  
+  // We supply null since we do not know the subreddit.
+  infoCall.perform(URL, null);
 }
 
 
