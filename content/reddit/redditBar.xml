@@ -108,7 +108,11 @@
         <body>
           // Score label
           var labelScore = document.getAnonymousElementByAttribute(this, "anonid", "labelScore");
-          labelScore.value = this.linkInfo.localState.score || "?";
+          if (this.linkInfo.localState.score != null) {
+            labelScore.value = this.linkInfo.localState.score;
+          } else {
+            labelScore.value = "?";
+          }
           if (this.linkInfo.localState.isLiked == true) {
             labelScore.setAttribute("class", "reddit-score reddit-liked");
           } else if (this.linkInfo.localState.isLiked == false) {
