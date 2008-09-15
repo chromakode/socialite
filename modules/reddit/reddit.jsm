@@ -163,7 +163,7 @@ RedditSite.prototype.getLinkInfo = function(URL, callback) {
     hitchThis(this, function success(r, json) {
       if (json.data.children.length > 0) {
         var linkInfo = RedditLinkInfoFromJSON(this.API, json);
-        Socialite.watchedURLs.watch(linkInfo.url, this, linkInfo);
+        Socialite.watchedURLs.watch(URL, this, linkInfo);
         callback(linkInfo);
       } else {
         callback(null);

@@ -180,14 +180,12 @@ var SocialiteWindow =
     }
 
     var watchLinkInfo = Socialite.watchedURLs.getWatchLinkInfo(currentURL, site);
-    if (watchLinkInfo) {
-      if (socialiteBar && socialiteBar.hasSiteUI(site)) {
-        // If the bar is open and the URL is watched by this site, the user intends to submit.
-        socialiteBar.addSiteUI(site, site.createBarSubmitUI(document, currentURL));
-      } else {
-        // If the site is watched, it is already posted, so we should open the bar for it.
-        openBarWith(site, site.createBarContentUI(document, watchLinkInfo));
-      }
+    if (socialiteBar && socialiteBar.hasSiteUI(site)) {
+      // If the bar is open and the URL is watched by this site, the user intends to submit.
+      socialiteBar.addSiteUI(site, site.createBarSubmitUI(document, currentURL));
+    } else if (watchLinkInfo) {
+      // If the site is watched, it is already posted, so we should open the bar for it.
+      openBarWith(site, site.createBarContentUI(document, watchLinkInfo));
     } else {
       // We have no local information about the URL, so we need to check the socialite site to see if the URL is already submitted.
       site.getLinkInfo(currentURL, function(linkInfo) {
