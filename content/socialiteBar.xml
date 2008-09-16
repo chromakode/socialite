@@ -112,7 +112,7 @@
     </implementation>
   </binding>
   
-  <binding id="socialitebarcontent">
+  <binding id="socialitesiteui">
     <content>
     </content>
     

@@ -98,6 +98,21 @@ RedditAPI.prototype.randomrising = Action("reddit.randomrising", function(action
   ).perform();
 });
 
+RedditAPI.prototype.mysubreddits = Action("reddit.mysubreddits", function(action) {
+  logger.log("reddit", "Making ajax mysubreddits call");
+    
+  var act = http.GetAction(
+    this.auth.siteURL + "/reddits/mine.json",
+    null, // No parameters
+    
+    function success(r) {
+      var json = nativeJSON.decode(r.responseText);
+      action.success(r, json);
+    },
+    function failure(r) { action.failure(); }
+  ).perform();
+});
+
 RedditAPI.prototype._vote = function(linkID, isLiked, action) {
   logger.log("reddit", "Making ajax vote call");
   

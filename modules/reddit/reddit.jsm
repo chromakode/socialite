@@ -189,17 +189,16 @@ RedditSite.prototype.createBarContentUI = function(document, linkInfo) {
   var site = this;
   barContent.afterBound = function() {
     
-    var failureHandler = hitchHandler(site, "actionFailureHandler", barContent.linkInfo);
     var voteUpdateHandler = function() {
       barContent.linkInfo.update(
         hitchThis(barContent, barContent.update),
-        failureHandler
+        site.actionFailureHandler
       ).perform(["score"]);
     };
     var updateHandler = function() {
       barContent.linkInfo.update(
         hitchThis(barContent, barContent.update),
-        failureHandler
+        site.actionFailureHandler
       ).perform([]);
     };
     
@@ -212,7 +211,7 @@ RedditSite.prototype.createBarContentUI = function(document, linkInfo) {
     this.buttonLike.addEventListener("click", function(e) {
       var vote = barContent.linkInfo.vote(
         voteUpdateHandler,
-        failureHandler
+        site.actionFailureHandler
       );
       if (barContent.linkInfo.localState.isLiked == true) {
         vote.perform(null);
@@ -225,7 +224,7 @@ RedditSite.prototype.createBarContentUI = function(document, linkInfo) {
     this.buttonDislike.addEventListener("click", function(e) {
       var vote = barContent.linkInfo.vote(
         voteUpdateHandler,
-        failureHandler
+        site.actionFailureHandler
       );
       if (barContent.linkInfo.localState.isLiked == false) {
         vote.perform(null);
@@ -243,12 +242,12 @@ RedditSite.prototype.createBarContentUI = function(document, linkInfo) {
       if (barContent.linkInfo.localState.isSaved) {
         var submit = barContent.linkInfo.unsave(
           updateHandler,
-          failureHandler
+          site.actionFailureHandler
         );
       } else {
         var submit = barContent.linkInfo.save(
           updateHandler,
-          failureHandler
+          site.actionFailureHandler
         );
       }
       submit.perform()
@@ -259,12 +258,12 @@ RedditSite.prototype.createBarContentUI = function(document, linkInfo) {
       if (barContent.linkInfo.localState.isHidden) {
         var submit = barContent.linkInfo.unhide(
           updateHandler,
-          failureHandler
+          site.actionFailureHandler
         );
       } else {
         var submit = barContent.linkInfo.hide(
           updateHandler,
-          failureHandler
+          site.actionFailureHandler
         );
       }
       submit.perform()
@@ -278,25 +277,38 @@ RedditSite.prototype.createBarContentUI = function(document, linkInfo) {
           Socialite.watchedURLs.watch(linkInfo.url, site, linkInfo);
           Socialite.openUILink(linkInfo.url, e);
         },
-        failureHandler
+        site.actionFailureHandler
       ).perform();
     }, false);
     
   };
   
-  barContent.style.MozBinding = "url(chrome://socialite/content/reddit/redditBar.xml#redditbarcontent)"; 
+  barContent.style.MozBinding = "url(chrome://socialite/content/reddit/redditBar.xml#redditcontentui)"; 
   return barContent;
 }
 
-RedditSite.prototype.actionFailureHandler = function(linkInfo, r, action) {
-  // 5xx error codes
-  if (r.status >= 500 && r.status < 600) {
-    text = "Unable to perform the requested action (" + action.name + "). Please try again later.";
-  } else {
-    text = "Unexpected HTTP status " + r.status + " recieved (" + action.name + ")";
-  }
+RedditSite.prototype.createBarSubmitUI = function(document, linkInfo) {
+  var barSubmit = document.createElement("hbox");
   
-  Socialite.failureMessage(this.siteName + ": " + text);
+  var site = this;
+  barSubmit.afterBound = function() {
+    // Get subreddit listing and initialize menu
+    site.API.mysubreddits(
+      function success(r, json) {
+        for each (var subredditInfo in json.data.children) {
+          var subredditURL = subredditInfo.data.url;
+          var subredditURLName = /^\/r\/(.+)\/$/.exec(subredditURL)[1];
+          barSubmit.menulistSubreddit.appendItem(subredditURLName, subredditURL);
+        }
+        
+        barSubmit.menulistSubreddit.selectedIndex = 0;
+      },
+      site.actionFailureHandler
+    ).perform();
+  };
+  
+  barSubmit.style.MozBinding = "url(chrome://socialite/content/reddit/redditBar.xml#redditsubmitui)"; 
+  return barSubmit;
 }
 
 RedditSite.prototype.createPreferencesUI = function(document, propertiesWindow) {
@@ -344,6 +356,17 @@ RedditSite.prototype.createPreferencesUI = function(document, propertiesWindow) 
   addBooleanPreferenceUI(displayGroup, "showRandom", false);
     
   return propertiesBox;  
+}
+
+RedditSite.prototype.actionFailureHandler = function(r, action) {
+  // 5xx error codes
+  if (r.status >= 500 && r.status < 600) {
+    text = "Unable to perform the requested action (" + action.name + "). Please try again later.";
+  } else {
+    text = "Unexpected HTTP status " + r.status + " recieved (" + action.name + ")";
+  }
+  
+  Socialite.failureMessage(this.siteName + ": " + text);
 }
 
 // Register this class for instantiation

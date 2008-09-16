@@ -3,7 +3,7 @@
 <bindings xmlns="http://www.mozilla.org/xbl" xmlns:xbl="http://www.mozilla.org/xbl"
   xmlns:xul="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul">
 
-  <binding id="redditbarcontent" extends="chrome://socialite/content/socialiteBar.xml#socialitebarcontent">
+  <binding id="redditcontentui" extends="chrome://socialite/content/socialiteBar.xml#socialitesiteui">
     <content>
       <xul:hbox anonid="container" flex="1" align="center">
         <xul:box tooltip="_child">
@@ -205,6 +205,37 @@
           updateButton(this.buttonRandom, "chrome://socialite/content/reddit/8ball.png", "&random.label;");
         </body>
       </method>
+    </implementation>
+  </binding>
+  
+  <binding id="redditsubmitui" extends="chrome://socialite/content/socialiteBar.xml#socialitesiteui">
+    <content>
+      <xul:hbox anonid="container" flex="1" align="center">
+        <xul:menulist anonid="menulistSubreddit">
+          <xul:menupopup anonid="menuSubreddits" height="400px"/>
+        </xul:menulist>
+        <xul:textbox anonid="textboxTitle" emptytext="&textboxTitle.emptytext;" flex="1"/>
+        <xul:button anonid="buttonSubmit" label="&submit.label;" accesskey="&submit.accesskey;"/>
+        <children/>
+      </xul:hbox>
+    </content>
+    
+    <resources>
+      <stylesheet src="chrome://socialite/skin/socialite.css"/>
+      <stylesheet src="chrome://socialite/skin/reddit.css"/>
+    </resources>
+    
+    <implementation implements="nsIObserver">
+      <field name="afterBound"/>
+      
+      <constructor>
+        this.menulistSubreddit = document.getAnonymousElementByAttribute(this, "anonid", "menulistSubreddit");
+        this.menuSubreddits = document.getAnonymousElementByAttribute(this, "anonid", "menuSubreddits");
+        this.textboxTitle = document.getAnonymousElementByAttribute(this, "anonid", "textboxTitle");
+        this.buttonSubmit = document.getAnonymousElementByAttribute(this, "anonid", "buttonSubmit");
+        this.afterBound();
+      </constructor>
+      
     </implementation>
   </binding>
   

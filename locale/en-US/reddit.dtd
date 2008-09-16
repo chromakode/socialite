@@ -15,3 +15,7 @@
 <!ENTITY unhide.accesskey "n">
 <!ENTITY random.label "Serendipity!">
 <!ENTITY random.accesskey "r">
+
+<!ENTITY textboxTitle.emptytext "Please enter a title describing this location.">
+<!ENTITY submit.label "Submit">
+<!ENTITY submit.accesskey "s">
