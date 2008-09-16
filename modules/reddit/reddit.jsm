@@ -7,6 +7,7 @@ Components.utils.import("resource://socialite/reddit/authentication.jsm");
 Components.utils.import("resource://socialite/reddit/redditAPI.jsm");
 //Components.utils.import("resource://socialite/reddit/bookmarkletAPI.jsm");
 Components.utils.import("resource://socialite/reddit/redditLinkInfo.jsm");
+Components.utils.import("resource://socialite/reddit/redditUtils.jsm");
 
 var EXPORTED_SYMBOLS = ["RedditSite"];
 
@@ -295,6 +296,9 @@ RedditSite.prototype.createBarSubmitUI = function(document, linkInfo) {
     // Get subreddit listing and initialize menu
     site.API.mysubreddits(
       function success(r, json) {
+        // Sort the subreddits like on the submit page.
+        json.data.children.sort(subredditSort);
+        
         for each (var subredditInfo in json.data.children) {
           var subredditURL = subredditInfo.data.url;
           var subredditURLName = /^\/r\/(.+)\/$/.exec(subredditURL)[1];
