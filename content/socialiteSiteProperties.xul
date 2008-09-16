@@ -28,11 +28,11 @@
           </row>
           <row align="center">
             <hbox pack="end"><label control="textboxSiteName" value="&siteName.label;:"/></hbox>
-            <textbox id="textboxSiteName" flex="1" preference="prefSiteName" oninput="SocialiteSiteProperties.validate();"/>
+            <textbox id="textboxSiteName" emptytext="&sampleSiteName;" preference="prefSiteName" oninput="SocialiteSiteProperties.validate();" flex="1"/>
           </row>
           <row align="center">
             <hbox pack="end"><label control="textboxSiteURL" value="&siteURL.label;"/></hbox>
-            <textbox id="textboxSiteURL" flex="1" preference="prefSiteURL" oninput="SocialiteSiteProperties.validate();"/>
+            <textbox id="textboxSiteURL" emptytext="&sampleSiteURL;" preference="prefSiteURL" oninput="SocialiteSiteProperties.validate();" flex="1"/>
           </row>
         </rows>
       </grid>

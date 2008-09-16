@@ -26,6 +26,8 @@
 
 <!ENTITY sitepropwindow.title "Site Properties">
 
-<!ENTITY siteName.label "Name">
-<!ENTITY siteURL.label "URL">
 <!ENTITY siteClass.label "Type">
+<!ENTITY siteName.label "Name">
+<!ENTITY sampleSiteName "Example">
+<!ENTITY siteURL.label "URL">
+<!ENTITY sampleSiteURL  "http://www.example.com">
