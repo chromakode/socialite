@@ -314,7 +314,7 @@ RedditSite.prototype.createPreferencesUI = function(document, propertiesWindow) 
   }
   
   var generalGroup = addGroupbox(stringBundle.GetStringFromName("generalGroup.caption"));
-  addBooleanPreferenceUI(generalGroup, "compactDisplay", false);
+  addBooleanPreferenceUI(generalGroup, "compactDisplay", true);
   
   var displayGroup = addGroupbox(stringBundle.GetStringFromName("displayGroup.caption"));
   addBooleanPreferenceUI(displayGroup, "showScore", true);
