@@ -211,7 +211,7 @@
   <binding id="redditsubmitui" extends="chrome://socialite/content/socialiteBar.xml#socialitesiteui">
     <content>
       <xul:hbox anonid="container" flex="1" align="center">
-        <xul:label anonid="labelSubmitTo" value="&submitTo.label;"/>
+        <xul:label anonid="labelSubmitTo" value="&subreddit.label;"/>
         <xul:menulist anonid="menulistSubreddit" label="&subreddit.loadingtext;" tooltiptext="&subreddit.tooltip;" sizetopopup="none" class="socialite-no-vertical-margin socialite-menulist-compact">
           <xul:menupopup anonid="menuSubreddits"/>
         </xul:menulist>

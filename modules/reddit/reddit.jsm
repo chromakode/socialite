@@ -288,7 +288,7 @@ RedditSite.prototype.createBarContentUI = function(document, linkInfo) {
   return barContent;
 }
 
-RedditSite.prototype.createBarSubmitUI = function(document, linkInfo) {
+RedditSite.prototype.createBarSubmitUI = function(document, submitURL) {
   var barSubmit = document.createElement("hbox");
   
   var site = this;
@@ -309,6 +309,17 @@ RedditSite.prototype.createBarSubmitUI = function(document, linkInfo) {
       },
       site.actionFailureHandler
     ).perform();
+    
+    this.buttonSubmit.addEventListener("click", function(e) {
+      subredditURL = barSubmit.menulistSubreddit.selectedItem.value;
+      submitTitle = barSubmit.textboxTitle.value;
+      
+      formURL = site.siteURL+subredditURL+"submit/?"+
+                  "url="+encodeURIComponent(submitURL)+
+                  "&title="+encodeURIComponent(submitTitle);
+      
+      Socialite.openUILink(formURL, e);
+    }, false);
   };
   
   barSubmit.style.MozBinding = "url(chrome://socialite/content/reddit/redditBar.xml#redditsubmitui)"; 
