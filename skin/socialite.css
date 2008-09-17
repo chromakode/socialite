@@ -19,12 +19,27 @@
 	display: -moz-box;
 }
 
+.socialite-menulist-compact > menupopup > menuitem {
+  /* Ditto. Wtf? Why does every single menuitem waste 30px of space on the right? */
+  padding-right: 0;
+}
+
+.socialite-menulist-compact > menupopup > menuitem > .menu-accel-container {
+  display: none;
+}
+
+
 hbox[anonid="siteSelector"] {
 	-moz-binding: url(chrome://socialite/content/socialiteBar.xml#socialitesiteselector);
 }
 
 notification[value="socialitebar-notification"] {
   -moz-binding: url(chrome://socialite/content/socialiteBar.xml#socialitebar);
+}
+
+.socialite-no-vertical-margin {
+  margin-top: 0;
+  margin-bottom: 0;
 }
 
 .socialite-button-compact {
