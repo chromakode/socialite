@@ -6,6 +6,7 @@ var observerService = Components.classes["@mozilla.org/observer-service;1"]
                                          .getService(Components.interfaces.nsIObserverService);
 
 SOCIALITE_CONTENT_NOTIFICATION_VALUE = "socialite-contentbar-notification";
+SOCIALITE_SUBMIT_NOTIFICATION_VALUE = "socialite-submitbar-notification"; 
 SOCIALITE_URLBARICON_ID = "socialite-urlbar-icon-"; 
 
 
@@ -151,7 +152,28 @@ var SocialiteWindow =
     // Set url property so we know the location the bar was originally opened for.
     notification.url = url;
     
-    logger.log("Socialite", "Notification created");
+    logger.log("Socialite", "Content notification created");
+    return notification;
+  },
+  
+  createSubmitBar: function(notificationBox, url) {
+    var notification = notificationBox.appendNotification(
+      "",
+      SOCIALITE_SUBMIT_NOTIFICATION_VALUE,
+      "",
+      notificationBox.PRIORITY_INFO_HIGH, // Appear on top of socialite content notifications
+      []
+    );
+    
+    // Note: the notification XBL binding is changed by CSS
+  
+    // Make the notification immortal
+    notification.persistence = -1;
+    
+    // Set url property so we know the location the bar was originally opened for.
+    notification.url = url;
+    
+    logger.log("Socialite", "Submit notification created");
     return notification;
   },
   
@@ -172,29 +194,35 @@ var SocialiteWindow =
     }
     
     // Helper function to open the bar with some content.
-    function openBarWith(site, siteUI) {
+    function openContentBarTo(site, siteUI) {
       if (!socialiteBar) {
         socialiteBar = SocialiteWindow.createContentBar(notificationBox, currentURL);
       }
       socialiteBar.addSiteUI(site, siteUI);
     }
+    
+    // Helper function to open the submit bar with a particular destination site selected.
+    function openSubmitBarTo(site) {
+      submitBar = SocialiteWindow.createSubmitBar(notificationBox, currentURL);
+      submitBar.siteSelector.selectSite(site);
+    }
 
     var watchLinkInfo = Socialite.watchedURLs.getWatchLinkInfo(currentURL, site);
     if (socialiteBar && socialiteBar.hasSiteUI(site)) {
-      // If the bar is open and the URL is watched by this site, the user intends to submit.
-      socialiteBar.addSiteUI(site, site.createBarSubmitUI(document, currentURL));
+      // If the bar is open, the user intends to submit.
+      openSubmitBarTo(site);
     } else if (watchLinkInfo) {
       // If the site is watched, it is already posted, so we should open the bar for it.
-      openBarWith(site, site.createBarContentUI(document, watchLinkInfo));
+      openContentBarTo(site, site.createBarContentUI(document, watchLinkInfo));
     } else {
       // We have no local information about the URL, so we need to check the socialite site to see if the URL is already submitted.
       site.getLinkInfo(currentURL, function(linkInfo) {
         if (linkInfo) {
           // If the URL is already submitted, open the bar for it.
-          openBarWith(site, site.createBarContentUI(document, linkInfo));
+          openContentBarTo(site, site.createBarContentUI(document, linkInfo));
         } else {
           // If the URL has not already been submitted, open the submit UI.
-          openBarWith(site, site.createBarSubmitUI(document, currentURL));
+          openSubmitBarTo(site);
         }
       });
     }
@@ -239,7 +267,7 @@ var SocialiteWindow =
              socialiteBar.close(); 
           }
         }
-      };
+      }
     }
   }
 

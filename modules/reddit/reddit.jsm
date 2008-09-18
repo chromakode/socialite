@@ -180,6 +180,7 @@ RedditSite.prototype.getLinkInfo = function(URL, callback) {
 
 RedditSite.prototype.createBarContentUI = function(document, linkInfo) {
   var barContent = document.createElement("hbox");
+  barContent.setAttribute("flex", "1");
   
   barContent.siteID = this.siteID;
   barContent.linkInfo = linkInfo;
@@ -290,6 +291,7 @@ RedditSite.prototype.createBarContentUI = function(document, linkInfo) {
 
 RedditSite.prototype.createBarSubmitUI = function(document, submitURL) {
   var barSubmit = document.createElement("hbox");
+  barSubmit.setAttribute("flex", "1");
   
   var site = this;
   barSubmit.afterBound = function() {
@@ -299,10 +301,16 @@ RedditSite.prototype.createBarSubmitUI = function(document, submitURL) {
         // Sort the subreddits like on the submit page.
         json.data.children.sort(subredditSort);
         
-        for each (var subredditInfo in json.data.children) {
-          var subredditURL = subredditInfo.data.url;
-          var subredditURLName = /^\/r\/(.+)\/$/.exec(subredditURL)[1];
-          barSubmit.menulistSubreddit.appendItem(subredditURLName, subredditURL);
+        if (json.data.children.length == 0) {
+          Socialite.siteFailureMessage(site, "No subscribed subreddits found.");
+          barSubmit.labelSubreddit.hidden = true;
+          barSubmit.menulistSubreddit.hidden = true;
+        } else {
+          for each (var subredditInfo in json.data.children) {
+            var subredditURL = subredditInfo.data.url;
+            var subredditURLName = /^\/r\/(.+)\/$/.exec(subredditURL)[1];
+            barSubmit.menulistSubreddit.appendItem(subredditURLName, subredditURL);
+          }
         }
         
         barSubmit.menulistSubreddit.selectedIndex = 0;
@@ -311,8 +319,13 @@ RedditSite.prototype.createBarSubmitUI = function(document, submitURL) {
     ).perform();
     
     this.buttonSubmit.addEventListener("click", function(e) {
-      subredditURL = barSubmit.menulistSubreddit.selectedItem.value;
-      submitTitle = barSubmit.textboxTitle.value;
+      var subredditURL;
+      if (barSubmit.menulistSubreddit.selectedItem && !barSubmit.hidden) {
+        subredditURL = barSubmit.menulistSubreddit.selectedItem.value;
+      } else {
+        subredditURL = "";
+      }
+      var submitTitle = barSubmit.textboxTitle.value;
       
       formURL = site.siteURL+subredditURL+"submit/?"+
                   "url="+encodeURIComponent(submitURL)+
@@ -381,7 +394,7 @@ RedditSite.prototype.actionFailureHandler = function(r, action) {
     text = "Unexpected HTTP status " + r.status + " recieved (" + action.name + ")";
   }
   
-  Socialite.failureMessage(this.siteName + ": " + text);
+  Socialite.siteFailureMessage(this, text);
 }
 
 // Register this class for instantiation

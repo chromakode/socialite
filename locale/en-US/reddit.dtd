@@ -16,7 +16,7 @@
 <!ENTITY random.label "Serendipity!">
 <!ENTITY random.accesskey "r">
 
-<!ENTITY subreddit.label "Submit to:">
+<!ENTITY subreddit.label "Subreddit:">
 <!ENTITY subreddit.tooltip "Subreddit">
 <!ENTITY subreddit.loadingtext "Loading...">
 <!ENTITY textboxTitle.emptytext "Please enter a title describing this location.">

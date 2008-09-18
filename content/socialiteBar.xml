@@ -1,5 +1,11 @@
 <?xml version="1.0"?>
-<!DOCTYPE notificationDTD SYSTEM "chrome://global/locale/notification.dtd">
+<!DOCTYPE window [
+  <!ENTITY % notificationDTD SYSTEM "chrome://global/locale/notification.dtd">
+  %notificationDTD;
+  <!ENTITY % socialiteDTD SYSTEM "chrome://socialite/locale/socialite.dtd">
+  %socialiteDTD;
+]>
+
 <bindings xmlns="http://www.mozilla.org/xbl" xmlns:xbl="http://www.mozilla.org/xbl"
   xmlns:xul="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul">
   
@@ -112,6 +118,46 @@
     </implementation>
   </binding>
   
+  <binding id="socialite-submit-bar" extends="chrome://global/content/bindings/notification.xml#notification">
+    <content>
+      <xul:hbox class="notification-inner outset" flex="1" xbl:inherits="type">
+        <xul:hbox anonid="details" flex="1" align="center">
+          <xul:label anonid="labelSiteSelector" value="&loadedSiteSelector.label;"/>
+          <xul:hbox anonid="loadedSiteSelector"/>
+          <xul:separator width="0px" height="18px" orient="vertical" class="socialite-separator"/>
+          <xul:hbox anonid="siteSubmitUIContainer" flex="1" align="center"/>
+        </xul:hbox>
+        <xul:toolbarbutton ondblclick="event.stopPropagation();"
+          class="messageCloseButton tabbable" xbl:inherits="hidden=hideclose"
+          tooltiptext="&closeNotification.tooltip;" oncommand="document.getBindingParent(this).close();"/>
+      </xul:hbox>
+    </content>
+    
+    <resources>
+      <stylesheet src="chrome://socialite/skin/socialite.css"/>
+    </resources>
+    
+    <implementation>
+      <field name="url"/>
+            
+      <constructor>
+        this.siteSelector = document.getAnonymousElementByAttribute(this, "anonid", "loadedSiteSelector");
+        var container = document.getAnonymousElementByAttribute(this, "anonid", "siteSubmitUIContainer");
+        var self = this;
+        siteSelector.addEventListener("command", function(event) {
+          // Remove existing UI
+          if (container.hasChildNodes()){
+            container.removeChild(container.firstChild);
+          }
+          
+          // Add new UI
+          var siteSubmitUI = self.siteSelector.selectedSite.createBarSubmitUI(document, self.url);
+          container.appendChild(siteSubmitUI);
+        }, false);
+      </constructor>
+    </implementation>
+  </binding>
+  
   <binding id="socialitesiteui">
     <content>
     </content>
@@ -163,6 +209,8 @@
       <field name="preferences"/>
     
       <constructor>
+        Components.utils.import("resource://socialite/socialite.jsm");
+      
         this.preferences = Components.classes["@mozilla.org/preferences-service;1"]
             .getService(Components.interfaces.nsIPrefService)
             .getBranch("extensions.socialite.sites.");
@@ -201,7 +249,7 @@
         // Site link click handler
         var labelSite = document.getAnonymousElementByAttribute(this, "anonid", "labelSite");
         labelSite.addEventListener("click", function(event) {
-          openUILink(self.selectedSite.siteURL);
+          Socialite.openUILink(self.selectedSite.siteURL);
         }, false);
       </constructor>
       
@@ -284,4 +332,46 @@
       </method>
     </implementation>
   </binding>
+  
+  <binding id="socialite-loaded-site-selector" extends="chrome://socialite/content/socialiteBar.xml#socialite-site-selector">
+    <implementation>    
+      <constructor>
+        Components.utils.import("resource://socialite/socialite.jsm");
+        
+        // Add currently loaded sites
+        for each (var site in Socialite.sites.byID) {
+          if (site) {
+            this.addSite(site);
+          }
+        };
+
+        var observerService = Components.classes["@mozilla.org/observer-service;1"]
+                              .getService(Components.interfaces.nsIObserverService);
+
+        // Site name change observer
+        var self = this;
+        this.observer = {
+          observe: function(subject, topic, data) {
+            if (topic == "socialite-load-site") {
+              self.addSite(Socialite.sites.byID[data]);
+            } else if (topic == "socialite-unload-site") {
+              self.removeSite(Socialite.sites.byID[data]);
+            }
+          }
+        }
+        
+        observerService.addObserver(this.observer, "socialite-load-site", false);
+        observerService.addObserver(this.observer, "socialite-unload-site", false);
+      </constructor>
+      
+      <destructor>
+        var observerService = Components.classes["@mozilla.org/observer-service;1"]
+                              .getService(Components.interfaces.nsIObserverService);
+                              
+        observerService.removeObserver(this.observer, "socialite-load-site");
+        observerService.removeObserver(this.observer, "socialite-unload-site");
+      </destructor>
+    </implementation>
+  </binding>
+  
 </bindings>

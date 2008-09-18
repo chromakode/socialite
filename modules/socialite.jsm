@@ -34,6 +34,10 @@ var Socialite =
       null, null, null, "socialite-failure"
     );
   },
+  
+  siteFailureMessage: function(site, message) {
+    Socialite.failureMessage(site.siteName + ": " + message);
+  },
 
   openUILink: function(url, e) {
     window = windowManager.getMostRecentWindow("navigator:browser");
