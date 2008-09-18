@@ -25,7 +25,13 @@ var SocialiteProgressListener =
     var window = aProgress.DOMWindow;
     
     if (window == window.top) {
-      logger.log("SocialiteProgressListener", "onLocationChange (loading): " + aProgress.DOMWindow.location.href);
+      var isLoadingText;
+      if (aProgress.isLoadingDocument) {
+        isLoadingText = "(loading)"; 
+      } else {
+        isLoadingText = ""; 
+      }
+      logger.log("SocialiteProgressListener", "onLocationChange " + isLoadingText + ": " + aProgress.DOMWindow.location.href);
       SocialiteWindow.linkStartLoad(window, aProgress.isLoadingDocument);
     }
   },
