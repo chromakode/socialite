@@ -5,7 +5,7 @@ persistence = Components.utils.import("resource://socialite/persistence.jsm");
 var observerService = Components.classes["@mozilla.org/observer-service;1"]
                                          .getService(Components.interfaces.nsIObserverService);
 
-SOCIALITE_NOTIFICATION_VALUE = "socialitebar-notification"; 
+SOCIALITE_CONTENT_NOTIFICATION_VALUE = "socialite-contentbar-notification";
 SOCIALITE_URLBARICON_ID = "socialite-urlbar-icon-"; 
 
 
@@ -112,7 +112,7 @@ var SocialiteWindow =
     var browser = gBrowser.getBrowserForDocument(win.document);
     var notificationBox = gBrowser.getNotificationBox(browser);
   
-    socialiteBar = notificationBox.getNotificationWithValue(SOCIALITE_NOTIFICATION_VALUE);
+    socialiteBar = notificationBox.getNotificationWithValue(SOCIALITE_CONTENT_NOTIFICATION_VALUE);
     if (socialiteBar) {
       // Handle persistence changes, if any.
       if (!persistence.onLocationChange(socialiteBar.url, href)) {
@@ -125,7 +125,7 @@ var SocialiteWindow =
     
     if (!socialiteBar && Socialite.watchedURLs.isWatched(href)) {
       // This is a watched link. Create a notification box and initialize.
-      var newBar = SocialiteWindow.createNotificationBar(notificationBox, href);
+      var newBar = SocialiteWindow.createContentBar(notificationBox, href);
       
       // Populate the bar
       for each (entry in Socialite.watchedURLs.getWatches(href)) {
@@ -134,10 +134,10 @@ var SocialiteWindow =
     }
   },
   
-  createNotificationBar: function(notificationBox, url) {
+  createContentBar: function(notificationBox, url) {
     var notification = notificationBox.appendNotification(
       "",
-      SOCIALITE_NOTIFICATION_VALUE,
+      SOCIALITE_CONTENT_NOTIFICATION_VALUE,
       "",
       notificationBox.PRIORITY_INFO_MEDIUM,
       []
@@ -162,7 +162,7 @@ var SocialiteWindow =
     var urlBarIcon = event.target;
     var site = Socialite.sites.byID[urlBarIcon.siteID];
     
-    var socialiteBar = notificationBox.getNotificationWithValue(SOCIALITE_NOTIFICATION_VALUE);
+    var socialiteBar = notificationBox.getNotificationWithValue(SOCIALITE_CONTENT_NOTIFICATION_VALUE);
     if (socialiteBar) {
       if (socialiteBar.url != currentURL) {
         // The bar was opened for another URL. We will replace it.
@@ -174,7 +174,7 @@ var SocialiteWindow =
     // Helper function to open the bar with some content.
     function openBarWith(site, siteUI) {
       if (!socialiteBar) {
-        socialiteBar = SocialiteWindow.createNotificationBar(notificationBox, currentURL);
+        socialiteBar = SocialiteWindow.createContentBar(notificationBox, currentURL);
       }
       socialiteBar.addSiteUI(site, siteUI);
     }
@@ -231,7 +231,7 @@ var SocialiteWindow =
       SocialiteWindow.removeUrlBarIcon(site);
       for (var i=0; i<gBrowser.browsers.length; i++) {
         var browser = gBrowser.browsers[i];
-        socialiteBar = gBrowser.getNotificationBox(browser).getNotificationWithValue(SOCIALITE_NOTIFICATION_VALUE);
+        socialiteBar = gBrowser.getNotificationBox(browser).getNotificationWithValue(SOCIALITE_CONTENT_NOTIFICATION_VALUE);
         if (socialiteBar) {
           socialiteBar.removeSiteUI(site);
           

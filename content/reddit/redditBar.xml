@@ -3,7 +3,7 @@
 <bindings xmlns="http://www.mozilla.org/xbl" xmlns:xbl="http://www.mozilla.org/xbl"
   xmlns:xul="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul">
 
-  <binding id="redditcontentui" extends="chrome://socialite/content/socialiteBar.xml#socialitesiteui">
+  <binding id="reddit-content-ui" extends="chrome://socialite/content/socialiteBar.xml#socialitesiteui">
     <content>
       <xul:hbox anonid="container" flex="1" align="center">
         <xul:box tooltip="_child">
@@ -208,7 +208,7 @@
     </implementation>
   </binding>
   
-  <binding id="redditsubmitui" extends="chrome://socialite/content/socialiteBar.xml#socialitesiteui">
+  <binding id="reddit-submit-ui" extends="chrome://socialite/content/socialiteBar.xml#socialitesiteui">
     <content>
       <xul:hbox anonid="container" flex="1" align="center">
         <xul:label anonid="labelSubmitTo" value="&subreddit.label;"/>

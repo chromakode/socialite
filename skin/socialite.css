@@ -30,12 +30,17 @@
 
 
 hbox[anonid="siteSelector"] {
-	-moz-binding: url(chrome://socialite/content/socialiteBar.xml#socialitesiteselector);
+	-moz-binding: url(chrome://socialite/content/socialiteBar.xml#socialite-site-selector);
 }
 
-notification[value="socialitebar-notification"] {
-  -moz-binding: url(chrome://socialite/content/socialiteBar.xml#socialitebar);
+notification[value="socialite-contentbar-notification"] {
+  -moz-binding: url(chrome://socialite/content/socialiteBar.xml#socialite-content-bar);
 }
+
+notification[value="socialite-submitbar-notification"] {
+  -moz-binding: url(chrome://socialite/content/socialiteBar.xml#socialite-submit-bar);
+}
+
 
 .socialite-no-vertical-margin {
   margin-top: 0;

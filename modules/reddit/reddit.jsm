@@ -284,7 +284,7 @@ RedditSite.prototype.createBarContentUI = function(document, linkInfo) {
     
   };
   
-  barContent.style.MozBinding = "url(chrome://socialite/content/reddit/redditBar.xml#redditcontentui)"; 
+  barContent.style.MozBinding = "url(chrome://socialite/content/reddit/redditBar.xml#reddit-content-ui)"; 
   return barContent;
 }
 
@@ -322,7 +322,7 @@ RedditSite.prototype.createBarSubmitUI = function(document, submitURL) {
     }, false);
   };
   
-  barSubmit.style.MozBinding = "url(chrome://socialite/content/reddit/redditBar.xml#redditsubmitui)"; 
+  barSubmit.style.MozBinding = "url(chrome://socialite/content/reddit/redditBar.xml#reddit-submit-ui)"; 
   return barSubmit;
 }
 
