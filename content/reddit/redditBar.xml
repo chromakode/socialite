@@ -212,7 +212,7 @@
     <content>
       <xul:hbox anonid="container" flex="1" align="center">
         <xul:label anonid="labelSubreddit" value="&subreddit.label;"/>
-        <xul:menulist anonid="menulistSubreddit" label="&subreddit.loadingtext;" tooltiptext="&subreddit.tooltip;" sizetopopup="none" class="socialite-no-vertical-margin socialite-menulist-compact">
+        <xul:menulist anonid="menulistSubreddit" label="&subreddit.loadingtext;" tooltiptext="&subreddit.tooltip;" sizetopopup="none" class="socialite-menulist-compact">
           <xul:menupopup anonid="menuSubreddits"/>
         </xul:menulist>
         <xul:textbox anonid="textboxTitle" emptytext="&textboxTitle.emptytext;" tooltiptext="&textboxTitle.tooltip;" flex="1"/>
