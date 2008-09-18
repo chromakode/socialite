@@ -328,8 +328,9 @@ RedditSite.prototype.createBarSubmitUI = function(document) {
       var submitURL = barSubmit.parentNode.url;
       var submitTitle = barSubmit.textboxTitle.value;
       
-      formURL = site.siteURL+subredditURL+"submit/?"+
-                  "url="+encodeURIComponent(submitURL)+
+      // Use ?resubmit GET parameter so reddit doesn't jump straight to the "already submitted" page
+      formURL = site.siteURL+subredditURL+"submit/?resubmit=true"+
+                  "&url="+encodeURIComponent(submitURL)+
                   "&title="+encodeURIComponent(submitTitle);
       
       Socialite.openUILink(formURL, e);
