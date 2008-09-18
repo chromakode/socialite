@@ -211,7 +211,6 @@
   <binding id="reddit-submit-ui" extends="chrome://socialite/content/socialiteBar.xml#socialite-site-ui">
     <content>
       <xul:hbox anonid="container" flex="1" align="center">
-        <xul:label anonid="labelSubreddit" value="&subreddit.label;"/>
         <xul:menulist anonid="menulistSubreddit" label="&subreddit.loadingtext;" tooltiptext="&subreddit.tooltip;" sizetopopup="none" class="socialite-menulist-compact">
           <xul:menupopup anonid="menuSubreddits"/>
         </xul:menulist>
@@ -230,7 +229,6 @@
       <field name="afterBound"/>
       
       <constructor>
-        this.labelSubreddit = document.getAnonymousElementByAttribute(this, "anonid", "labelSubreddit");
         this.menulistSubreddit = document.getAnonymousElementByAttribute(this, "anonid", "menulistSubreddit");
         this.menuSubreddits = document.getAnonymousElementByAttribute(this, "anonid", "menuSubreddits");
         this.textboxTitle = document.getAnonymousElementByAttribute(this, "anonid", "textboxTitle");

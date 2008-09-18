@@ -185,16 +185,14 @@ var SocialiteWindow =
     var site = Socialite.sites.byID[urlBarIcon.siteID];
     
     var socialiteBar = notificationBox.getNotificationWithValue(SOCIALITE_CONTENT_NOTIFICATION_VALUE);
-    if (socialiteBar) {
-      if (socialiteBar.url != currentURL) {
+    
+    // Helper function to open the bar with some content.
+    function openContentBarTo(site, siteUI) {
+      if (socialiteBar && socialiteBar.url != currentURL) {
         // The bar was opened for another URL. We will replace it.
         socialiteBar.close();
         socialiteBar = null;
       }
-    }
-    
-    // Helper function to open the bar with some content.
-    function openContentBarTo(site, siteUI) {
       if (!socialiteBar) {
         socialiteBar = SocialiteWindow.createContentBar(notificationBox, currentURL);
       }
@@ -209,25 +207,31 @@ var SocialiteWindow =
       }
       submitBar.siteSelector.selectSite(site);
     }
-
-    var watchLinkInfo = Socialite.watchedURLs.getWatchLinkInfo(currentURL, site);
-    if (socialiteBar && socialiteBar.hasSiteUI(site)) {
-      // If the bar is open, the user intends to submit.
-      openSubmitBarTo(site);
-    } else if (watchLinkInfo) {
-      // If the site is watched, it is already posted, so we should open the bar for it.
-      openContentBarTo(site, site.createBarContentUI(document, watchLinkInfo));
+    
+    if (event.button == 1) {
+      // Middle-click forces submit action
+      openSubmitBarTo(site)
     } else {
-      // We have no local information about the URL, so we need to check the socialite site to see if the URL is already submitted.
-      site.getLinkInfo(currentURL, function(linkInfo) {
-        if (linkInfo) {
-          // If the URL is already submitted, open the bar for it.
-          openContentBarTo(site, site.createBarContentUI(document, linkInfo));
-        } else {
-          // If the URL has not already been submitted, open the submit UI.
-          openSubmitBarTo(site);
-        }
-      });
+  
+      var watchLinkInfo = Socialite.watchedURLs.getWatchLinkInfo(currentURL, site);
+      if (socialiteBar && socialiteBar.hasSiteUI(site)) {
+        // If the bar is open, the user intends to submit.
+        openSubmitBarTo(site);
+      } else if (watchLinkInfo) {
+        // If the site is watched, it is already posted, so we should open the bar for it.
+        openContentBarTo(site, site.createBarContentUI(document, watchLinkInfo));
+      } else {
+        // We have no local information about the URL, so we need to check the socialite site to see if the URL is already submitted.
+        site.getLinkInfo(currentURL, function(linkInfo) {
+          if (linkInfo) {
+            // If the URL is already submitted, open the bar for it.
+            openContentBarTo(site, site.createBarContentUI(document, linkInfo));
+          } else {
+            // If the URL has not already been submitted, open the submit UI.
+            openSubmitBarTo(site);
+          }
+        });
+      }
     }
   },
   
