@@ -289,7 +289,7 @@ RedditSite.prototype.createBarContentUI = function(document, linkInfo) {
   return barContent;
 }
 
-RedditSite.prototype.createBarSubmitUI = function(document, submitURL) {
+RedditSite.prototype.createBarSubmitUI = function(document) {
   var barSubmit = document.createElement("hbox");
   barSubmit.setAttribute("flex", "1");
   
@@ -300,7 +300,7 @@ RedditSite.prototype.createBarSubmitUI = function(document, submitURL) {
       function success(r, json) {
         // Sort the subreddits like on the submit page.
         json.data.children.sort(subredditSort);
-        
+                
         if (json.data.children.length == 0) {
           Socialite.siteFailureMessage(site, "No subscribed subreddits found.");
           barSubmit.labelSubreddit.hidden = true;
@@ -323,8 +323,10 @@ RedditSite.prototype.createBarSubmitUI = function(document, submitURL) {
       if (barSubmit.menulistSubreddit.selectedItem && !barSubmit.hidden) {
         subredditURL = barSubmit.menulistSubreddit.selectedItem.value;
       } else {
+        // Degrade to general submission page if no subreddit is set.
         subredditURL = "";
       }
+      var submitURL = barSubmit.parentNode.url;
       var submitTitle = barSubmit.textboxTitle.value;
       
       formURL = site.siteURL+subredditURL+"submit/?"+
@@ -332,6 +334,7 @@ RedditSite.prototype.createBarSubmitUI = function(document, submitURL) {
                   "&title="+encodeURIComponent(submitTitle);
       
       Socialite.openUILink(formURL, e);
+      barSubmit.parentNode.close();
     }, false);
   };
   

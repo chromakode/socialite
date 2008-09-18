@@ -125,7 +125,9 @@
           <xul:label anonid="labelSiteSelector" value="&loadedSiteSelector.label;"/>
           <xul:hbox anonid="loadedSiteSelector"/>
           <xul:separator width="0px" height="18px" orient="vertical" class="socialite-separator"/>
-          <xul:hbox anonid="siteSubmitUIContainer" flex="1" align="center"/>
+          <xul:hbox anonid="siteSubmitUIContainer" flex="1" align="center">
+            <children/>
+          </xul:hbox>
         </xul:hbox>
         <xul:toolbarbutton ondblclick="event.stopPropagation();"
           class="messageCloseButton tabbable" xbl:inherits="hidden=hideclose"
@@ -142,23 +144,39 @@
             
       <constructor>
         this.siteSelector = document.getAnonymousElementByAttribute(this, "anonid", "loadedSiteSelector");
-        var container = document.getAnonymousElementByAttribute(this, "anonid", "siteSubmitUIContainer");
         var self = this;
         siteSelector.addEventListener("command", function(event) {
           // Remove existing UI
-          if (container.hasChildNodes()){
-            container.removeChild(container.firstChild);
+          if (self.hasChildNodes()){
+            self.removeChild(self.firstChild);
           }
           
           // Add new UI
-          var siteSubmitUI = self.siteSelector.selectedSite.createBarSubmitUI(document, self.url);
-          container.appendChild(siteSubmitUI);
+          var siteSubmitUI = self.siteSelector.selectedSite.createBarSubmitUI(document);
+          self.appendChild(siteSubmitUI);
         }, false);
       </constructor>
     </implementation>
   </binding>
   
-  <binding id="socialitesiteui">
+    <binding id="socialite-site-ui">
+    <content>
+    </content>
+    
+    <implementation>
+      <field name="siteID"/>
+      <field name="sitePreferences"/>
+      
+      <constructor>
+        this.sitePreferences = Components.classes["@mozilla.org/preferences-service;1"]
+            .getService(Components.interfaces.nsIPrefService)
+            .getBranch("extensions.socialite.sites."+this.siteID+".");
+        this.sitePreferences.QueryInterface(Components.interfaces.nsIPrefBranch2);
+      </constructor>
+    </implementation>
+  </binding>
+  
+  <binding id="socialite-site-content-ui" extends="chrome://socialite/content/socialiteBar.xml#socialite-site-ui">
     <content>
     </content>
     
@@ -315,18 +333,20 @@
         <parameter name="site"/>
         <body>
           <![CDATA[
-            var siteImage = document.getAnonymousElementByAttribute(this, "anonid", "imageSite");
-            var siteName = document.getAnonymousElementByAttribute(this, "anonid", "labelSite");
-            
-            siteImage.src = site.getIconURI();
-            siteName.value = site.siteName;
-            
-            this.selectedSite = site;
-            
-            // Fire event
-            var event = document.createEvent("UIEvent");
-            event.initUIEvent("command", true, true, window, site.siteID);
-            this.dispatchEvent(event);
+            if (site != this.selectedSite) {
+              var siteImage = document.getAnonymousElementByAttribute(this, "anonid", "imageSite");
+              var siteName = document.getAnonymousElementByAttribute(this, "anonid", "labelSite");
+              
+              siteImage.src = site.getIconURI();
+              siteName.value = site.siteName;
+              
+              this.selectedSite = site;
+              
+              // Fire event
+              var event = document.createEvent("UIEvent");
+              event.initUIEvent("command", true, true, window, site.siteID);
+              this.dispatchEvent(event);
+            }
           ]]>
         </body>
       </method>
