@@ -203,7 +203,10 @@ var SocialiteWindow =
     
     // Helper function to open the submit bar with a particular destination site selected.
     function openSubmitBarTo(site) {
-      var submitBar = SocialiteWindow.createSubmitBar(notificationBox, currentURL);
+      var submitBar = notificationBox.getNotificationWithValue(SOCIALITE_SUBMIT_NOTIFICATION_VALUE);
+      if (!submitBar) {
+        submitBar = SocialiteWindow.createSubmitBar(notificationBox, currentURL);
+      }
       submitBar.siteSelector.selectSite(site);
     }
 
