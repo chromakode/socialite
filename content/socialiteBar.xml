@@ -15,7 +15,9 @@
         <xul:hbox anonid="details" flex="1" align="center">
           <xul:hbox anonid="siteSelector"/>
           <xul:separator width="0px" height="18px" orient="vertical" class="socialite-separator"/>
-          <xul:deck anonid="deckContent" flex="1" align="center"/>
+          <xul:deck anonid="deckContent" flex="1" align="center">
+            <children/>
+          </xul:deck>
         </xul:hbox>
         <xul:toolbarbutton ondblclick="event.stopPropagation();"
           class="messageCloseButton tabbable" xbl:inherits="hidden=hideclose"
@@ -38,7 +40,7 @@
           var index = self.getContentIndex(siteSelector.selectedSite);
           if (index != -1) {
             deckContent.selectedIndex = index
-            deckContent.childNodes[index].refresh();
+            self.childNodes[index].refresh();
           }
         }, false);
       </constructor>
@@ -46,8 +48,7 @@
       <property name="contentCount">
         <getter>
           <![CDATA[
-            var deckContent = document.getAnonymousElementByAttribute(this, "anonid", "deckContent");
-            return deckContent.childNodes.length;
+            return this.childNodes.length;
           ]]>
         </getter>
       </property>
@@ -57,8 +58,7 @@
         <parameter name="siteContent"/>
         <body>
           <![CDATA[
-            var deckContent = document.getAnonymousElementByAttribute(this, "anonid", "deckContent");
-            deckContent.appendChild(siteContent);
+            this.appendChild(siteContent);
             
             var siteSelector = document.getAnonymousElementByAttribute(this, "anonid", "siteSelector");
             siteSelector.addSite(site);
@@ -72,8 +72,7 @@
           <![CDATA[
             var index = this.getContentIndex(site);
             if (index != -1) {
-              var deckContent = document.getAnonymousElementByAttribute(this, "anonid", "deckContent");
-              deckContent.removeChild(deckContent.childNodes[index]);
+              this.removeChild(this.childNodes[index]);
               
               var siteSelector = document.getAnonymousElementByAttribute(this, "anonid", "siteSelector");
               siteSelector.removeSite(site);
@@ -95,9 +94,8 @@
         <parameter name="site"/>
         <body>
           <![CDATA[
-            var deckContent = document.getAnonymousElementByAttribute(this, "anonid", "deckContent");
-            for (var i=0; i<deckContent.childNodes.length; i++) {
-              if (deckContent.childNodes[i].siteID == site.siteID) {
+            for (var i=0; i<this.childNodes.length; i++) {
+              if (this.childNodes[i].siteID == site.siteID) {
                 return i;
               }
             }
@@ -111,7 +109,7 @@
           <![CDATA[
             // Refresh the top (currently displayed) content.
             var deckContent = document.getAnonymousElementByAttribute(this, "anonid", "deckContent");
-            deckContent.selectedPanel.refresh();
+            this.childNodes[deckContent.selectedIndex].refresh();
           ]]>
         </body>
       </method>
