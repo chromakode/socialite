@@ -146,7 +146,7 @@ var SocialiteWindow =
       "",
       SOCIALITE_CONTENT_NOTIFICATION_VALUE,
       "",
-      notificationBox.PRIORITY_INFO_MEDIUM,
+      notificationBox.PRIORITY_INFO_LOW,
       []
     );
     
@@ -167,7 +167,7 @@ var SocialiteWindow =
       "",
       SOCIALITE_SUBMIT_NOTIFICATION_VALUE,
       "",
-      notificationBox.PRIORITY_INFO_HIGH, // Appear on top of socialite content notifications
+      notificationBox.PRIORITY_INFO_MEDIUM, // Appear on top of socialite content notifications
       []
     );
     
