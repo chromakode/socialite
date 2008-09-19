@@ -190,9 +190,8 @@ var SocialiteWindow =
     var urlBarIcon = event.target;
     var site = Socialite.sites.byID[urlBarIcon.siteID];
     
-    var socialiteBar = notificationBox.getNotificationWithValue(SOCIALITE_CONTENT_NOTIFICATION_VALUE);
-    
     // Helper function to open the bar with some content.
+    var socialiteBar = notificationBox.getNotificationWithValue(SOCIALITE_CONTENT_NOTIFICATION_VALUE);
     function openContentBarTo(site, siteUI) {
       if (socialiteBar && socialiteBar.url != currentURL) {
         // The bar was opened for another URL. We will replace it.
@@ -206,8 +205,8 @@ var SocialiteWindow =
     }
     
     // Helper function to open the submit bar with a particular destination site selected.
+    var submitBar = notificationBox.getNotificationWithValue(SOCIALITE_SUBMIT_NOTIFICATION_VALUE);
     function openSubmitBarTo(site) {
-      var submitBar = notificationBox.getNotificationWithValue(SOCIALITE_SUBMIT_NOTIFICATION_VALUE);
       if (!submitBar) {
         submitBar = SocialiteWindow.createSubmitBar(notificationBox, currentURL);
       }
@@ -220,7 +219,7 @@ var SocialiteWindow =
     } else {
   
       var watchLinkInfo = Socialite.watchedURLs.getWatchLinkInfo(currentURL, site);
-      if (socialiteBar && socialiteBar.hasSiteUI(site)) {
+      if (submitBar || (socialiteBar && socialiteBar.hasSiteUI(site))) {
         // If the bar is open, the user intends to submit.
         openSubmitBarTo(site);
       } else if (watchLinkInfo) {
