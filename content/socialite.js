@@ -3,12 +3,14 @@ logger = Components.utils.import("resource://socialite/utils/log.jsm");
 persistence = Components.utils.import("resource://socialite/persistence.jsm");
 
 var observerService = Components.classes["@mozilla.org/observer-service;1"]
-                                         .getService(Components.interfaces.nsIObserverService);
+                      .getService(Components.interfaces.nsIObserverService);
+
+var historyService = Components.classes["@mozilla.org/browser/nav-history-service;1"]
+                     .getService(Components.interfaces.nsINavHistoryService);
 
 SOCIALITE_CONTENT_NOTIFICATION_VALUE = "socialite-contentbar-notification";
 SOCIALITE_SUBMIT_NOTIFICATION_VALUE = "socialite-submitbar-notification"; 
 SOCIALITE_URLBARICON_ID = "socialite-urlbar-icon-"; 
-
 
 // ---
 
@@ -55,8 +57,11 @@ var SocialiteWindow =
   },
   
   onLoad: function() {
-    observerService.addObserver(SocialiteWindow, "socialite-load-site", false);
-    observerService.addObserver(SocialiteWindow, "socialite-unload-site", false);
+    observerService.addObserver(SocialiteWindow.preferenceObserver, "socialite-load-site", false);
+    observerService.addObserver(SocialiteWindow.preferenceObserver, "socialite-unload-site", false);
+    
+    historyService.addObserver(SocialiteWindow.historyObserver, false);
+    SocialiteWindow._urlBarSiteURLs = {};
     
     Socialite.load();
   
@@ -92,8 +97,9 @@ var SocialiteWindow =
   },
   
   onUnload: function() {
-    observerService.removeObserver(SocialiteWindow, "socialite-load-site");
-    observerService.removeObserver(SocialiteWindow, "socialite-unload-site");
+    observerService.removeObserver(SocialiteWindow.preferenceObserver, "socialite-load-site");
+    observerService.removeObserver(SocialiteWindow.preferenceObserver, "socialite-unload-site");
+    historyService.removeObserver(SocialiteWindow.historyObserver, false);
     // Remove remaining progress listeners.
     SocialiteWindow.unsetProgressListener(gBrowser);
   },
@@ -152,7 +158,7 @@ var SocialiteWindow =
     // Set url property so we know the location the bar was originally opened for.
     notification.url = url;
     
-    logger.log("Socialite", "Content notification created");
+    logger.log("SocialiteWindow", "Content notification created");
     return notification;
   },
   
@@ -173,7 +179,7 @@ var SocialiteWindow =
     // Set url property so we know the location the bar was originally opened for.
     notification.url = url;
     
-    logger.log("Socialite", "Submit notification created");
+    logger.log("SocialiteWindow", "Submit notification created");
     return notification;
   },
   
@@ -244,38 +250,71 @@ var SocialiteWindow =
     urlBarIcon.siteID = site.siteID;
     urlBarIcon.className = "socialite-urlbar-icon urlbar-icon";
     urlBarIcon.setAttribute("src", site.getIconURI());
+    urlBarIcon.setAttribute("tooltiptext", site.siteName);
     urlBarIcon.addEventListener("click", SocialiteWindow.linkContextAction, false);
     
+    SocialiteWindow._urlBarSiteURLs[site.siteURL] = site;
     urlBarIcons.insertBefore(urlBarIcon, feedButton);
     
     return urlBarIcon;
   },
   
+  getUrlBarIcon: function(site) {
+    return document.getElementById(SOCIALITE_URLBARICON_ID + site.siteID);
+  },
+  
   removeUrlBarIcon: function(site) {
     var urlBarIcons = document.getElementById("urlbar-icons");
-    var urlBarIcon = document.getElementById(SOCIALITE_URLBARICON_ID + site.siteID);
+    var urlBarIcon = SocialiteWindow.getUrlBarIcon(site);
+    delete SocialiteWindow._urlBarSiteURLs[site.siteURL];
     urlBarIcons.removeChild(urlBarIcon)
   },
   
-  observe: function(subject, topic, data) {
-    if (topic == "socialite-load-site") {
-      var site = Socialite.sites.byID[data];
-      SocialiteWindow.createUrlBarIcon(site);
-    } else if (topic == "socialite-unload-site") {
-      var site = Socialite.sites.byID[data];
-      SocialiteWindow.removeUrlBarIcon(site);
-      for (var i=0; i<gBrowser.browsers.length; i++) {
-        var browser = gBrowser.browsers[i];
-        socialiteBar = gBrowser.getNotificationBox(browser).getNotificationWithValue(SOCIALITE_CONTENT_NOTIFICATION_VALUE);
-        if (socialiteBar) {
-          socialiteBar.removeSiteUI(site);
-          
-          if (socialiteBar.contentCount == 0) {
-             socialiteBar.close(); 
+  // Preference observer
+  preferenceObserver: { 
+    observe: function(subject, topic, data) {
+      if (topic == "socialite-load-site") {
+        var site = Socialite.sites.byID[data];
+        SocialiteWindow.createUrlBarIcon(site);
+      } else if (topic == "socialite-unload-site") {
+        var site = Socialite.sites.byID[data];
+        SocialiteWindow.removeUrlBarIcon(site);
+        for (var i=0; i<gBrowser.browsers.length; i++) {
+          var browser = gBrowser.browsers[i];
+          socialiteBar = gBrowser.getNotificationBox(browser).getNotificationWithValue(SOCIALITE_CONTENT_NOTIFICATION_VALUE);
+          if (socialiteBar) {
+            socialiteBar.removeSiteUI(site);
+            
+            if (socialiteBar.contentCount == 0) {
+               socialiteBar.close(); 
+            }
           }
         }
       }
     }
+  },
+  
+  historyObserver: {
+    // nsINavHistoryService observer
+    onPageChanged: function(URI, what, value) {
+      if (what == Components.interfaces.nsINavHistoryObserver.ATTRIBUTE_FAVICON) {
+        var spec = URI.spec;
+        var site = SocialiteWindow._urlBarSiteURLs[spec];
+        if (site) {
+          var urlBarIcon = SocialiteWindow.getUrlBarIcon(site);
+          urlBarIcon.src = value;
+          logger.log("SocialiteWindow", "Updated url bar icon for site: " + site.siteName);
+        }
+      }
+    },
+  
+    onBeginUpdateBatch: function() {},
+    onEndUpdateBatch: function() {},
+    onVisit: function() {},
+    onTitleChanged: function() {},
+    onDeleteURI: function() {},
+    onClearHistory: function() {},
+    onPageExpired: function() {},
   }
 
 }

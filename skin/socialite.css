@@ -66,6 +66,8 @@ notification[value="socialite-submitbar-notification"] {
 }
 
 .socialite-urlbar-icon {
+  width: 16px;
+  height: 16px;
   opacity: .8;
   margin-right: 3px;
 }

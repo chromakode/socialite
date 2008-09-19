@@ -19,7 +19,7 @@ var EXPORTED_SYMBOLS = ["SocialiteSite", "SiteCollection", "siteClassRegistry"];
 function SocialiteSite(siteID, siteName, siteURL) {
   this.siteID = siteID;
   this.siteName = siteName;
-  this.siteURL = siteURL;
+  this.siteURL = IOService.newURI(siteURL, null, null).spec;
   this.loaded = false;
   
   this.sitePreferences = Components.classes["@mozilla.org/preferences-service;1"]
@@ -33,11 +33,15 @@ SocialiteSite.prototype.siteClassName = "Socialite Site";
 SocialiteSite.prototype.siteClassIconURI = "";
 
 SocialiteSite.prototype.getIconURI = function() {
+  // We'll assume that favicon.ico exists for now.
   var siteURI = IOService.newURI(this.siteURL, null, null);
+  var faviconURI = IOService.newURI(this.siteURL+"/favicon.ico", null, null);
+  
+  faviconService.setAndLoadFaviconForPage(siteURI, faviconURI, false);
   return faviconService.getFaviconImageForPage(siteURI).spec;
 }
 
-SocialiteSite.prototype.onLoad = function() {
+SocialiteSite.prototype.onLoad = function() {  
   this.loaded = true;  
 };
 
