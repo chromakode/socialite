@@ -19,7 +19,8 @@ var EXPORTED_SYMBOLS = ["SocialiteSite", "SiteCollection", "siteClassRegistry"];
 function SocialiteSite(siteID, siteName, siteURL) {
   this.siteID = siteID;
   this.siteName = siteName;
-  this.siteURL = IOService.newURI(siteURL, null, null).spec;
+  this.siteURI = IOService.newURI(siteURL, null, null);
+  this.siteURL = this.siteURI.spec;
   this.loaded = false;
   
   this.sitePreferences = Components.classes["@mozilla.org/preferences-service;1"]
@@ -34,11 +35,10 @@ SocialiteSite.prototype.siteClassIconURI = "";
 
 SocialiteSite.prototype.getIconURI = function() {
   // We'll assume that favicon.ico exists for now.
-  var siteURI = IOService.newURI(this.siteURL, null, null);
   var faviconURI = IOService.newURI(this.siteURL+"/favicon.ico", null, null);
   
-  faviconService.setAndLoadFaviconForPage(siteURI, faviconURI, false);
-  return faviconService.getFaviconImageForPage(siteURI).spec;
+  faviconService.setAndLoadFaviconForPage(this.siteURI, faviconURI, false);
+  return faviconService.getFaviconImageForPage(this.siteURI).spec;
 }
 
 SocialiteSite.prototype.onLoad = function() {  
@@ -67,15 +67,12 @@ function SiteCollection() {
 SiteCollection.prototype.onContentLoad = function(doc, win) {
   for each (var site in this.byID) {
     if (site) {
-      // Remove .*://www.
-      var baseSiteURL = site.siteURL.replace(/(.*:\/\/)?(www\.)?/, "");
-      // If the hostname doesn't exist, an error will be thrown.
-      try {
-        if (strEndsWith(doc.location.hostname, baseSiteURL)) {
-          site.onSitePageLoad(doc, win);
-        }
-      } catch (e) {
-        // We will ignore it, since URLs with no applicable hostname are of no interest.
+      // Remove www.
+      var baseRegex = /www\.?/;
+      var baseSiteHost = site.siteURI.spec.replace(baseRegex, "");
+      var baseURL = doc.location.href.replace(baseRegex, "");
+      if (strStartsWith(baseURL, baseSiteHost)) {
+        site.onSitePageLoad(doc, win);
       }
     }
   };
