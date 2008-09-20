@@ -3,6 +3,7 @@
 }
 
 .socialite-site-name {
+  margin-left: 4px;
   margin-right: 0;
 }
 
@@ -26,6 +27,10 @@
 
 .socialite-menulist-compact > menupopup > menuitem > .menu-accel-container {
   display: none;
+}
+
+.socialite-toolbarbutton-compact > .toolbarbutton-icon {
+  margin: 0;
 }
 
 

@@ -208,7 +208,7 @@
       <xul:hbox align="center">
         <xul:image anonid="imageSite" class="messageImage"/>
         <xul:label anonid="labelSite" class="socialite-site-name text-link"/>
-        <xul:toolbarbutton anonid="buttonSiteSelector" type="menu" hidden="true">
+        <xul:toolbarbutton anonid="buttonSiteSelector" type="menu" class="socialite-toolbarbutton-compact" hidden="true">
           <xul:menupopup anonid="menuSites" position="after_end"/>
         </xul:toolbarbutton>
       </xul:hbox>
