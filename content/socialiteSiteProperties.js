@@ -1,6 +1,9 @@
 Components.utils.import("resource://socialite/socialite.jsm");
 Components.utils.import("resource://socialite/site.jsm");
 
+var IOService = Components.classes["@mozilla.org/network/io-service;1"]
+                .getService(Components.interfaces.nsIIOService);
+
 var SocialiteSiteProperties = {
 
   init: function SSProps_init() {
@@ -86,8 +89,10 @@ var SocialiteSiteProperties = {
       var needsReload = false;
       
       this.site.siteName = this.prefSiteName.value;
-      if (this.site.siteURL != this.prefSiteURL.value) {
-        this.site.siteURL = this.prefSiteURL.value;
+      
+      var newSiteURL = IOService.newURI(this.prefSiteURL.value, null, null).spec;
+      if (this.site.siteURL != newSiteURL) {
+        this.site.siteURL = newSiteURL;
         needsReload = true;
       }
       
