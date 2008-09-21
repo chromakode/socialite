@@ -1,4 +1,5 @@
 Components.utils.import("resource://socialite/socialite.jsm");
+faviconWatch = Components.utils.import("resource://socialite/utils/faviconWatch.jsm");
 
 var observerService = Components.classes["@mozilla.org/observer-service;1"]
                                          .getService(Components.interfaces.nsIObserverService);
@@ -23,7 +24,10 @@ var SocialiteSitePreferences = {
       newItem.update = function() {
         siteCell.setAttribute("class", "listcell-iconic");
         siteCell.setAttribute("label", site.siteName);
-        siteCell.setAttribute("image", site.getIconURI());
+        
+        if (newItem.removeFaviconWatch) { newItem.removeFaviconWatch(); }
+        newItem.removeFaviconWatch = faviconWatch.useFaviconAsAttribute(siteCell, "image", site.siteURL);
+        
         urlCell.setAttribute("label", site.siteURL);
       };
       newItem.update();
@@ -40,6 +44,7 @@ var SocialiteSitePreferences = {
     this.siteListbox.removeSite = function(siteID) {
       var item = this.getItemBySiteID(siteID);
       if (item) {
+        if (item.removeFaviconWatch) { item.removeFaviconWatch(); }
         this.removeChild(item);
       }
     }
@@ -51,13 +56,27 @@ var SocialiteSitePreferences = {
       }
     };
     
-    observerService.addObserver(this, "socialite-load-site", false);
-    observerService.addObserver(this, "socialite-unload-site", false);
+    observerService.addObserver(this.siteObserver, "socialite-load-site", false);
+    observerService.addObserver(this.siteObserver, "socialite-unload-site", false);
   },
   
   unload: function SSPrefs_unload() {
-    observerService.removeObserver(this, "socialite-load-site");
-    observerService.removeObserver(this, "socialite-unload-site");
+    Array.map(this.siteListbox.childNodes, function(item) {
+      if (item.removeFaviconWatch) { item.removeFaviconWatch(); }
+    });
+    
+    observerService.removeObserver(this.siteObserver, "socialite-load-site");
+    observerService.removeObserver(this.siteObserver, "socialite-unload-site");
+  },
+  
+  siteObserver: {
+    observe: function(subject, topic, data) {
+      if (topic == "socialite-load-site") {
+        SocialiteSitePreferences.siteListbox.addSite(Socialite.sites.byID[data]);
+      } else if (topic == "socialite-unload-site") {
+        SocialiteSitePreferences.siteListbox.removeSite(data);
+      }
+    }
   },
 
   siteAdd: function SSPrefs_siteAdd(event) {
@@ -93,14 +112,6 @@ var SocialiteSitePreferences = {
         Socialite.sites.deleteSite(site);
         Socialite.sites.saveConfiguredSites();
       }
-    }
-  },
-  
-  observe: function(subject, topic, data) {
-    if (topic == "socialite-load-site") {
-      this.siteListbox.addSite(Socialite.sites.byID[data]);
-    } else if (topic == "socialite-unload-site") {
-      this.siteListbox.removeSite(data);
     }
   }
 

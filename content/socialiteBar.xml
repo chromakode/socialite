@@ -276,9 +276,7 @@
         this.preferences.removeObserver("", this.observer);
         
         var siteImage = document.getAnonymousElementByAttribute(this, "anonid", "imageSite");
-        if (siteImage.removeFaviconWatch) {
-            siteImage.removeFaviconWatch();
-        }
+        if (siteImage.removeFaviconWatch) { siteImage.removeFaviconWatch(); }
       </destructor>
       
       <method name="addSite">
@@ -346,9 +344,7 @@
               siteName.value = site.siteName;
               
               faviconWatch = Components.utils.import("resource://socialite/utils/faviconWatch.jsm");
-              if (siteImage.removeFaviconWatch) {
-                siteImage.removeFaviconWatch();
-              }
+              if (siteImage.removeFaviconWatch) { siteImage.removeFaviconWatch(); }
               siteImage.removeFaviconWatch = faviconWatch.useFaviconAsAttribute(siteImage, "src", site.siteURL);
               
               this.selectedSite = site;

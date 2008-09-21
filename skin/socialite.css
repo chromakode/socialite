@@ -70,13 +70,13 @@ notification[value="socialite-submitbar-notification"] {
   display: none;
 }
 
-.socialite-urlbar-icon {
+.socialite-site-urlbar-icon {
   width: 16px;
   height: 16px;
   opacity: .8;
   margin-right: 3px;
 }
 
-.socialite-urlbar-icon:hover {
+.socialite-site-urlbar-icon:hover {
   opacity: 1;
 }

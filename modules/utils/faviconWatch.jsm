@@ -45,9 +45,15 @@ function removeFaviconWatch(siteURL, changedCallback) {
   var siteURI = IOService.newURI(siteURL, null, null);
   
   if (watches[siteURI.spec]) {
+    // Find the specific callback and remove it
     var index = watches[siteURI.spec].indexOf(changedCallback);
     if (index != -1) {
       watches[siteURI.spec].splice(index, 1);
+    }
+    
+    // Delete the entry if the list is empty
+    if (watches[siteURI.spec].length == 0) {
+       delete watches[siteURI.spec];
     }
   }
 }
