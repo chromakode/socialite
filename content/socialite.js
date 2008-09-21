@@ -58,8 +58,8 @@ var SocialiteWindow =
   onLoad: function() {
     Socialite.load();
     
-    observerService.addObserver(SocialiteWindow.preferenceObserver, "socialite-load-site", false);
-    observerService.addObserver(SocialiteWindow.preferenceObserver, "socialite-unload-site", false);
+    observerService.addObserver(SocialiteWindow.siteObserver, "socialite-load-site", false);
+    observerService.addObserver(SocialiteWindow.siteObserver, "socialite-unload-site", false);
     
     SocialiteWindow.SiteUrlBarIcon.onLoad();
     
@@ -96,8 +96,8 @@ var SocialiteWindow =
   
   onUnload: function() {
     SocialiteWindow.SiteUrlBarIcon.onUnload();
-    observerService.removeObserver(SocialiteWindow.preferenceObserver, "socialite-load-site");
-    observerService.removeObserver(SocialiteWindow.preferenceObserver, "socialite-unload-site");
+    observerService.removeObserver(SocialiteWindow.siteObserver, "socialite-load-site");
+    observerService.removeObserver(SocialiteWindow.siteObserver, "socialite-unload-site");
     // Remove remaining progress listeners.
     SocialiteWindow.unsetProgressListener(gBrowser);
   },
@@ -286,8 +286,8 @@ var SocialiteWindow =
     }
   },
 
-  // Preference observer
-  preferenceObserver: { 
+  // Site observer
+  siteObserver: { 
     observe: function(subject, topic, data) {
       if (topic == "socialite-load-site") {
         var site = Socialite.sites.byID[data];
