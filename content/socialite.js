@@ -56,11 +56,13 @@ var SocialiteWindow =
   },
   
   onLoad: function() {
+    Socialite.load();
+    
     observerService.addObserver(SocialiteWindow.preferenceObserver, "socialite-load-site", false);
     observerService.addObserver(SocialiteWindow.preferenceObserver, "socialite-unload-site", false);
     
-    Socialite.load();
-  
+    SocialiteWindow.SiteUrlBarIcon.onLoad();
+    
     gBrowser.addEventListener("DOMContentLoaded", function(event) {
       var doc = event.originalTarget;
       
@@ -269,6 +271,14 @@ var SocialiteWindow =
       urlBarIcons.removeChild(urlBarIcon)
     },
     
+    onLoad: function() {
+      for each (var site in Socialite.sites.byID) {
+        if (site) {
+          SocialiteWindow.SiteUrlBarIcon.create(site);
+        }
+      };
+    },
+    
     onUnload: function() {
       Array.map(SocialiteWindow.SiteUrlBarIcon.getAll(), function(urlBarIcon) {
         if (urlBarIcon.removeFaviconWatch) { urlBarIcon.removeFaviconWatch(); }
@@ -298,7 +308,7 @@ var SocialiteWindow =
         }
       }
     }
-  },
+  }
 
 }
 
