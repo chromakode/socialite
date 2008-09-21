@@ -1,18 +1,16 @@
 Components.utils.import("resource://socialite/socialite.jsm");
 logger = Components.utils.import("resource://socialite/utils/log.jsm");
+faviconWatch = Components.utils.import("resource://socialite/utils/faviconWatch.jsm");
 Components.utils.import("resource://socialite/utils/strUtils.jsm");
 
-var faviconService = Components.classes["@mozilla.org/browser/favicon-service;1"]
-                                        .getService(Components.interfaces.nsIFaviconService);
-
 var IOService = Components.classes["@mozilla.org/network/io-service;1"]
-                                   .getService(Components.interfaces.nsIIOService);
+                .getService(Components.interfaces.nsIIOService);
 
 var nativeJSON = Components.classes["@mozilla.org/dom/json;1"]
-                                    .createInstance(Components.interfaces.nsIJSON);
+                 .createInstance(Components.interfaces.nsIJSON);
 
 var observerService = Components.classes["@mozilla.org/observer-service;1"]
-                                         .getService(Components.interfaces.nsIObserverService);
+                      .getService(Components.interfaces.nsIObserverService);
 
 var EXPORTED_SYMBOLS = ["SocialiteSite", "SiteCollection", "siteClassRegistry"];
 
@@ -35,13 +33,11 @@ SocialiteSite.prototype.siteClassIconURI = "";
 
 SocialiteSite.prototype.getIconURI = function() {
   // We'll assume that favicon.ico exists for now.
-  var faviconURI = IOService.newURI(this.siteURL+"/favicon.ico", null, null);
-  
-  faviconService.setAndLoadFaviconForPage(this.siteURI, faviconURI, false);
-  return faviconService.getFaviconImageForPage(this.siteURI).spec;
+  return this.siteURL+"/favicon.ico";
 }
 
-SocialiteSite.prototype.onLoad = function() {  
+SocialiteSite.prototype.onLoad = function() {
+  faviconWatch.setFavicon(this.siteURL, this.getIconURI());  
   this.loaded = true;  
 };
 

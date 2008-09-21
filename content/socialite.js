@@ -1,16 +1,15 @@
 Components.utils.import("resource://socialite/socialite.jsm");
 logger = Components.utils.import("resource://socialite/utils/log.jsm");
 persistence = Components.utils.import("resource://socialite/persistence.jsm");
+faviconWatch = Components.utils.import("resource://socialite/utils/faviconWatch.jsm");
 
 var observerService = Components.classes["@mozilla.org/observer-service;1"]
                       .getService(Components.interfaces.nsIObserverService);
 
-var historyService = Components.classes["@mozilla.org/browser/nav-history-service;1"]
-                     .getService(Components.interfaces.nsINavHistoryService);
-
-SOCIALITE_CONTENT_NOTIFICATION_VALUE = "socialite-contentbar-notification";
-SOCIALITE_SUBMIT_NOTIFICATION_VALUE = "socialite-submitbar-notification"; 
-SOCIALITE_URLBARICON_ID = "socialite-urlbar-icon-"; 
+var SOCIALITE_CONTENT_NOTIFICATION_VALUE = "socialite-contentbar-notification";
+var SOCIALITE_SUBMIT_NOTIFICATION_VALUE = "socialite-submitbar-notification"; 
+var SOCIALITE_URLBARICON_ID = "socialite-urlbar-icon-"; 
+var SOCIALITE_MENUITEM_ID = "socialite-menu-item-"; 
 
 // ---
 
@@ -60,9 +59,6 @@ var SocialiteWindow =
     observerService.addObserver(SocialiteWindow.preferenceObserver, "socialite-load-site", false);
     observerService.addObserver(SocialiteWindow.preferenceObserver, "socialite-unload-site", false);
     
-    historyService.addObserver(SocialiteWindow.historyObserver, false);
-    SocialiteWindow._urlBarSiteURLs = {};
-    
     Socialite.load();
   
     gBrowser.addEventListener("DOMContentLoaded", function(event) {
@@ -99,7 +95,6 @@ var SocialiteWindow =
   onUnload: function() {
     observerService.removeObserver(SocialiteWindow.preferenceObserver, "socialite-load-site");
     observerService.removeObserver(SocialiteWindow.preferenceObserver, "socialite-unload-site");
-    historyService.removeObserver(SocialiteWindow.historyObserver, false);
     // Remove remaining progress listeners.
     SocialiteWindow.unsetProgressListener(gBrowser);
   },
@@ -183,12 +178,10 @@ var SocialiteWindow =
     return notification;
   },
   
-  linkContextAction: function(event) {
+  linkContextAction: function(site, event) {
     var selectedBrowser = gBrowser.selectedBrowser;
     var currentURL = selectedBrowser.currentURI.spec;
     var notificationBox = gBrowser.getNotificationBox(selectedBrowser);
-    var urlBarIcon = event.target;
-    var site = Socialite.sites.byID[urlBarIcon.siteID];
     
     // Helper function to open the bar with some content.
     var socialiteBar = notificationBox.getNotificationWithValue(SOCIALITE_CONTENT_NOTIFICATION_VALUE);
@@ -240,33 +233,36 @@ var SocialiteWindow =
     }
   },
   
-  createUrlBarIcon: function(site) {
-    var urlBarIcons = document.getElementById("urlbar-icons");
-    var feedButton = document.getElementById("feed-button");
-    var urlBarIcon = document.createElement("image");
+  UrlBarIcon: {
+    create: function(site) {
+      var urlBarIcons = document.getElementById("urlbar-icons");
+      var feedButton = document.getElementById("feed-button");
+      var urlBarIcon = document.createElement("image");
+      
+      urlBarIcon.id = SOCIALITE_URLBARICON_ID + site.siteID;
+      urlBarIcon.siteID = site.siteID;
+      urlBarIcon.className = "socialite-urlbar-icon urlbar-icon";
+      urlBarIcon.removeFaviconWatch = faviconWatch.useFaviconAsAttribute(urlBarIcon, "src", site.siteURL);
+      urlBarIcon.setAttribute("tooltiptext", site.siteName);
+      urlBarIcon.addEventListener("click", function(event) {
+        SocialiteWindow.linkContextAction(site, event)
+      }, false);
+      
+      urlBarIcons.insertBefore(urlBarIcon, feedButton);
+      
+      return urlBarIcon;
+    },
     
-    urlBarIcon.id = SOCIALITE_URLBARICON_ID + site.siteID;
-    urlBarIcon.siteID = site.siteID;
-    urlBarIcon.className = "socialite-urlbar-icon urlbar-icon";
-    urlBarIcon.setAttribute("src", site.getIconURI());
-    urlBarIcon.setAttribute("tooltiptext", site.siteName);
-    urlBarIcon.addEventListener("click", SocialiteWindow.linkContextAction, false);
+    get: function(site) {
+      return document.getElementById(SOCIALITE_URLBARICON_ID + site.siteID);
+    },
     
-    SocialiteWindow._urlBarSiteURLs[site.siteURL] = site;
-    urlBarIcons.insertBefore(urlBarIcon, feedButton);
-    
-    return urlBarIcon;
-  },
-  
-  getUrlBarIcon: function(site) {
-    return document.getElementById(SOCIALITE_URLBARICON_ID + site.siteID);
-  },
-  
-  removeUrlBarIcon: function(site) {
-    var urlBarIcons = document.getElementById("urlbar-icons");
-    var urlBarIcon = SocialiteWindow.getUrlBarIcon(site);
-    delete SocialiteWindow._urlBarSiteURLs[site.siteURL];
-    urlBarIcons.removeChild(urlBarIcon)
+    remove: function(site) {
+      var urlBarIcons = document.getElementById("urlbar-icons");
+      var urlBarIcon = SocialiteWindow.UrlBarIcon.get(site);
+      urlBarIcon.removeFaviconWatch();
+      urlBarIcons.removeChild(urlBarIcon)
+    }
   },
   
   // Preference observer
@@ -274,10 +270,10 @@ var SocialiteWindow =
     observe: function(subject, topic, data) {
       if (topic == "socialite-load-site") {
         var site = Socialite.sites.byID[data];
-        SocialiteWindow.createUrlBarIcon(site);
+        SocialiteWindow.UrlBarIcon.create(site);
       } else if (topic == "socialite-unload-site") {
         var site = Socialite.sites.byID[data];
-        SocialiteWindow.removeUrlBarIcon(site);
+        SocialiteWindow.UrlBarIcon.remove(site);
         for (var i=0; i<gBrowser.browsers.length; i++) {
           var browser = gBrowser.browsers[i];
           socialiteBar = gBrowser.getNotificationBox(browser).getNotificationWithValue(SOCIALITE_CONTENT_NOTIFICATION_VALUE);
@@ -292,29 +288,6 @@ var SocialiteWindow =
       }
     }
   },
-  
-  historyObserver: {
-    // nsINavHistoryService observer
-    onPageChanged: function(URI, what, value) {
-      if (what == Components.interfaces.nsINavHistoryObserver.ATTRIBUTE_FAVICON) {
-        var spec = URI.spec;
-        var site = SocialiteWindow._urlBarSiteURLs[spec];
-        if (site) {
-          var urlBarIcon = SocialiteWindow.getUrlBarIcon(site);
-          urlBarIcon.src = value;
-          logger.log("SocialiteWindow", "Updated url bar icon for site: " + site.siteName);
-        }
-      }
-    },
-  
-    onBeginUpdateBatch: function() {},
-    onEndUpdateBatch: function() {},
-    onVisit: function() {},
-    onTitleChanged: function() {},
-    onDeleteURI: function() {},
-    onClearHistory: function() {},
-    onPageExpired: function() {},
-  }
 
 }
 
