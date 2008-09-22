@@ -4,4 +4,5 @@
 <overlay id="socialite-overlay"
          xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul">
   <script src="socialite.js" type="application/javascript;version=1.8"/>
+  <script src="siteUrlBarIcon.js" type="application/javascript;version=1.8"/>
 </overlay>
