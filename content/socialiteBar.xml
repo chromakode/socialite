@@ -220,7 +220,7 @@
     </resources>
     
     <implementation>
-      <field name="sites">{}</field>
+      <field name="menuItems"/>
       <field name="selectedSite"/>
       <field name="preferences"/>
     
@@ -232,6 +232,8 @@
               .getService(Components.interfaces.nsIPrefService)
               .getBranch("extensions.socialite.sites.");
           this.preferences.QueryInterface(Components.interfaces.nsIPrefBranch2);
+          
+          this.menuItems = {};
           
           var self = this;
           
@@ -246,6 +248,12 @@
               // Update the UI if the site name changes.
               if (prefName == "siteName") {
                 var newSiteName = self.preferences.getCharPref(data);
+                
+                var menuItem = self.menuItems[siteID];
+                if (menuItem) {
+                  menuItem.updateName(newSiteName);
+                }
+                
                 if (self.selectedSite.siteID == siteID) {
                   var siteName = document.getAnonymousElementByAttribute(self, "anonid", "labelSite");
                   siteName.value = newSiteName;
@@ -258,10 +266,9 @@
           // Site menu updater
           var menuSites = document.getAnonymousElementByAttribute(this, "anonid", "menuSites");
           menuSites.addEventListener("popupshowing", function(event) {
-            for (var i=0; i<menuSites.childNodes.length; i++) {
-              var menuitem = menuSites.childNodes[i];
-              menuitem.update();
-            }
+            Array.map(menuSites.childNodes, function(menuitem) {
+              menuitem.updateIcon();
+            });
           }, false);
           
           // Site link click handler
@@ -283,13 +290,21 @@
         <parameter name="site"/>
         <body>
           <![CDATA[
-            faviconWatch = Components.utils.import("resource://socialite/utils/faviconWatch.jsm");
             var menuSites = document.getAnonymousElementByAttribute(this, "anonid", "menuSites");
             
             var menuItem = document.createElement("menuitem");
             menuItem.class = "menuitem-iconic";
-            menuItem.update = function() {
-              menuItem.setAttribute("label", site.siteName);
+            menuItem.updateName = function(newName) {
+              Components.utils.import("resource://socialite/utils/domUtils.jsm");
+              menuItem.setAttribute("label", newName);
+              addSorted(menuItem, menuSites, function(item1, item2) {
+                let label1 = item1.getAttribute("label"); 
+                let label2 = item2.getAttribute("label"); 
+                return label1.localeCompare(label2);
+              });
+            }
+            menuItem.updateIcon = function() {
+              faviconWatch = Components.utils.import("resource://socialite/utils/faviconWatch.jsm");
               menuItem.setAttribute("image", faviconWatch.getFavicon(site.siteURL));
             }
             
@@ -299,7 +314,8 @@
               event.stopPropagation();
             }, false);
             
-            menuSites.appendChild(menuItem);
+            menuItem.updateName(site.siteName);
+            this.menuItems[site.siteID] = menuItem;
             
             if (menuSites.childNodes.length == 1) {
               this.selectSite(site);
@@ -317,6 +333,7 @@
           <![CDATA[
             var menuSites = document.getAnonymousElementByAttribute(this, "anonid", "menuSites");
             menuSites.removeChild(this.menuItems[site.siteID]);
+             delete this.menuItems[site.siteID];
             
             if (menuSites.childNodes.length == 1) {
               var buttonSiteSelector = document.getAnonymousElementByAttribute(this, "anonid", "buttonSiteSelector");

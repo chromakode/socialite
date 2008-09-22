@@ -2,6 +2,7 @@ Components.utils.import("resource://socialite/socialite.jsm");
 logger = Components.utils.import("resource://socialite/utils/log.jsm");
 persistence = Components.utils.import("resource://socialite/persistence.jsm");
 faviconWatch = Components.utils.import("resource://socialite/utils/faviconWatch.jsm");
+Components.utils.import("resource://socialite/utils/domUtils.jsm");
 
 var observerService = Components.classes["@mozilla.org/observer-service;1"]
                       .getService(Components.interfaces.nsIObserverService);
@@ -243,12 +244,14 @@ var SocialiteWindow =
   
   SiteUrlBarIcon: {
     create: function(site) {
-      let urlBarIcons = document.getElementById("urlbar-icons");
+      let urlBarIconParent = document.getElementById("urlbar-icons");
+      let urlBarIcons = this.getAll();
       let feedButton = document.getElementById("feed-button");
       let urlBarIcon = document.createElement("image");
       
       urlBarIcon.id = SOCIALITE_SITE_URLBARICON_ID + site.siteID;
       urlBarIcon.siteID = site.siteID;
+      urlBarIcon.siteName = site.siteName;
       urlBarIcon.className = SOCIALITE_SITE_URLBARICON_CLASS + " urlbar-icon";
       urlBarIcon.removeFaviconWatch = faviconWatch.useFaviconAsAttribute(urlBarIcon, "src", site.siteURL);
       urlBarIcon.setAttribute("tooltiptext", site.siteName);
@@ -256,9 +259,18 @@ var SocialiteWindow =
         SocialiteWindow.linkContextAction(site, event)
       }, false);
       
-      urlBarIcons.insertBefore(urlBarIcon, feedButton);
+      if (urlBarIcons.length == 0) {
+        urlBarIconParent.insertBefore(urlBarIcon, feedButton);
+      } else {
+        insertSorted(urlBarIcon, urlBarIcons, this.compareUrlBarIcons);
+      }
       
       return urlBarIcon;
+    },
+    
+    compareUrlBarIcons: function compare(urlBarIcon1, urlBarIcon2) {
+      // Compare site names alphabetically
+      return urlBarIcon1.siteName.localeCompare(urlBarIcon2.siteName);
     },
     
     get: function(site) {
@@ -271,20 +283,24 @@ var SocialiteWindow =
     
     remove: function(site) {
       let urlBarIcons = document.getElementById("urlbar-icons");
-      let urlBarIcon = SocialiteWindow.SiteUrlBarIcon.get(site);
+      let urlBarIcon = this.get(site);
       if (urlBarIcon.removeFaviconWatch) { urlBarIcon.removeFaviconWatch(); }
       urlBarIcons.removeChild(urlBarIcon)
     },
     
     updateSiteName: function(site, siteName) {
-      let urlBarIcon = SocialiteWindow.SiteUrlBarIcon.get(site);
+      let urlBarIcon = this.get(site);
+      urlBarIcon.siteName = siteName;
       urlBarIcon.setAttribute("tooltiptext", siteName);
+      
+      // Reorder in the list
+      insertSorted(urlBarIcon, this.getAll(), this.compareUrlBarIcons);
     },
     
     onLoad: function() {
       for each (let site in Socialite.sites.byID) {
         if (site) {
-          SocialiteWindow.SiteUrlBarIcon.create(site);
+          this.create(site);
         }
       };
     },

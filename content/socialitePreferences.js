@@ -1,5 +1,6 @@
 Components.utils.import("resource://socialite/socialite.jsm");
 faviconWatch = Components.utils.import("resource://socialite/utils/faviconWatch.jsm");
+Components.utils.import("resource://socialite/utils/domUtils.jsm");
 
 var observerService = Components.classes["@mozilla.org/observer-service;1"]
                                          .getService(Components.interfaces.nsIObserverService);
@@ -23,16 +24,23 @@ var SocialiteSitePreferences = {
       
       newItem.update = function() {
         siteCell.setAttribute("class", "listcell-iconic");
-        siteCell.setAttribute("label", site.siteName);
+        
+        if (siteCell.getAttribute("label") != site.siteName) {
+          siteCell.setAttribute("label", site.siteName);
+          insertListboxSorted(newItem, SocialiteSitePreferences.siteListbox, function(item1, item2) {
+            let label1 = item1.firstChild.getAttribute("label"); 
+            let label2 = item2.firstChild.getAttribute("label"); 
+            return label1.localeCompare(label2);
+          });
+        }
         
         if (newItem.removeFaviconWatch) { newItem.removeFaviconWatch(); }
         newItem.removeFaviconWatch = faviconWatch.useFaviconAsAttribute(siteCell, "image", site.siteURL);
         
         urlCell.setAttribute("label", site.siteURL);
       };
-      newItem.update();
       
-      this.appendChild(newItem);
+      newItem.update();
     }
     this.siteListbox.getItemBySiteID = function(siteID) {
       for (var i=0; i<this.childNodes.length; i++) {
