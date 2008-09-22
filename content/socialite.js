@@ -61,6 +61,8 @@ var SocialiteWindow =
     observerService.addObserver(SocialiteWindow.siteObserver, "socialite-load-site", false);
     observerService.addObserver(SocialiteWindow.siteObserver, "socialite-unload-site", false);
     
+    Socialite.preferences.addObserver("", SocialiteWindow.preferenceObserver, false);
+    
     SocialiteWindow.SiteUrlBarIcon.onLoad();
     
     gBrowser.addEventListener("DOMContentLoaded", function(event) {
@@ -96,6 +98,9 @@ var SocialiteWindow =
   
   onUnload: function() {
     SocialiteWindow.SiteUrlBarIcon.onUnload();
+    
+    Socialite.preferences.removeObserver("", this.preferenceObserver);
+    
     observerService.removeObserver(SocialiteWindow.siteObserver, "socialite-load-site");
     observerService.removeObserver(SocialiteWindow.siteObserver, "socialite-unload-site");
     // Remove remaining progress listeners.
@@ -238,9 +243,9 @@ var SocialiteWindow =
   
   SiteUrlBarIcon: {
     create: function(site) {
-      var urlBarIcons = document.getElementById("urlbar-icons");
-      var feedButton = document.getElementById("feed-button");
-      var urlBarIcon = document.createElement("image");
+      let urlBarIcons = document.getElementById("urlbar-icons");
+      let feedButton = document.getElementById("feed-button");
+      let urlBarIcon = document.createElement("image");
       
       urlBarIcon.id = SOCIALITE_SITE_URLBARICON_ID + site.siteID;
       urlBarIcon.siteID = site.siteID;
@@ -265,14 +270,19 @@ var SocialiteWindow =
     },
     
     remove: function(site) {
-      var urlBarIcons = document.getElementById("urlbar-icons");
-      var urlBarIcon = SocialiteWindow.SiteUrlBarIcon.get(site);
+      let urlBarIcons = document.getElementById("urlbar-icons");
+      let urlBarIcon = SocialiteWindow.SiteUrlBarIcon.get(site);
       if (urlBarIcon.removeFaviconWatch) { urlBarIcon.removeFaviconWatch(); }
       urlBarIcons.removeChild(urlBarIcon)
     },
     
+    updateSiteName: function(site, siteName) {
+      let urlBarIcon = SocialiteWindow.SiteUrlBarIcon.get(site);
+      urlBarIcon.setAttribute("tooltiptext", siteName);
+    },
+    
     onLoad: function() {
-      for each (var site in Socialite.sites.byID) {
+      for each (let site in Socialite.sites.byID) {
         if (site) {
           SocialiteWindow.SiteUrlBarIcon.create(site);
         }
@@ -286,21 +296,20 @@ var SocialiteWindow =
     }
   },
 
-  // Site observer
   siteObserver: { 
+    
     observe: function(subject, topic, data) {
       if (topic == "socialite-load-site") {
-        var site = Socialite.sites.byID[data];
+        let site = Socialite.sites.byID[data];
         SocialiteWindow.SiteUrlBarIcon.create(site);
       } else if (topic == "socialite-unload-site") {
-        var site = Socialite.sites.byID[data];
+        let site = Socialite.sites.byID[data];
         SocialiteWindow.SiteUrlBarIcon.remove(site);
-        for (var i=0; i<gBrowser.browsers.length; i++) {
-          var browser = gBrowser.browsers[i];
+        for (let i=0; i<gBrowser.browsers.length; i++) {
+          let browser = gBrowser.browsers[i];
           socialiteBar = gBrowser.getNotificationBox(browser).getNotificationWithValue(SOCIALITE_CONTENT_NOTIFICATION_VALUE);
           if (socialiteBar) {
             socialiteBar.removeSiteUI(site);
-            
             if (socialiteBar.contentCount == 0) {
                socialiteBar.close(); 
             }
@@ -308,6 +317,27 @@ var SocialiteWindow =
         }
       }
     }
+  
+  },
+  
+  preferenceObserver: {
+    
+    observe: function(subject, topic, data) {
+      // data is of the form siteID.preference
+      let splitData = data.split(".");
+      let prefStart = splitData[0];
+      if (prefStart == "sites") {
+        let [prefStart, siteID, prefName] = splitData;
+        
+        // Update the UI if the site name changes.
+        if (prefName == "siteName") {
+          let newSiteName = Socialite.preferences.getCharPref(data);
+          let site = Socialite.sites.byID[siteID];
+          SocialiteWindow.SiteUrlBarIcon.updateSiteName(site, newSiteName);
+        }
+      }
+    }
+  
   }
 
 }
