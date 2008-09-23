@@ -48,6 +48,10 @@ var SocialiteWindow =
 {
   
   init: function() {
+    SocialiteWindow.stringBundle = Components.classes["@mozilla.org/intl/stringbundle;1"]
+                                   .getService(Components.interfaces.nsIStringBundleService)
+                                   .createBundle("chrome://socialite/locale/socialite.properties")
+                                   
     window.addEventListener("load", SocialiteWindow.onLoad, false);
     window.addEventListener("unload", SocialiteWindow.onUnload, false);
   },
@@ -61,6 +65,7 @@ var SocialiteWindow =
     Socialite.preferences.addObserver("", SocialiteWindow.preferenceObserver, false);
     
     SocialiteWindow.SiteUrlBarIcon.onLoad();
+    SocialiteWindow.SiteMenuItem.onLoad();
     
     gBrowser.addEventListener("DOMContentLoaded", function(event) {
       var doc = event.originalTarget;
@@ -95,6 +100,7 @@ var SocialiteWindow =
   
   onUnload: function() {
     SocialiteWindow.SiteUrlBarIcon.onUnload();
+    SocialiteWindow.SiteMenuItem.onUnload();
     
     Socialite.preferences.removeObserver("", this.preferenceObserver);
     
@@ -244,9 +250,11 @@ var SocialiteWindow =
       if (topic == "socialite-load-site") {
         let site = Socialite.sites.byID[data];
         SocialiteWindow.SiteUrlBarIcon.create(site);
+        SocialiteWindow.SiteMenuItem.create(site);
       } else if (topic == "socialite-unload-site") {
         let site = Socialite.sites.byID[data];
         SocialiteWindow.SiteUrlBarIcon.remove(site);
+        SocialiteWindow.SiteMenuItem.remove(site);
         for (let i=0; i<gBrowser.browsers.length; i++) {
           let browser = gBrowser.browsers[i];
           socialiteBar = gBrowser.getNotificationBox(browser).getNotificationWithValue(SOCIALITE_CONTENT_NOTIFICATION_VALUE);
@@ -276,6 +284,7 @@ var SocialiteWindow =
           let newSiteName = Socialite.preferences.getCharPref(data);
           let site = Socialite.sites.byID[siteID];
           SocialiteWindow.SiteUrlBarIcon.updateSiteName(site, newSiteName);
+          SocialiteWindow.SiteMenuItem.updateSiteName(site, newSiteName);
         }
       }
     }

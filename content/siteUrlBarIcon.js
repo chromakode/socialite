@@ -9,7 +9,6 @@ var SOCIALITE_SITE_URLBARICON_CLASS = "socialite-site-urlbar-icon";
 SocialiteWindow.SiteUrlBarIcon = {
   create: function(site) {
     let urlBarIconParent = document.getElementById("urlbar-icons");
-    let urlBarIcons = this.getAll();
     let feedButton = document.getElementById("feed-button");
     let urlBarIcon = document.createElement("image");
     
@@ -18,25 +17,29 @@ SocialiteWindow.SiteUrlBarIcon = {
     urlBarIcon.siteName = site.siteName;
     urlBarIcon.className = SOCIALITE_SITE_URLBARICON_CLASS + " urlbar-icon";
     urlBarIcon.removeFaviconWatch = faviconWatch.useFaviconAsAttribute(urlBarIcon, "src", site.siteURL);
-    urlBarIcon.setAttribute("tooltiptext", site.siteName);
     urlBarIcon.addEventListener("click", function(event) {
       SocialiteWindow.linkContextAction(site, event)
     }, false);
     
-    if (urlBarIcons.length == 0) {
-      urlBarIconParent.insertBefore(urlBarIcon, feedButton);
-    } else {
-      insertSorted(urlBarIcon, urlBarIcons, this.compareUrlBarIcons);
+    urlBarIcon.updateSiteName = function(newSiteName) {
+      urlBarIcon.siteName = newSiteName;
+      urlBarIcon.setAttribute("tooltiptext", newSiteName);
+
+      let urlBarIcons = SocialiteWindow.SiteUrlBarIcon.getAll();
+      if (urlBarIcons.length == 0) {
+        urlBarIconParent.insertBefore(urlBarIcon, feedButton);
+      } else {
+        insertSorted(urlBarIcon, urlBarIcons, function compare(urlBarIcon1, urlBarIcon2) {
+          // Compare site names alphabetically
+          return urlBarIcon1.siteName.localeCompare(urlBarIcon2.siteName);
+        });
+      }
     }
+    urlBarIcon.updateSiteName(site.siteName);
     
     return urlBarIcon;
   },
-  
-  compareUrlBarIcons: function compare(urlBarIcon1, urlBarIcon2) {
-    // Compare site names alphabetically
-    return urlBarIcon1.siteName.localeCompare(urlBarIcon2.siteName);
-  },
-  
+
   get: function(site) {
     return document.getElementById(SOCIALITE_SITE_URLBARICON_ID + site.siteID);
   },
@@ -54,11 +57,7 @@ SocialiteWindow.SiteUrlBarIcon = {
   
   updateSiteName: function(site, siteName) {
     let urlBarIcon = this.get(site);
-    urlBarIcon.siteName = siteName;
-    urlBarIcon.setAttribute("tooltiptext", siteName);
-    
-    // Reorder in the list
-    insertSorted(urlBarIcon, this.getAll(), this.compareUrlBarIcons);
+    urlBarIcon.updateSiteName(siteName);
   },
   
   onLoad: function() {

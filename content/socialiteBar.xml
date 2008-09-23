@@ -251,7 +251,7 @@
                 
                 var menuItem = self.menuItems[siteID];
                 if (menuItem) {
-                  menuItem.updateName(newSiteName);
+                  menuItem.updateSiteName(newSiteName);
                 }
                 
                 if (self.selectedSite.siteID == siteID) {
@@ -267,7 +267,7 @@
           var menuSites = document.getAnonymousElementByAttribute(this, "anonid", "menuSites");
           menuSites.addEventListener("popupshowing", function(event) {
             Array.map(menuSites.childNodes, function(menuitem) {
-              menuitem.updateIcon();
+              menuitem.updateSiteIcon();
             });
           }, false);
           
@@ -294,7 +294,7 @@
             
             var menuItem = document.createElement("menuitem");
             menuItem.class = "menuitem-iconic";
-            menuItem.updateName = function(newName) {
+            menuItem.updateSiteName = function(newName) {
               Components.utils.import("resource://socialite/utils/domUtils.jsm");
               menuItem.setAttribute("label", newName);
               addSorted(menuItem, menuSites, function(item1, item2) {
@@ -303,7 +303,7 @@
                 return label1.localeCompare(label2);
               });
             }
-            menuItem.updateIcon = function() {
+            menuItem.updateSiteIcon = function() {
               faviconWatch = Components.utils.import("resource://socialite/utils/faviconWatch.jsm");
               menuItem.setAttribute("image", faviconWatch.getFavicon(site.siteURL));
             }
@@ -314,7 +314,7 @@
               event.stopPropagation();
             }, false);
             
-            menuItem.updateName(site.siteName);
+            menuItem.updateSiteName(site.siteName);
             this.menuItems[site.siteID] = menuItem;
             
             if (menuSites.childNodes.length == 1) {
