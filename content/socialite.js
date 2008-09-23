@@ -189,7 +189,7 @@ var SocialiteWindow =
     return notification;
   },
   
-  linkContextAction: function(site, event) {
+  linkContextAction: function(site, event, forceSubmit) {
     var selectedBrowser = gBrowser.selectedBrowser;
     var currentURL = selectedBrowser.currentURI.spec;
     var notificationBox = gBrowser.getNotificationBox(selectedBrowser);
@@ -223,8 +223,8 @@ var SocialiteWindow =
     } else {
   
       var watchLinkInfo = Socialite.watchedURLs.getWatchLinkInfo(currentURL, site);
-      if (submitBar || (socialiteBar && socialiteBar.hasSiteUI(site))) {
-        // If the bar is open, the user intends to submit.
+      if (submitBar || forceSubmit || (socialiteBar && socialiteBar.hasSiteUI(site))) {
+        // If the bar is open or the force flag is set, the user intends to submit.
         openSubmitBarTo(site);
       } else if (watchLinkInfo) {
         // If the site is watched, it is already posted, so we should open the bar for it.

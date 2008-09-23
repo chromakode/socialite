@@ -18,7 +18,7 @@ SocialiteWindow.SiteUrlBarIcon = {
     urlBarIcon.className = SOCIALITE_SITE_URLBARICON_CLASS + " urlbar-icon";
     urlBarIcon.removeFaviconWatch = faviconWatch.useFaviconAsAttribute(urlBarIcon, "src", site.siteURL);
     urlBarIcon.addEventListener("click", function(event) {
-      SocialiteWindow.linkContextAction(site, event)
+      SocialiteWindow.linkContextAction(site, event);
     }, false);
     
     urlBarIcon.updateSiteName = function(newSiteName) {

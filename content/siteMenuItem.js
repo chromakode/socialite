@@ -17,7 +17,7 @@ SocialiteWindow.SiteMenuItem = {
     siteMenuItem.className = SOCIALITE_SITE_MENUITEM_CLASS;
     siteMenuItem.removeFaviconWatch = faviconWatch.useFaviconAsAttribute(siteMenuItem, "image", site.siteURL);
     siteMenuItem.addEventListener("command", function(event) {
-      SocialiteWindow.linkContextAction(site, event)
+      SocialiteWindow.linkContextAction(site, event, true);
     }, false);
     
     siteMenuItem.updateSiteName = function(newSiteName) {
