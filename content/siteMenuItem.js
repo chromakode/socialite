@@ -68,7 +68,7 @@ SocialiteWindow.SiteMenuItem = {
   },
   
   onUnload: function() {
-    Array.map(SocialiteWindow.SiteUrlBarIcon.getAll(), function(siteMenuItem) {
+    Array.map(SocialiteWindow.SiteMenuItem.getAll(), function(siteMenuItem) {
       if (siteMenuItem.removeFaviconWatch) { siteMenuItem.removeFaviconWatch(); }
     });
   }
