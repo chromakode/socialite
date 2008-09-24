@@ -383,10 +383,8 @@
         Components.utils.import("resource://socialite/socialite.jsm");
         
         // Add currently loaded sites
-        for each (var site in Socialite.sites.byID) {
-          if (site) {
-            this.addSite(site);
-          }
+        for (let site in Socialite.sites) {
+          this.addSite(site);
         }
 
         var observerService = Components.classes["@mozilla.org/observer-service;1"]

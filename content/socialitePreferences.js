@@ -58,11 +58,9 @@ var SocialiteSitePreferences = {
     }
     
     // Populate the list
-    for each (var site in Socialite.sites.byID) {
-      if (site) {
-        this.siteListbox.addSite(site);
-      }
-    };
+    for (let site in Socialite.sites) {
+      this.siteListbox.addSite(site);
+    }
     
     observerService.addObserver(this.siteObserver, "socialite-load-site", false);
     observerService.addObserver(this.siteObserver, "socialite-unload-site", false);
