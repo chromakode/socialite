@@ -2,6 +2,9 @@ pref("extensions.socialite.debug", false);
 pref("extensions.socialite.debugInErrorConsole", false);
 
 // Global preferences
+pref("extensions.socialite.showSiteUrlBarIcons", true);
+pref("extensions.socialite.showSiteMenuItems", true);
+pref("extensions.socialite.consolidateSites", false);
 pref("extensions.socialite.persistmode", 2);
 
 // Sites

@@ -1,6 +1,15 @@
 <!ENTITY prefwindow.title "Socialite Preferences">
 
 <!ENTITY general.title "General">
+
+<!ENTITY interfaceGroup.caption "User Interface">
+<!ENTITY showSiteUrlBarIcons.label "Add site icons to the Location Bar">
+<!ENTITY showSiteUrlBarIcons.accesskey "L">
+<!ENTITY showSiteMenuItems.label "Add share items to the File Menu">
+<!ENTITY showSiteMenuItems.accesskey "F">
+<!ENTITY consolidateSites.label "Consolidate icons/menu items">
+<!ENTITY consolidateSites.accesskey "C">
+
 <!ENTITY persistGroup.caption "Info Bar Persistence">
 <!ENTITY doNotPersist.label "Info bar closes upon navigation to another page">
 <!ENTITY doNotPersist.accesskey "n">
@@ -12,6 +21,7 @@
 <!ENTITY alwaysPersist.accesskey "i">
 
 <!ENTITY sites.title "Sites">
+
 <!ENTITY sitesGroup.caption "Content Sites">
 <!ENTITY sitesGroup.description "Socialite will provide social bookmarking functionality for the following sites as you browse them.">
 <!ENTITY siteListbox.header.site "Site">

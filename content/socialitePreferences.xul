@@ -8,15 +8,26 @@
             onunload="SocialiteSitePreferences.unload();">
   <prefpane id="socialitePreferencesGeneralPane" label="&general.title;" image="chrome://socialite/skin/general-preferences.png">
     <preferences>
+      <preference id="prefShowSiteUrlBarIcons" name="extensions.socialite.showSiteUrlBarIcons" type="bool"/>
+      <preference id="prefShowSiteMenuItems" name="extensions.socialite.showSiteMenuItems" type="bool"/>
+      <preference id="prefConsolidateSites" name="extensions.socialite.consolidateSites" type="bool"/>
       <preference id="prefPersistMode" name="extensions.socialite.persistmode" type="int"/>
     </preferences>
     
-    <groupbox flex="1">      <caption label="&persistGroup.caption;"/>
+    <groupbox flex="1">
+      <caption label="User Interface"/>
+      <checkbox label="&showSiteUrlBarIcons.label;" accesskey="&showSiteUrlBarIcons.accesskey;" preference="prefShowSiteUrlBarIcons"/>
+      <checkbox label="&showSiteMenuItems.label;" accesskey="&showSiteMenuItems.accesskey;" preference="prefShowSiteMenuItems"/>
+      <checkbox label="&consolidateSites.label;" accesskey="&consolidateSites.accesskey;" preference="prefConsolidateSites"/>
+    </groupbox>
+
+    <groupbox flex="1">
+      <caption label="&persistGroup.caption;"/>
       <radiogroup id="clrPrefs" preference="prefPersistMode">
-        <radio id="donotpersist_pref" label="&doNotPersist.label;" accesskey="&doNotPersist.accesskey;" value="0" />
-        <radio id="sitepersist_pref" label="&sitePersist.label;" accesskey="&sitePersist.accesskey;" value="1"/>
-        <radio id="sectionpersist_pref" label="&sectionPersist.label;" accesskey="&sectionPersist.accesskey;" value="2"/>
-        <radio id="alwayspersist_pref" label="&alwaysPersist.label;" accesskey="&alwaysPersist.accesskey;" value="3"/>
+        <radio label="&doNotPersist.label;" accesskey="&doNotPersist.accesskey;" value="0"/>
+        <radio label="&sitePersist.label;" accesskey="&sitePersist.accesskey;" value="1"/>
+        <radio label="&sectionPersist.label;" accesskey="&sectionPersist.accesskey;" value="2"/>
+        <radio label="&alwaysPersist.label;" accesskey="&alwaysPersist.accesskey;" value="3"/>
       </radiogroup>
     </groupbox>
   </prefpane>

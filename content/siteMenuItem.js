@@ -1,21 +1,31 @@
 Components.utils.import("resource://socialite/socialite.jsm");
 logger = Components.utils.import("resource://socialite/utils/log.jsm");
 faviconWatch = Components.utils.import("resource://socialite/utils/faviconWatch.jsm");
-Components.utils.import("resource://socialite/utils/domUtils.jsm");
-
-var SOCIALITE_SITE_MENUITEM_ID = "socialite-site-menuitem-";
-var SOCIALITE_SITE_MENUITEM_CLASS = "socialite-site-menuitem"; 
+Components.utils.import("resource://socialite/utils/domUtils.jsm"); 
 
 SocialiteWindow.SiteMenuItem = {
+  SITE_MENUITEM_ID: "socialite-site-menuitem-",
+  SITE_MENUITEM_CLASS: "socialite-site-menuitem",
+  MENUITEM_CLASS: "socialite-menuitem",
+  GENERAL_MENUITEM_ID: "socialite-menuitem",
+  
   create: function(site) {
     let fileMenuPopup = document.getElementById("menu_FilePopup");
     let sendMenuItem = document.getElementById("menu_sendLink");
     let siteMenuItem = document.createElement("menuitem");
     
-    siteMenuItem.id = SOCIALITE_SITE_MENUITEM_ID + site.siteID;
-    siteMenuItem.siteID = site.siteID;
-    siteMenuItem.className = SOCIALITE_SITE_MENUITEM_CLASS;
+    siteMenuItem.id = this.SITE_MENUITEM_ID + site.siteID;
+    siteMenuItem.className = [this.SITE_MENUITEM_CLASS, this.MENUITEM_CLASS].join(" ");
     siteMenuItem.removeFaviconWatch = faviconWatch.useFaviconAsAttribute(siteMenuItem, "image", site.siteURL);
+    
+    siteMenuItem.updateVisibility = function(visible, consolidated) {
+      siteMenuItem.setAttribute("hidden", !visible || consolidated);
+    }
+    siteMenuItem.updateVisibility(
+      Socialite.preferences.getBoolPref("showSiteMenuItems"),
+      Socialite.preferences.getBoolPref("consolidateSites")
+    );
+    
     siteMenuItem.addEventListener("command", function(event) {
       SocialiteWindow.linkContextAction(site, event, true);
     }, false);
@@ -39,12 +49,39 @@ SocialiteWindow.SiteMenuItem = {
     return siteMenuItem;
   },
   
+  createGeneral: function() {
+    let fileMenuPopup = document.getElementById("menu_FilePopup");
+    let sendMenuItem = document.getElementById("menu_sendLink");
+    let siteMenuItem = document.createElement("menuitem");
+    
+    siteMenuItem.id = this.GENERAL_MENUITEM_ID;
+    siteMenuItem.className = this.MENUITEM_CLASS;
+    siteMenuItem.setAttribute("src", "chrome://socialite/content/socialite-small.png");
+    siteMenuItem.setAttribute("label", SocialiteWindow.stringBundle.GetStringFromName("generalMenuItem.label"));
+    
+    siteMenuItem.updateVisibility = function(visible, consolidated) {
+      siteMenuItem.setAttribute("hidden", !visible || !consolidated);
+    }
+    siteMenuItem.updateVisibility(
+      Socialite.preferences.getBoolPref("showSiteMenuItems"),
+      Socialite.preferences.getBoolPref("consolidateSites")
+    );
+    
+    siteMenuItem.addEventListener("command", function(event) {
+      SocialiteWindow.linkContextAction(null, event, true);
+    }, false);
+    
+    fileMenuPopup.insertBefore(siteMenuItem, sendMenuItem.nextSibling);
+    
+    return siteMenuItem;
+  },
+  
   get: function(site) {
-    return document.getElementById(SOCIALITE_SITE_MENUITEM_ID + site.siteID);
+    return document.getElementById(this.SITE_MENUITEM_ID + site.siteID);
   },
   
   getAll: function() {
-    return document.getElementsByClassName(SOCIALITE_SITE_MENUITEM_CLASS);
+    return document.getElementsByClassName(this.SITE_MENUITEM_CLASS);
   },
   
   remove: function(site) {
@@ -59,7 +96,17 @@ SocialiteWindow.SiteMenuItem = {
     siteMenuItem.updateSiteName(siteName);
   },
   
+  updateVisibility: function() {
+    let visible = Socialite.preferences.getBoolPref("showSiteMenuItems");
+    let consolidated = Socialite.preferences.getBoolPref("consolidateSites");
+    this.generalItem.updateVisibility(visible, consolidated);
+    Array.map(this.getAll(), function(siteMenuItem) {
+      siteMenuItem.updateVisibility(visible, consolidated);
+    });
+  },
+  
   onLoad: function() {
+    this.generalItem = this.createGeneral();
     for each (let site in Socialite.sites.byID) {
       if (site) {
         this.create(site);
@@ -68,7 +115,7 @@ SocialiteWindow.SiteMenuItem = {
   },
   
   onUnload: function() {
-    Array.map(SocialiteWindow.SiteMenuItem.getAll(), function(siteMenuItem) {
+    Array.map(this.getAll(), function(siteMenuItem) {
       if (siteMenuItem.removeFaviconWatch) { siteMenuItem.removeFaviconWatch(); }
     });
   }

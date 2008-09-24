@@ -214,16 +214,18 @@ var SocialiteWindow =
       if (!submitBar) {
         submitBar = SocialiteWindow.createSubmitBar(notificationBox, currentURL);
       }
-      submitBar.siteSelector.selectSite(site);
+      if (site) {
+        submitBar.siteSelector.selectSite(site);
+      }
     }
     
-    if (event.button == 1) {
+    if (event.button == 1 || forceSubmit) {
       // Middle-click forces submit action
       openSubmitBarTo(site)
     } else {
   
       var watchLinkInfo = Socialite.watchedURLs.getWatchLinkInfo(currentURL, site);
-      if (submitBar || forceSubmit || (socialiteBar && socialiteBar.hasSiteUI(site))) {
+      if (submitBar || (socialiteBar && socialiteBar.hasSiteUI(site))) {
         // If the bar is open or the force flag is set, the user intends to submit.
         openSubmitBarTo(site);
       } else if (watchLinkInfo) {
@@ -247,24 +249,29 @@ var SocialiteWindow =
   siteObserver: { 
     
     observe: function(subject, topic, data) {
-      if (topic == "socialite-load-site") {
-        let site = Socialite.sites.byID[data];
-        SocialiteWindow.SiteUrlBarIcon.create(site);
-        SocialiteWindow.SiteMenuItem.create(site);
-      } else if (topic == "socialite-unload-site") {
-        let site = Socialite.sites.byID[data];
-        SocialiteWindow.SiteUrlBarIcon.remove(site);
-        SocialiteWindow.SiteMenuItem.remove(site);
-        for (let i=0; i<gBrowser.browsers.length; i++) {
-          let browser = gBrowser.browsers[i];
-          socialiteBar = gBrowser.getNotificationBox(browser).getNotificationWithValue(SOCIALITE_CONTENT_NOTIFICATION_VALUE);
-          if (socialiteBar) {
-            socialiteBar.removeSiteUI(site);
-            if (socialiteBar.contentCount == 0) {
-               socialiteBar.close(); 
+      let site = Socialite.sites.byID[data];
+      switch (topic) {
+      
+        case "socialite-load-site":
+          SocialiteWindow.SiteUrlBarIcon.create(site);
+          SocialiteWindow.SiteMenuItem.create(site);
+          break;
+          
+        case "socialite-unload-site":
+          SocialiteWindow.SiteUrlBarIcon.remove(site);
+          SocialiteWindow.SiteMenuItem.remove(site);
+          for (let i=0; i<gBrowser.browsers.length; i++) {
+            let browser = gBrowser.browsers[i];
+            socialiteBar = gBrowser.getNotificationBox(browser).getNotificationWithValue(SOCIALITE_CONTENT_NOTIFICATION_VALUE);
+            if (socialiteBar) {
+              socialiteBar.removeSiteUI(site);
+              if (socialiteBar.contentCount == 0) {
+                 socialiteBar.close(); 
+              }
             }
           }
-        }
+          break;
+          
       }
     }
   
@@ -276,16 +283,32 @@ var SocialiteWindow =
       // data is of the form siteID.preference
       let splitData = data.split(".");
       let prefStart = splitData[0];
-      if (prefStart == "sites") {
-        let [prefStart, siteID, prefName] = splitData;
-        
-        // Update the UI if the site name changes.
-        if (prefName == "siteName") {
-          let newSiteName = Socialite.preferences.getCharPref(data);
-          let site = Socialite.sites.byID[siteID];
-          SocialiteWindow.SiteUrlBarIcon.updateSiteName(site, newSiteName);
-          SocialiteWindow.SiteMenuItem.updateSiteName(site, newSiteName);
-        }
+      switch (prefStart) {
+      
+        case "sites":
+          let [prefStart, siteID, prefName] = splitData;
+          // Update the UI if the site name changes.
+          if (prefName == "siteName") {
+            let newSiteName = Socialite.preferences.getCharPref(data);
+            let site = Socialite.sites.byID[siteID];
+            SocialiteWindow.SiteUrlBarIcon.updateSiteName(site, newSiteName);
+            SocialiteWindow.SiteMenuItem.updateSiteName(site, newSiteName);
+          }
+          break;
+          
+        case "showSiteUrlBarIcons":
+          SocialiteWindow.SiteUrlBarIcon.updateVisibility();
+          break;
+          
+        case "showSiteMenuItems":
+          SocialiteWindow.SiteMenuItem.updateVisibility();
+          break;
+          
+        case "consolidateSites":
+          SocialiteWindow.SiteUrlBarIcon.updateVisibility();
+          SocialiteWindow.SiteMenuItem.updateVisibility();
+          break;
+          
       }
     }
   
