@@ -13,12 +13,12 @@ var EXPORTED_SYMBOLS = ["RedditAPI"];
 
 QUANTIZE_TIME = 1000;
 
-var REDDIT_API_PATH = "/api/";
+var REDDIT_API_PATH = "api/";
 function APIURL(siteURL, op, subreddit) {
   // Note: vote calls will 404 without the 'www.' (included in site URL)
   var subredditPart;
   if (subreddit) {
-    subredditPart = "/r/" + subreddit;
+    subredditPart = "r/" + subreddit + "/";
   } else {
     subredditPart = ""; 
   }
@@ -87,7 +87,7 @@ RedditAPI.prototype.randomrising = Action("reddit.randomrising", function(action
   };
     
   var act = http.GetAction(
-    this.auth.siteURL + "/randomrising.json",
+    this.auth.siteURL + "randomrising.json",
     params,
     
     function success(r) {
@@ -102,7 +102,7 @@ RedditAPI.prototype.mysubreddits = Action("reddit.mysubreddits", function(action
   logger.log("reddit", "Making ajax mysubreddits call");
     
   var act = http.GetAction(
-    this.auth.siteURL + "/reddits/mine.json",
+    this.auth.siteURL + "reddits/mine.json",
     null, // No parameters
     
     function success(r) {

@@ -207,7 +207,7 @@ RedditSite.prototype.createBarContentUI = function(document, linkInfo) {
     this.refreshCallback = updateHandler;
     
     this.labelSubreddit.addEventListener("click", function(e) {
-      Socialite.openUILink(site.siteURL+"/r/"+barContent.linkInfo.localState.subreddit+"/", e);
+      Socialite.openUILink(site.siteURL+"r/"+barContent.linkInfo.localState.subreddit+"/", e);
     }, false);
         
     this.buttonLike.addEventListener("click", function(e) {
@@ -237,7 +237,7 @@ RedditSite.prototype.createBarContentUI = function(document, linkInfo) {
     }, false);
     
     this.buttonComments.addEventListener("click", function(e) {
-      Socialite.openUILink(site.siteURL+"/info/"+barContent.linkInfo.getID()+"/comments/", e);
+      Socialite.openUILink(site.siteURL+"info/"+barContent.linkInfo.getID()+"/comments/", e);
     }, false);
     
     this.buttonSave.addEventListener("click", function(e) {
@@ -306,8 +306,12 @@ RedditSite.prototype.createBarSubmitUI = function(document) {
           barSubmit.menulistSubreddit.hidden = true;
         } else {
           for each (var subredditInfo in json.data.children) {
-            var subredditURL = subredditInfo.data.url;
-            var subredditURLName = /^\/r\/(.+)\/$/.exec(subredditURL)[1];
+            let subredditURL = subredditInfo.data.url;
+            let subredditURLName = /^\/r\/(.+)\/$/.exec(subredditURL)[1];
+            
+            // Remove the '/' at the beginning
+            subredditURL = subredditURL.substring(1);
+            
             barSubmit.menulistSubreddit.appendItem(subredditURLName, subredditURL);
           }
         }
