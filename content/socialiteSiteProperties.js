@@ -10,9 +10,10 @@ let IOService = Components.classes["@mozilla.org/network/io-service;1"]
 var SocialiteSiteProperties = {
 
   init: function SSProps_init() {
-  
     this.prefWindow = document.getElementById("socialiteSiteProperties");
     this.buttonAccept = this.prefWindow._buttons.accept;
+    
+    this.strings = document.getElementById("socialiteSitePropertiesStrings");
   
     this.isNewSite = window.arguments[0].isNewSite;
     if (this.isNewSite) {
@@ -28,15 +29,16 @@ var SocialiteSiteProperties = {
     // Site name and URL preferences
     this.textboxSiteName = document.getElementById("textboxSiteName");    
     this.textboxSiteURL = document.getElementById("textboxSiteURL");
+    this.labelSiteURLError = document.getElementById("labelSiteURLError");
     
     this.prefSiteName = this.addSitePreference("prefSiteName", "siteName", "string");
     this.prefSiteURL = this.addSitePreference("prefSiteURL", "siteURL", "string");
     
     // Site class dropdown menu initialization (populate)
-    var buttonSiteClass = document.getElementById("buttonSiteClass");
-    var menuSiteClass = document.getElementById("menuSiteClass");
-    for each (var siteClass in SiteClassRegistry.classes) {
-      var menuItem = document.createElement("menuitem");
+    let buttonSiteClass = document.getElementById("buttonSiteClass");
+    let menuSiteClass = document.getElementById("menuSiteClass");
+    for each (let siteClass in SiteClassRegistry.classes) {
+      let menuItem = document.createElement("menuitem");
       
       menuItem.setAttribute("class", "menuitem-iconic");
       menuItem.setAttribute("label", siteClass.prototype.siteClassName);
@@ -49,7 +51,7 @@ var SocialiteSiteProperties = {
     // Handler to update preferences pane for site class
     this.boxSiteProperties = document.getElementById("boxSiteProperties");
     buttonSiteClass.addEventListener("ValueChange", function(event) {
-      var container = SocialiteSiteProperties.boxSiteProperties;
+      let container = SocialiteSiteProperties.boxSiteProperties;
       
       // Remove old pane
       if (container.hasChildNodes()) {
@@ -57,9 +59,9 @@ var SocialiteSiteProperties = {
       }
       
       // Add new pane
-      var siteClassID = buttonSiteClass.selectedItem.value;
-      var siteClass = SiteClassRegistry.getClass(siteClassID);
-      var pane = siteClass.prototype.createPreferencesUI(document, SocialiteSiteProperties);
+      let siteClassID = buttonSiteClass.selectedItem.value;
+      let siteClass = SiteClassRegistry.getClass(siteClassID);
+      let pane = siteClass.prototype.createPreferencesUI(document, SocialiteSiteProperties);
       container.appendChild(pane);
     }, false);
     
@@ -76,7 +78,7 @@ var SocialiteSiteProperties = {
   },
   
   addSitePreference: function SSProps_addSitePreference(prefID, prefName, prefType) {
-    var preference = document.createElement("preference");
+    let preference = document.createElement("preference");
     preference.setAttribute("id", prefID);
     preference.setAttribute("name", "extensions.socialite.sites."+this.siteID+"."+prefName);
     preference.setAttribute("type", prefType);    
@@ -89,11 +91,11 @@ var SocialiteSiteProperties = {
       this.site = Socialite.sites.createSite(this.prefSiteClassID.value, this.siteID, this.prefSiteName.value, this.prefSiteURL.value)
       return true;
     } else {
-      var needsReload = false;
+      let needsReload = false;
       
       this.site.siteName = this.prefSiteName.value;
       
-      var newSiteURL = IOService.newURI(this.prefSiteURL.value, null, null).spec;
+      let newSiteURL = IOService.newURI(this.prefSiteURL.value, null, null).spec;
       if (this.site.siteURL != newSiteURL) {
         this.site.siteURL = newSiteURL;
         needsReload = true;
@@ -116,7 +118,28 @@ var SocialiteSiteProperties = {
   },
   
   validate: function SSProps_validate(event) {
-    this.buttonAccept.disabled = ((this.textboxSiteName.value == "") || (this.textboxSiteURL.value == "")); 
+    if ((this.textboxSiteName.value == "") || (this.textboxSiteURL.value == "")) {
+      // Short circuit case if either field is empty
+      this.labelSiteURLError.value = "";
+      this.buttonAccept.disabled = true;
+    } else {
+      let validURL;
+      try {
+        IOService.newURI(this.textboxSiteURL.value, null, null);
+        validURL = true;
+      } catch (e if e.name=="NS_ERROR_MALFORMED_URI") {
+        // We were unable to create a URI, so the URL is invalid.
+        validURL = false;
+      }
+      
+      if (!validURL) {
+        this.labelSiteURLError.value = this.strings.getString("siteURLInvalidError");
+        this.buttonAccept.disabled = true;
+      } else {
+        this.labelSiteURLError.value = "";
+        this.buttonAccept.disabled = false;
+      }
+    }
   }
 
 };

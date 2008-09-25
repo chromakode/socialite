@@ -34,6 +34,10 @@
             <hbox pack="end"><label control="textboxSiteURL" value="&siteURL.label;"/></hbox>
             <textbox id="textboxSiteURL" emptytext="&sampleSiteURL;" preference="prefSiteURL" oninput="SocialiteSiteProperties.validate();" flex="1"/>
           </row>
+          <row align="center">
+            <spacer/>
+            <label id="labelSiteURLError" class="socialite-form-error"/>
+          </row>
         </rows>
       </grid>
       
@@ -43,7 +47,11 @@
     </vbox>
   </prefpane>
   
-  <script type="application/javascript" src="chrome://socialite/content/socialiteSiteProperties.js"/>  
+  <stringbundleset>
+    <stringbundle id="socialiteSitePropertiesStrings" src="chrome://socialite/locale/preferences.properties"/>
+  </stringbundleset>
+  
+  <script type="application/javascript;version=1.8" src="chrome://socialite/content/socialiteSiteProperties.js"/>  
   <script type="text/javascript">
     SocialiteSiteProperties.setAcceptButton = function SSProps_setAcceptButton() {
       if (window.arguments[0].isNewSite) {

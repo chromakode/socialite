@@ -40,4 +40,4 @@
 <!ENTITY siteName.label "Name">
 <!ENTITY sampleSiteName "Example">
 <!ENTITY siteURL.label "URL">
-<!ENTITY sampleSiteURL  "http://www.example.com">
+<!ENTITY sampleSiteURL "http://www.example.com">

@@ -80,3 +80,7 @@ notification[value="socialite-submitbar-notification"] {
 .socialite-urlbar-icon:hover {
   opacity: 1;
 }
+
+.socialite-form-error {
+  color: red;
+}

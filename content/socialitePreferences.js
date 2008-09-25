@@ -113,7 +113,7 @@ var SocialiteSitePreferences = {
       var site = Socialite.sites.byID[item.value];
       
       var confirmed = promptService.confirm(window, 
-          this.strings.getString("removeSiteConfirm.title"), 
+          this.strings.getString("removeSiteConfirm.title"),
           this.strings.getFormattedString("removeSiteConfirm.message", [ site.siteName ])
       );
       
