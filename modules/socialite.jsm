@@ -24,19 +24,26 @@ var Socialite =
     }
   },
 
-  failureMessage: function(message) {
+  failureMessage: function(title, message) {
     logger.log("Socialite", "Failure occurred, message: " + message);
-  
+    
+    let titlePart;
+    if (title) {
+      titlePart = " ("+title+")";
+    } else {
+      titlePart = "";
+    }
+    
     alertsService.showAlertNotification(
       "chrome://global/skin/icons/Error.png",
-      "Socialite Error",
+      "Socialite Error" + titlePart,
       message, 
       null, null, null, "socialite-failure"
     );
   },
   
-  siteFailureMessage: function(site, message) {
-    Socialite.failureMessage(site.siteName + ": " + message);
+  siteFailureMessage: function(site, subject, message) {
+    Socialite.failureMessage(site.siteName, subject+": "+message);
   },
 
   openUILink: function(url, e) {

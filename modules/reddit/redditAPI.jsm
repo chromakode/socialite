@@ -75,7 +75,7 @@ RedditAPI.prototype._info = function(url, subreddit, action) {
       var json = nativeJSON.decode(r.responseText);
       action.success(r, json);
     },
-    function failure(r) { action.failure(); }
+    function failure(r) { action.failure(r); }
   ).perform();
 };
 
@@ -94,7 +94,7 @@ RedditAPI.prototype.randomrising = Action("reddit.randomrising", function(action
       var json = nativeJSON.decode(r.responseText);
       action.success(r, json);
     },
-    function failure(r) { action.failure(); }
+    function failure(r) { action.failure(r); }
   ).perform();
 });
 
@@ -109,7 +109,7 @@ RedditAPI.prototype.mysubreddits = Action("reddit.mysubreddits", function(action
       var json = nativeJSON.decode(r.responseText);
       action.success(r, json);
     },
-    function failure(r) { action.failure(); }
+    function failure(r) { action.failure(r); }
   ).perform();
 });
 

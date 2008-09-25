@@ -194,13 +194,13 @@ RedditSite.prototype.createBarContentUI = function(document, linkInfo) {
     var voteUpdateHandler = function() {
       barContent.linkInfo.update(
         hitchThis(barContent, barContent.update),
-        site.actionFailureHandler
+        hitchThis(site, site.actionFailureHandler)
       ).perform(["score"]);
     };
     var updateHandler = function() {
       barContent.linkInfo.update(
         hitchThis(barContent, barContent.update),
-        site.actionFailureHandler
+        hitchThis(site, site.actionFailureHandler)
       ).perform([]);
     };
     
@@ -396,12 +396,12 @@ RedditSite.prototype.createPreferencesUI = function(document, propertiesWindow) 
 RedditSite.prototype.actionFailureHandler = function(r, action) {
   // 5xx error codes
   if (r.status >= 500 && r.status < 600) {
-    text = "Unable to perform the requested action (" + action.name + "). Please try again later.";
+    text = "Unable to perform the requested action. Please try again.";
   } else {
-    text = "Unexpected HTTP status " + r.status + " recieved (" + action.name + ")";
+    text = "HTTP status " + r.status + " recieved.";
   }
   
-  Socialite.siteFailureMessage(this, text);
+  Socialite.siteFailureMessage(this, action.name, text);
 }
 
 // Register this class for instantiation
