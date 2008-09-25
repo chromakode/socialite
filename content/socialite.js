@@ -90,8 +90,17 @@ var SocialiteWindow =
     }, false);
     
     gBrowser.addEventListener("TabClose", function(event) {
-      var tab = event.originalTarget;
-      logger.log("main", "Tab closed: " + event.originalTarget.linkedBrowser.currentURI.spec);
+      // XXX: Call close methods for notifications if they exist, since they won't be called otherwise
+      var selectedBrowser = event.originalTarget.linkedBrowser;
+      var notificationBox = gBrowser.getNotificationBox(selectedBrowser);
+      
+      var socialiteBar = notificationBox.getNotificationWithValue(SOCIALITE_CONTENT_NOTIFICATION_VALUE);
+      if (socialiteBar) { socialiteBar.fireCloseEvent(); }
+      
+      var submitBar = notificationBox.getNotificationWithValue(SOCIALITE_SUBMIT_NOTIFICATION_VALUE);
+      if (submitBar) { submitBar.fireCloseEvent(); }
+      
+      logger.log("main", "Tab closed: " + selectedBrowser.currentURI.spec);
     }, false);
     
     // Add progress listener to tabbrowser. This fires progress events for the current tab.
@@ -179,7 +188,7 @@ var SocialiteWindow =
     );
     
     // Note: the notification XBL binding is changed by CSS
-  
+    
     // Make the notification immortal
     notification.persistence = -1;
     

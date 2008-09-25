@@ -9,7 +9,37 @@
 <bindings xmlns="http://www.mozilla.org/xbl" xmlns:xbl="http://www.mozilla.org/xbl"
   xmlns:xul="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul">
   
-  <binding id="socialite-content-bar" extends="chrome://global/content/bindings/notification.xml#notification">
+  <binding id="socialite-notification" extends="chrome://global/content/bindings/notification.xml#notification">
+    <implementation>
+      <method name="fireCloseEvent">
+        <body>
+          <![CDATA[
+            var event = document.createEvent("Events");
+            event.initEvent("SocialiteNotificationClose", true, true);
+            this.dispatchEvent(event);
+          ]]>
+        </body>
+      </method>
+    
+      <method name="close">
+        <body>
+          <![CDATA[
+            // Overriden copy of the method from notification so we can add a close event that should have been there.  
+            this.fireCloseEvent();
+            
+            // From notification.xml
+            var control = this.control;
+            if (control)
+              control.removeNotification(this);
+            else
+              this.hidden = true;
+          ]]>
+        </body>
+      </method>
+    </implementation>
+  </binding>
+  
+  <binding id="socialite-content-bar" extends="chrome://socialite/content/socialiteBar.xml#socialite-notification">
     <content>
       <xul:hbox class="notification-inner outset" flex="1" xbl:inherits="type">
         <xul:hbox anonid="details" flex="1" align="center">
@@ -31,19 +61,6 @@
     
     <implementation>
       <field name="url"/>
-            
-      <constructor>
-        var siteSelector = document.getAnonymousElementByAttribute(this, "anonid", "siteSelector");
-        var deckContent = document.getAnonymousElementByAttribute(this, "anonid", "deckContent");
-        var self = this;
-        siteSelector.addEventListener("command", function(event) {
-          var index = self.getContentIndex(siteSelector.selectedSite);
-          if (index != -1) {
-            deckContent.selectedIndex = index
-            self.childNodes[index].refresh();
-          }
-        }, false);
-      </constructor>
       
       <property name="contentCount">
         <getter>
@@ -52,6 +69,29 @@
           ]]>
         </getter>
       </property>
+            
+      <constructor>
+        var siteSelector = document.getAnonymousElementByAttribute(this, "anonid", "siteSelector");
+        var deckContent = document.getAnonymousElementByAttribute(this, "anonid", "deckContent");
+        var self = this;
+        
+        // Site selector change handler
+        siteSelector.addEventListener("command", function(event) {
+          var index = self.getContentIndex(siteSelector.selectedSite);
+          if (index != -1) {
+            deckContent.selectedIndex = index
+            self.childNodes[index].refresh();
+          }
+        }, false);
+        
+        // XXX: Clean up children that must remove observers since XBL destructors don't work
+        this.addEventListener("SocialiteNotificationClose", function() {
+          Array.forEach(self.childNodes, function(siteContent) {
+            siteContent.destroy();
+          });
+          siteSelector.destroySiteSelector();          
+        }, false)
+      </constructor>
       
       <method name="addSiteUI">
         <parameter name="site"/>
@@ -72,6 +112,7 @@
           <![CDATA[
             var index = this.getContentIndex(site);
             if (index != -1) {
+              this.childNodes[index].destroy();
               this.removeChild(this.childNodes[index]);
               
               var siteSelector = document.getAnonymousElementByAttribute(this, "anonid", "siteSelector");
@@ -116,7 +157,7 @@
     </implementation>
   </binding>
   
-  <binding id="socialite-submit-bar" extends="chrome://global/content/bindings/notification.xml#notification">
+  <binding id="socialite-submit-bar" extends="chrome://socialite/content/socialiteBar.xml#socialite-notification">
     <content>
       <xul:hbox class="notification-inner outset" flex="1" xbl:inherits="type">
         <xul:hbox anonid="details" flex="1" align="center">
@@ -143,6 +184,8 @@
       <constructor>
         this.siteSelector = document.getAnonymousElementByAttribute(this, "anonid", "loadedSiteSelector");
         var self = this;
+        
+        // Site selector change handler
         siteSelector.addEventListener("command", function(event) {
           // Remove existing UI
           if (self.hasChildNodes()){
@@ -153,11 +196,19 @@
           var siteSubmitUI = self.siteSelector.selectedSite.createBarSubmitUI(document);
           self.appendChild(siteSubmitUI);
         }, false);
+        
+        // XXX: Clean up children that must remove observers since XBL destructors don't work 
+        this.addEventListener("SocialiteNotificationClose", function() {
+          Array.forEach(self.childNodes, function(siteContent) {
+            siteContent.destroy();
+          });
+          siteSelector.destroyLoadedSiteSelector();
+        }, false)
       </constructor>
     </implementation>
   </binding>
   
-    <binding id="socialite-site-ui">
+  <binding id="socialite-site-ui">
     <content>
     </content>
     
@@ -171,6 +222,12 @@
             .getBranch("extensions.socialite.sites."+this.siteID+".");
         this.sitePreferences.QueryInterface(Components.interfaces.nsIPrefBranch2);
       </constructor>
+      
+      <method name="destroy">
+        <body>
+          // To be used by subclasses
+        </body>
+      </method>
     </implementation>
   </binding>
   
@@ -280,11 +337,18 @@
       </constructor>
       
       <destructor>
-        this.preferences.removeObserver("", this.observer);
-        
-        var siteImage = document.getAnonymousElementByAttribute(this, "anonid", "imageSite");
-        if (siteImage.removeFaviconWatch) { siteImage.removeFaviconWatch(); }
+        this.destroySiteSelector();
       </destructor>
+
+      <method name="destroySiteSelector">
+        <body>
+          <![CDATA[
+            this.preferences.removeObserver("", this.observer);
+            var siteImage = document.getAnonymousElementByAttribute(this, "anonid", "imageSite");
+            if (siteImage.removeFaviconWatch) { siteImage.removeFaviconWatch(); }
+          ]]>
+        </body>
+      </method>
       
       <method name="addSite">
         <parameter name="site"/>
@@ -406,11 +470,21 @@
       </constructor>
       
       <destructor>
-        var observerService = Components.classes["@mozilla.org/observer-service;1"]
-                              .getService(Components.interfaces.nsIObserverService);
-        observerService.removeObserver(this.observer, "socialite-load-site");
-        observerService.removeObserver(this.observer, "socialite-unload-site");
+        this.destroyLoadedSiteSelector();
       </destructor>
+
+      <method name="destroyLoadedSiteSelector">
+        <body>
+          <![CDATA[
+            var observerService = Components.classes["@mozilla.org/observer-service;1"]
+                                  .getService(Components.interfaces.nsIObserverService);
+            observerService.removeObserver(this.observer, "socialite-load-site");
+            observerService.removeObserver(this.observer, "socialite-unload-site");
+            
+            this.destroySiteSelector();
+          ]]>
+        </body>
+      </method>
     </implementation>
   </binding>
   

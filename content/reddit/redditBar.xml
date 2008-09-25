@@ -38,6 +38,7 @@
       <field name="afterBound"/>
       
       <constructor>
+        // Public members for easy access
         this.labelScore = document.getAnonymousElementByAttribute(this, "anonid", "labelScore");
         this.buttonLike = document.getAnonymousElementByAttribute(this, "anonid", "buttonLike");
         this.buttonDislike = document.getAnonymousElementByAttribute(this, "anonid", "buttonDislike");
@@ -60,22 +61,9 @@
         
         this.compactDisplay = this.sitePreferences.getBoolPref("compactDisplay");
         
-        this.sitePreferences.addObserver("", this, false);
-        
-        this.update();
-        this.afterBound();
-      </constructor>
-      
-      <destructor>
-        this.sitePreferences.removeObserver("", this);
-      </destructor>
-      
-      <method name="observe">
-      <parameter name="subject"/>
-      <parameter name="topic"/>
-      <parameter name="data"/>
-        <body>
-          <![CDATA[
+        // Display preference change observer
+        this.observer = {
+          observe: function(subject, topic, data) {
             switch (data) {
               case "showScore":
                 this.labelScore.hidden = !this.sitePreferences.getBoolPref("showScore");
@@ -100,10 +88,24 @@
                 this.update();
                 break;
             }
-          ]]>
+          }
+        }
+        this.sitePreferences.addObserver("", this.observer, false);
+        
+        this.update();
+        this.afterBound();
+      </constructor>
+      
+      <destructor>
+        this.destroy();
+      </destructor>
+      
+      <method name="destroy">
+        <body>
+          this.sitePreferences.removeObserver("", this.observer);
         </body>
       </method>
-      
+
        <method name="update">
         <body>
           // Score label
