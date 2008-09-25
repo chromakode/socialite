@@ -66,7 +66,7 @@ ActionType.prototype.doCallback = function(callback, args) {
     if (callback instanceof ActionType) {
       return callback.perform.apply(callback, newargs);
     } else {
-      return callback.apply(this.thisObj, newargs);
+      return callback.apply(null, newargs);
     }
   }
 }
