@@ -1,11 +1,14 @@
-Components.utils.import("resource://socialite/socialite.jsm");
-faviconWatch = Components.utils.import("resource://socialite/utils/faviconWatch.jsm");
-Components.utils.import("resource://socialite/utils/domUtils.jsm");
+let modules = {};
+let importModule = function(name) Components.utils.import(name, modules);
 
-var observerService = Components.classes["@mozilla.org/observer-service;1"]
+let Socialite = importModule("resource://socialite/socialite.jsm").Socialite;
+let faviconWatch = importModule("resource://socialite/utils/faviconWatch.jsm");
+let domUtils = importModule("resource://socialite/utils/domUtils.jsm");
+
+let observerService = Components.classes["@mozilla.org/observer-service;1"]
                                          .getService(Components.interfaces.nsIObserverService);
 
-var promptService = Components.classes["@mozilla.org/embedcomp/prompt-service;1"]
+let promptService = Components.classes["@mozilla.org/embedcomp/prompt-service;1"]
                                        .getService(Components.interfaces.nsIPromptService); 
 
 var SocialiteSitePreferences = {
@@ -27,7 +30,7 @@ var SocialiteSitePreferences = {
         
         if (siteCell.getAttribute("label") != site.siteName) {
           siteCell.setAttribute("label", site.siteName);
-          insertListboxSorted(newItem, SocialiteSitePreferences.siteListbox, function(item1, item2) {
+          domUtils.insertListboxSorted(newItem, SocialiteSitePreferences.siteListbox, function(item1, item2) {
             let label1 = item1.firstChild.getAttribute("label"); 
             let label2 = item2.firstChild.getAttribute("label"); 
             return label1.localeCompare(label2);

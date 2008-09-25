@@ -1,12 +1,15 @@
-Components.utils.import("resource://socialite/socialite.jsm");
-logger = Components.utils.import("resource://socialite/utils/log.jsm");
-persistence = Components.utils.import("resource://socialite/persistence.jsm");
+let modules = {};
+let importModule = function(name) Components.utils.import(name, modules);
 
-var observerService = Components.classes["@mozilla.org/observer-service;1"]
+let Socialite = importModule("resource://socialite/socialite.jsm").Socialite;
+let logger = importModule("resource://socialite/utils/log.jsm");
+let persistence = importModule("resource://socialite/persistence.jsm");
+
+let observerService = Components.classes["@mozilla.org/observer-service;1"]
                       .getService(Components.interfaces.nsIObserverService);
 
-var SOCIALITE_CONTENT_NOTIFICATION_VALUE = "socialite-contentbar-notification";
-var SOCIALITE_SUBMIT_NOTIFICATION_VALUE = "socialite-submitbar-notification"; 
+let SOCIALITE_CONTENT_NOTIFICATION_VALUE = "socialite-contentbar-notification";
+let SOCIALITE_SUBMIT_NOTIFICATION_VALUE = "socialite-submitbar-notification"; 
 
 // ---
 

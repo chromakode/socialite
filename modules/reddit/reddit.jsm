@@ -408,4 +408,4 @@ RedditSite.prototype.actionFailureHandler = function(r, action) {
 RedditSite.prototype.siteClassID = "RedditSite";
 RedditSite.prototype.siteClassName = "Reddit API";
 RedditSite.prototype.siteClassIconURI = "chrome://socialite/content/reddit/reddit.ico";
-siteClassRegistry.addClass(RedditSite);
+SiteClassRegistry.addClass(RedditSite);

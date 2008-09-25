@@ -12,7 +12,7 @@ var nativeJSON = Components.classes["@mozilla.org/dom/json;1"]
 var observerService = Components.classes["@mozilla.org/observer-service;1"]
                       .getService(Components.interfaces.nsIObserverService);
 
-var EXPORTED_SYMBOLS = ["SocialiteSite", "SiteCollection", "siteClassRegistry"];
+var EXPORTED_SYMBOLS = ["SocialiteSite", "SiteCollection", "SiteClassRegistry"];
 
 function SocialiteSite(siteID, siteName, siteURL) {
   this.siteID = siteID;
@@ -120,7 +120,7 @@ SiteCollection.prototype.loadConfiguredSites = function() {
     
     logger.log("SiteCollection", "Loading site from preferences: \"" + siteName + "\" (" + siteClassID + ")");
     
-    var siteClass = siteClassRegistry.getClass(siteClassID);
+    var siteClass = SiteClassRegistry.getClass(siteClassID);
     var newSite = new siteClass(siteID, siteName, siteURL);
     this.loadSite(newSite);    
   }, this);
@@ -162,7 +162,7 @@ SiteCollection.prototype.releaseID = function(id) {
 
 SiteCollection.prototype.createSite = function(siteClassID, siteID, siteName, siteURL) {
   logger.log("SiteCollection", "Creating site: \"" + siteName + "\" (" + siteClassID + ")");
-  var siteClass = siteClassRegistry.getClass(siteClassID);
+  var siteClass = SiteClassRegistry.getClass(siteClassID);
   var newSite = new siteClass(siteID, siteName, siteURL);
   newSite.onCreate();
   this.loadSite(newSite);
@@ -179,16 +179,15 @@ SiteCollection.prototype.deleteSite = function(site) {
 
 //---
 
-function SiteClassRegistry() {
-  this.classes = {};
+var SiteClassRegistry = 
+{
+  classes: {},
+  
+  addClass: function(constructor) {
+    this.classes[constructor.prototype.siteClassID] = constructor;
+  },
+  
+  getClass: function(classID) {
+    return this.classes[classID];
+  }
 }
-
-SiteClassRegistry.prototype.addClass = function(constructor) {
-  this.classes[constructor.prototype.siteClassID] = constructor;
-}
-
-SiteClassRegistry.prototype.getClass = function(classID) {
-  return this.classes[classID];
-}
-
-siteClassRegistry = new SiteClassRegistry();

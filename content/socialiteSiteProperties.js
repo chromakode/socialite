@@ -1,7 +1,10 @@
-Components.utils.import("resource://socialite/socialite.jsm");
-Components.utils.import("resource://socialite/site.jsm");
+let modules = {};
+let importModule = function(name) Components.utils.import(name, modules);
 
-var IOService = Components.classes["@mozilla.org/network/io-service;1"]
+let Socialite = importModule("resource://socialite/socialite.jsm").Socialite;
+let SiteClassRegistry = importModule("resource://socialite/site.jsm").SiteClassRegistry;
+
+let IOService = Components.classes["@mozilla.org/network/io-service;1"]
                 .getService(Components.interfaces.nsIIOService);
 
 var SocialiteSiteProperties = {
@@ -32,7 +35,7 @@ var SocialiteSiteProperties = {
     // Site class dropdown menu initialization (populate)
     var buttonSiteClass = document.getElementById("buttonSiteClass");
     var menuSiteClass = document.getElementById("menuSiteClass");
-    for each (var siteClass in siteClassRegistry.classes) {
+    for each (var siteClass in SiteClassRegistry.classes) {
       var menuItem = document.createElement("menuitem");
       
       menuItem.setAttribute("class", "menuitem-iconic");
@@ -55,7 +58,7 @@ var SocialiteSiteProperties = {
       
       // Add new pane
       var siteClassID = buttonSiteClass.selectedItem.value;
-      var siteClass = siteClassRegistry.getClass(siteClassID);
+      var siteClass = SiteClassRegistry.getClass(siteClassID);
       var pane = siteClass.prototype.createPreferencesUI(document, SocialiteSiteProperties);
       container.appendChild(pane);
     }, false);
