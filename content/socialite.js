@@ -132,6 +132,7 @@ var SocialiteWindow =
         notificationBox.removeNotification(socialiteBar);
         socialiteBar = null;
       } else { 
+        // If we're not closing the bar, refresh it.
         socialiteBar.refresh();
       }
     } 
@@ -193,6 +194,10 @@ var SocialiteWindow =
     var selectedBrowser = gBrowser.selectedBrowser;
     var currentURL = selectedBrowser.currentURI.spec;
     var notificationBox = gBrowser.getNotificationBox(selectedBrowser);
+   
+    //
+    // *** Helper functions ***
+    //
     
     // Helper function to open the bar with some content.
     var socialiteBar = notificationBox.getNotificationWithValue(SOCIALITE_CONTENT_NOTIFICATION_VALUE);
@@ -219,27 +224,78 @@ var SocialiteWindow =
       }
     }
     
+    // Helper function to get link info from a watch, falling back to querying the site
+    function getWatchLinkInfo(URL, site, callback) {
+      let watchLinkInfo = Socialite.watchedURLs.getWatchLinkInfo(currentURL, site);
+      if (watchLinkInfo) {
+        // If the site is watched, return the stored information.
+        openContentBarTo(site, site.createBarContentUI(document, watchLinkInfo));
+        callback(watchLinkInfo);
+      } else {
+        // We have no local information about the URL, so we need to check the Socialite site to see if the URL is already submitted.
+        site.getLinkInfo(currentURL, function(linkInfo) {
+          if (linkInfo) {
+            openContentBarTo(site, site.createBarContentUI(document, linkInfo));
+          }
+          callback(linkInfo);
+        });
+      }
+    }
+    
+    // Helper function to sequentially call getWatchLinkInfo for a group of sites.
+    // Since each call happens asynchronously, we iterate by making a chain of callbacks.
+    function getSiteWatchLinkInfos(URL, sites, callback) {
+      linkInfos = [];
+      
+      // Iterate over each site given
+      siteIterator = Iterator(sites);
+      
+      function next(linkInfo) {
+        linkInfos.push(linkInfo);
+        try {
+          site = siteIterator.next();
+          getWatchLinkInfo(URL, site, next);
+        } catch (e if e instanceof StopIteration) {
+          // No more sites left. We're done.
+          callback(linkInfos);
+        }
+      }
+      
+      // Get the sequence started.
+      getWatchLinkInfo(URL, siteIterator.next(), next);
+    }
+    
+    //
+    // *** Context Logic ***
+    //
+    
+    // *** Step 1: UI cases where the intended action is clearly to submit
     if (event.button == 1 || forceSubmit) {
       // Middle-click forces submit action
       openSubmitBarTo(site)
+    } else if (submitBar) {
+      // If the submit bar is already open, we will simply update it
+      openSubmitBarTo(site);
+    } else if (socialiteBar && (!site || socialiteBar.hasSiteUI(site))) {
+      // If the content bar is already open, we will open the submit bar, with one exception:
+      // If a single site has been specified, and the content bar does not have  
+      openSubmitBarTo(site);
     } else {
-  
-      var watchLinkInfo = Socialite.watchedURLs.getWatchLinkInfo(currentURL, site);
-      if (submitBar || (socialiteBar && socialiteBar.hasSiteUI(site))) {
-        // If the bar is open or the force flag is set, the user intends to submit.
-        openSubmitBarTo(site);
-      } else if (watchLinkInfo) {
-        // If the site is watched, it is already posted, so we should open the bar for it.
-        openContentBarTo(site, site.createBarContentUI(document, watchLinkInfo));
-      } else {
-        // We have no local information about the URL, so we need to check the socialite site to see if the URL is already submitted.
-        site.getLinkInfo(currentURL, function(linkInfo) {
-          if (linkInfo) {
-            // If the URL is already submitted, open the bar for it.
-            openContentBarTo(site, site.createBarContentUI(document, linkInfo));
-          } else {
-            // If the URL has not already been submitted, open the submit UI.
+      // *** Step 2: We must check the link info and figure out whether the link has been posted before.
+      // If it exists on any sites, open content bar. Otherwise, open submit bar.
+      if (site) {
+        getWatchLinkInfo(currentURL, site, function(linkInfo) {
+          if (!linkInfo) {
+            // If we didn't find any linkInfo, open the submit bar 
             openSubmitBarTo(site);
+          }
+        });
+      } else {
+        getSiteWatchLinkInfos(currentURL, Socialite.sites, function(linkInfos) {
+          // If every linkInfo is null, we didn't find anything.
+          if (linkInfos.every(function(x) x == null)) {
+            // If we didn't find a single site that knows about this link, open the submit bar 
+            openSubmitBarTo();
           }
         });
       }

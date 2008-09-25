@@ -98,7 +98,7 @@ SocialiteWindow.SiteUrlBarIcon = {
     let visible = Socialite.preferences.getBoolPref("showSiteUrlBarIcons");
     let consolidated = Socialite.preferences.getBoolPref("consolidateSites");
     this.generalIcon.updateVisibility(visible, consolidated);
-    Array.map(this.getAll(), function(urlBarIcon) {
+    Array.forEach(this.getAll(), function(urlBarIcon) {
       urlBarIcon.updateVisibility(visible, consolidated);
     });
   },
@@ -111,7 +111,7 @@ SocialiteWindow.SiteUrlBarIcon = {
   },
   
   onUnload: function() {
-    Array.map(this.getAll(), function(urlBarIcon) {
+    Array.forEach(this.getAll(), function(urlBarIcon) {
       if (urlBarIcon.removeFaviconWatch) { urlBarIcon.removeFaviconWatch(); }
     });
   }

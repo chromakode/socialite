@@ -100,7 +100,7 @@ SocialiteWindow.SiteMenuItem = {
     let visible = Socialite.preferences.getBoolPref("showSiteMenuItems");
     let consolidated = Socialite.preferences.getBoolPref("consolidateSites");
     this.generalItem.updateVisibility(visible, consolidated);
-    Array.map(this.getAll(), function(siteMenuItem) {
+    Array.forEach(this.getAll(), function(siteMenuItem) {
       siteMenuItem.updateVisibility(visible, consolidated);
     });
   },
@@ -113,7 +113,7 @@ SocialiteWindow.SiteMenuItem = {
   },
   
   onUnload: function() {
-    Array.map(this.getAll(), function(siteMenuItem) {
+    Array.forEach(this.getAll(), function(siteMenuItem) {
       if (siteMenuItem.removeFaviconWatch) { siteMenuItem.removeFaviconWatch(); }
     });
   }
