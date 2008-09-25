@@ -401,7 +401,6 @@
             }
           }
         }
-        
         observerService.addObserver(this.observer, "socialite-load-site", false);
         observerService.addObserver(this.observer, "socialite-unload-site", false);
       </constructor>
@@ -409,7 +408,6 @@
       <destructor>
         var observerService = Components.classes["@mozilla.org/observer-service;1"]
                               .getService(Components.interfaces.nsIObserverService);
-                              
         observerService.removeObserver(this.observer, "socialite-load-site");
         observerService.removeObserver(this.observer, "socialite-unload-site");
       </destructor>

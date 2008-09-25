@@ -302,7 +302,7 @@ RedditSite.prototype.createBarSubmitUI = function(document) {
         json.data.children.sort(subredditSort);
                 
         if (json.data.children.length == 0) {
-          Socialite.siteFailureMessage(site, "No subscribed subreddits found.");
+          Socialite.siteFailureMessage(site, "createBarSubmitUI", "No subscribed subreddits found.");
           barSubmit.menulistSubreddit.hidden = true;
         } else {
           for each (var subredditInfo in json.data.children) {
