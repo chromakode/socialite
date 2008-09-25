@@ -1,7 +1,10 @@
-Components.utils.import("resource://socialite/socialite.jsm");
-logger = Components.utils.import("resource://socialite/utils/log.jsm");
-faviconWatch = Components.utils.import("resource://socialite/utils/faviconWatch.jsm");
-Components.utils.import("resource://socialite/utils/domUtils.jsm"); 
+let modules = {};
+let importModule = function(name) Components.utils.import(name, modules);
+
+let Socialite = importModule("resource://socialite/socialite.jsm").Socialite;
+let logger = importModule("resource://socialite/utils/log.jsm");
+let faviconWatch = importModule("resource://socialite/utils/faviconWatch.jsm");
+let domUtils = importModule("resource://socialite/utils/domUtils.jsm"); 
 
 SocialiteWindow.SiteMenuItem = {
   SITE_MENUITEM_ID: "socialite-site-menuitem-",
@@ -37,7 +40,7 @@ SocialiteWindow.SiteMenuItem = {
       if (siteMenuItems.length == 0) {
         fileMenuPopup.insertBefore(siteMenuItem, sendMenuItem.nextSibling);
       } else {
-        insertSorted(siteMenuItem, siteMenuItems, function(item1, item2) {
+        domUtils.insertSorted(siteMenuItem, siteMenuItems, function(item1, item2) {
           let label1 = item1.getAttribute("label"); 
           let label2 = item2.getAttribute("label"); 
           return label1.localeCompare(label2);

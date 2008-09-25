@@ -1,7 +1,10 @@
-Components.utils.import("resource://socialite/socialite.jsm");
-logger = Components.utils.import("resource://socialite/utils/log.jsm");
-faviconWatch = Components.utils.import("resource://socialite/utils/faviconWatch.jsm");
-Components.utils.import("resource://socialite/utils/domUtils.jsm");
+let modules = {};
+let importModule = function(name) Components.utils.import(name, modules);
+
+let Socialite = importModule("resource://socialite/socialite.jsm").Socialite;
+let logger = importModule("resource://socialite/utils/log.jsm");
+let faviconWatch = importModule("resource://socialite/utils/faviconWatch.jsm");
+let domUtils = importModule("resource://socialite/utils/domUtils.jsm");
 
 SocialiteWindow.SiteUrlBarIcon = {
   SITE_URLBARICON_ID: "socialite-site-urlbar-icon-",
@@ -37,7 +40,7 @@ SocialiteWindow.SiteUrlBarIcon = {
       if (urlBarIcons.length == 0) {
         urlBarIconParent.insertBefore(urlBarIcon, feedButton);
       } else {
-        insertSorted(urlBarIcon, urlBarIcons, function compare(urlBarIcon1, urlBarIcon2) {
+        domUtils.insertSorted(urlBarIcon, urlBarIcons, function compare(urlBarIcon1, urlBarIcon2) {
           let name1 = urlBarIcon1.getAttribute("tooltiptext"); 
           let name2 = urlBarIcon2.getAttribute("tooltiptext"); 
           return name1.localeCompare(name2);
