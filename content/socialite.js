@@ -359,8 +359,10 @@ var SocialiteWindow =
           if (prefName == "siteName") {
             let newSiteName = Socialite.preferences.getCharPref(data);
             let site = Socialite.sites.byID[siteID];
-            SocialiteWindow.SiteUrlBarIcon.updateSiteName(site, newSiteName);
-            SocialiteWindow.SiteMenuItem.updateSiteName(site, newSiteName);
+            if (site) {
+              SocialiteWindow.SiteUrlBarIcon.updateSiteName(site, newSiteName);
+              SocialiteWindow.SiteMenuItem.updateSiteName(site, newSiteName);
+            }
           }
           break;
           
