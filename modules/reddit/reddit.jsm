@@ -196,18 +196,21 @@ RedditSite.prototype.createBarContentUI = function(document, linkInfo) {
         hitchThis(barContent, barContent.update),
         hitchThis(site, site.actionFailureHandler)
       ).perform(["score"]);
-    };
+    }
     var updateHandler = function() {
       barContent.linkInfo.update(
         hitchThis(barContent, barContent.update),
         hitchThis(site, site.actionFailureHandler)
       ).perform([]);
-    };
+    }
+    var subredditURL = function() {
+      return site.siteURL+"r/"+barContent.linkInfo.localState.subreddit+"/";
+    }
     
     this.refreshCallback = updateHandler;
     
     this.labelSubreddit.addEventListener("click", function(e) {
-      Socialite.openUILink(site.siteURL+"r/"+barContent.linkInfo.localState.subreddit+"/", e);
+      Socialite.openUILink(subredditURL(), e);
     }, false);
         
     this.buttonLike.addEventListener("click", function(e) {
@@ -237,7 +240,7 @@ RedditSite.prototype.createBarContentUI = function(document, linkInfo) {
     }, false);
     
     this.buttonComments.addEventListener("click", function(e) {
-      Socialite.openUILink(site.siteURL+"info/"+barContent.linkInfo.getID()+"/comments/", e);
+      Socialite.openUILink(subredditURL()+"info/"+barContent.linkInfo.getID()+"/comments/", e);
     }, false);
     
     this.buttonSave.addEventListener("click", function(e) {
