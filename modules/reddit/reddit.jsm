@@ -73,10 +73,12 @@ RedditSite.prototype.onSitePageLoad = function(doc, win) {
 RedditSite.prototype.linkClicked = function(event) {
   var link = event.target;
   var doc = link.ownerDocument;
-  
   var linkURL   = link.href;
   
-  if (!Socialite.watchedURLs.isWatchedBy(linkURL, this)) {
+  if (Socialite.watchedURLs.isWatchedBy(linkURL, this)) {
+    // Ensure that the URL isn't hidden
+    Socialite.watchedURLs.get(linkURL).activate();
+  } else {
     try {
       // Remove title_ from title_XX_XXXXX
       var linkID    = link.id.slice(6);

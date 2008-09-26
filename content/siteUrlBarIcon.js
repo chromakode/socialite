@@ -108,7 +108,7 @@ SocialiteWindow.SiteUrlBarIcon = {
   
   onLoad: function() {
     this.generalIcon = this.createGeneral();
-    for (let site in Socialite.sites) {
+    for (let [siteID, site] in Socialite.sites) {
       this.create(site);
     }
   },

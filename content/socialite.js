@@ -150,13 +150,17 @@ var SocialiteWindow =
     } 
     
     if (!socialiteBar && Socialite.watchedURLs.isWatched(href)) {
-      // This is a watched link. Create a notification box and initialize.
-      var newBar = SocialiteWindow.createContentBar(notificationBox, href);
-      
-      // Populate the bar
-      for each (entry in Socialite.watchedURLs.getWatches(href)) {
-        newBar.addSiteUI(entry.site, entry.site.createBarContentUI(document, entry.linkInfo));
-      };
+      let watch = Socialite.watchedURLs.get(href);
+      if (!watch.hidden) {
+        // This is a watched link. Create a notification box and initialize.
+        var newBar = SocialiteWindow.createContentBar(notificationBox, href);
+        
+        // Populate the bar
+        for each (let [siteID, linkInfo] in watch) {
+          let site = Socialite.sites.byID[siteID];
+          newBar.addSiteUI(site, site.createBarContentUI(document, linkInfo));
+        }
+      }
     }
   },
   
@@ -176,6 +180,13 @@ var SocialiteWindow =
     
     // Set url property so we know the location the bar was originally opened for.
     notification.url = url;
+    
+    // If the user closes the notification manually, we'll set the watch to hidden, suppressing automatic display.
+    notification.addEventListener("SocialiteNotificationClosedByUser", function(event) {
+      if (Socialite.watchedURLs.isWatched(url)) {
+        Socialite.watchedURLs.get(url).hidden = true;
+      }
+    }, false);
     
     logger.log("SocialiteWindow", "Content notification created");
     return notification;
@@ -238,7 +249,7 @@ var SocialiteWindow =
     
     // Helper function to get link info from a watch, falling back to querying the site
     function getWatchLinkInfo(URL, site, callback) {
-      let watchLinkInfo = Socialite.watchedURLs.getWatchLinkInfo(currentURL, site);
+      let watchLinkInfo = Socialite.watchedURLs.getBy(currentURL, site);
       if (watchLinkInfo) {
         // If the site is watched, return the stored information.
         openContentBarTo(site, site.createBarContentUI(document, watchLinkInfo));
@@ -265,7 +276,7 @@ var SocialiteWindow =
       function next(linkInfo) {
         linkInfos.push(linkInfo);
         try {
-          site = siteIterator.next();
+          let [siteID, site] = siteIterator.next();
           getWatchLinkInfo(URL, site, next);
         } catch (e if e instanceof StopIteration) {
           // No more sites left. We're done.
@@ -274,7 +285,8 @@ var SocialiteWindow =
       }
       
       // Get the sequence started.
-      getWatchLinkInfo(URL, siteIterator.next(), next);
+      let [siteID, site] = siteIterator.next();
+      getWatchLinkInfo(URL, site, next);
     }
     
     //
@@ -293,16 +305,29 @@ var SocialiteWindow =
       // If a single site has been specified, and the content bar does not have  
       openSubmitBarTo(site);
     } else {
+      
       // *** Step 2: We must check the link info and figure out whether the link has been posted before.
       // If it exists on any sites, open content bar. Otherwise, open submit bar.
+      // Also, if a user has hidden a watch, they can use the context action to re-show it.
+      // Thus, if the URL is watched and hidden/suppressed, activate it.
       if (site) {
+        // If a specific site is specified, only activate if the URL is watched by that site.
+        if (Socialite.watchedURLs.isWatchedBy(currentURL, site)) {
+          Socialite.watchedURLs.get(currentURL).activate();
+        }
+        
         getWatchLinkInfo(currentURL, site, function(linkInfo) {
           if (!linkInfo) {
-            // If we didn't find any linkInfo, open the submit bar 
+            // If we didn't find any linkInfo, open the submit bar
             openSubmitBarTo(site);
           }
         });
+        
       } else {
+        if (Socialite.watchedURLs.isWatched(currentURL, site)) {
+          Socialite.watchedURLs.get(currentURL).activate();
+        }
+        
         getSiteWatchLinkInfos(currentURL, Socialite.sites, function(linkInfos) {
           // If every linkInfo is null, we didn't find anything.
           if (linkInfos.every(function(x) x == null)) {

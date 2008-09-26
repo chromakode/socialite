@@ -3,68 +3,110 @@ logger = Components.utils.import("resource://socialite/utils/log.jsm");
 
 var EXPORTED_SYMBOLS = ["WatchedURLs"];
 
-function isEmpty(object) {
-  // From http://objectmix.com/javascript/351435-json-object-empty.html#post1284914
-  for (var i in object) { 
-    return false;
+function WatchInfo(URL, redirectFrom) {
+  this.URL = URL;
+  this.hidden = false;
+  this.redirectFrom = redirectFrom;
+  this._info = {};
+}
+WatchInfo.prototype = {
+  get info() {
+    if (this.redirectFrom) {
+      return this.redirectFrom.info;
+    } else {
+      return this._info;
+    }
+  },
+  
+  set info(value) {
+    if (this.redirectFrom) {
+      this.redirectFrom.info = value;
+    } else {
+      this._info = value;
+    }
+  },
+  
+  __iterator__: function() {
+    return Iterator(this._info);
+  },
+  
+  addSite: function(site, linkInfo, replace) {
+    if (!this.info[site.siteID] || replace) {
+      this.info[site.siteID] = linkInfo;
+    }
+  },
+  
+  removeSite: function(site) {
+    if (this.info[site.siteID]) {
+      delete this.info[site.siteID];
+    }
+  },
+  
+  getSite: function(site) {
+    return this.info[site.siteID];
+  },
+  
+  hasSite: function(site) {
+    return site.siteID in this.info;
+  },
+  
+  isEmpty: function() {
+    // From http://objectmix.com/javascript/351435-json-object-empty.html#post1284914
+    for (var i in this.info) {
+      return false;
+    }
+    return true;
+  },
+  
+  /**
+   * Ensure that the watch is not hidden or otherwise prevented from displaying
+   */
+  activate: function() {
+    this.hidden = false;
   }
-  return true;
 }
 
-function WatchedURLs(limit) {
+function WatchedURLs() {
   this.watches = {};
 }
-
-WatchedURLs.prototype.watch = function(href, site, linkInfo, replace) {
-  if (Socialite.sites.isLoaded(site)) {
-    var entry = {
-      site: site,
-      linkInfo: linkInfo
-    }
+WatchedURLs.prototype = {
+  watch: function(URL, site, linkInfo, replace) {
+    if (Socialite.sites.isLoaded(site)) {
+      if (!(URL in this.watches)) {
+        this.watches[URL] = new WatchInfo(URL);
+      }
+      this.watches[URL].addSite(site, linkInfo, replace);
+      
+      // Adding a new site will activate a hidden/suppressed watch, since we should show the new information.
+      this.watches[URL].activate();
     
-    if (!(href in this.watches)) {
-      this.watches[href] = {};
+      logger.log("WatchedURLs", "Watching: " + URL);
     }
-    
-    if (!this.watches[href][site.siteID] || replace) {
-      this.watches[href][site.siteID] = entry;
+  },
+
+  get: function(URL) {
+    return this.watches[URL];
+  },
+
+  getBy: function(URL, site) {
+    if (this.isWatchedBy(URL, site)) {
+      return this.get(URL).getSite(site);
+    } else {
+      return null;
     }
-  
-    logger.log("WatchedURLs", "Watching: " + href);
+  },
+
+  isWatched: function(URL) {
+    return ((URL in this.watches) && !this.watches[URL].isEmpty());
+  },
+
+  isWatchedBy: function(URL, site) {
+    return (this.isWatched(URL) && this.get(URL).hasSite(site));
+  },
+
+  removeSite: function(site) {
+    for each (watchInfo in this.watches) {
+      watchInfo.removeSite(site);
+    };
   }
-}
-
-WatchedURLs.prototype.isWatched = function(href) {
-  return (href in this.watches && 
-          !isEmpty(this.watches[href]));
-}
-
-WatchedURLs.prototype.getWatches = function(href) {
-  if (href in this.watches) {
-    return this.watches[href];
-  } else {
-    return null;
-  }
-}
-
-WatchedURLs.prototype.isWatchedBy = function(href, site) {
-  return (href in this.watches && 
-          this.watches[href] && 
-          this.watches[href][site.siteID]);
-}
-
-WatchedURLs.prototype.getWatchLinkInfo = function(href, site) {
-  if (this.isWatchedBy(href, site)) {
-    return this.watches[href][site.siteID].linkInfo;
-  } else {
-    return null;
-  }
-}
-
-WatchedURLs.prototype.removeSite = function(site) {
-  for each (linkWatches in this.watches) {
-    if (linkWatches[site.siteID]) {
-      delete linkWatches[site.siteID];
-    }
-  };
 }

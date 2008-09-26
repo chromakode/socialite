@@ -61,7 +61,7 @@ var SocialiteSitePreferences = {
     }
     
     // Populate the list
-    for (let site in Socialite.sites) {
+    for (let [siteID, site] in Socialite.sites) {
       this.siteListbox.addSite(site);
     }
     

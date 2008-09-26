@@ -110,7 +110,7 @@ SocialiteWindow.SiteMenuItem = {
   
   onLoad: function() {
     this.generalItem = this.createGeneral();
-    for (let site in Socialite.sites) {
+    for (let [siteID, site] in Socialite.sites) {
       this.create(site);
     }
   },

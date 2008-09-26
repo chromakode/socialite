@@ -61,15 +61,16 @@ function SiteCollection() {
 }
 
 SiteCollection.prototype.__iterator__ = function() {
-  for each (let site in this.byID) {
+  for (let siteID in this.byID) {
+    let site = this.byID[siteID];
     if (site) {
-      yield site;
+      yield [siteID, site];
     }
   }
 }
 
 SiteCollection.prototype.onContentLoad = function(doc, win) {
-  for (let site in this) {
+  for (let [siteID, site] in this) {
     // Remove www.
     var baseRegex = /www\.?/;
     var baseSiteHost = site.siteURI.spec.replace(baseRegex, "");
@@ -128,7 +129,7 @@ SiteCollection.prototype.loadConfiguredSites = function() {
 
 SiteCollection.prototype.saveConfiguredSites = function() {
   var siteIDs = [];
-  for (let site in this) {
+  for (let [siteID, site] in this) {
     siteIDs.push(site.siteID);
   }
   Socialite.preferences.setCharPref("sites", nativeJSON.encode(siteIDs));

@@ -10,7 +10,41 @@
   xmlns:xul="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul">
   
   <binding id="socialite-notification" extends="chrome://global/content/bindings/notification.xml#notification">
-    <implementation>
+    <content>
+      <xul:hbox class="notification-inner outset" flex="1" xbl:inherits="type">
+        <xul:hbox anonid="details" align="center" flex="1"
+                  oncommand="this.parentNode.parentNode._doButtonCommand(event);">
+          <xul:image anonid="messageImage" class="messageImage" xbl:inherits="src=image"/>
+          <xul:description anonid="messageText" class="messageText" flex="1" xbl:inherits="xbl:text=label"/>
+          <xul:spacer flex="1"/>
+          <children/>
+        </xul:hbox>
+        <xul:toolbarbutton id="socialite-notification-close-button"
+                           ondblclick="event.stopPropagation();"
+                           class="messageCloseButton tabbable"
+                           xbl:inherits="hidden=hideclose"
+                           tooltiptext="&closeNotification.tooltip;"
+                           oncommand="document.getBindingParent(this).closeClicked();"/>
+      </xul:hbox>
+    </content>
+    
+    <resources>
+      <stylesheet src="chrome://global/skin/notification.css"/>
+    </resources>
+    
+    <implementation>      
+      <method name="closeClicked">
+        <body>
+          <![CDATA[
+            var event = document.createEvent("Events");
+            event.initEvent("SocialiteNotificationClosedByUser", true, true);
+            this.dispatchEvent(event);
+            
+            this.close();
+          ]]>
+        </body>
+      </method>
+    
       <method name="fireCloseEvent">
         <body>
           <![CDATA[
@@ -24,7 +58,7 @@
       <method name="close">
         <body>
           <![CDATA[
-            // Overriden copy of the method from notification so we can add a close event that should have been there.  
+            // Overriden copy (because we can't call super()) from notification to add an event.  
             this.fireCloseEvent();
             
             // From notification.xml
@@ -49,9 +83,12 @@
             <children/>
           </xul:deck>
         </xul:hbox>
-        <xul:toolbarbutton ondblclick="event.stopPropagation();"
-          class="messageCloseButton tabbable" xbl:inherits="hidden=hideclose"
-          tooltiptext="&closeNotification.tooltip;" oncommand="document.getBindingParent(this).close();"/>
+        <xul:toolbarbutton id="socialite-notification-close-button"
+                           ondblclick="event.stopPropagation();"
+                           class="messageCloseButton tabbable"
+                           xbl:inherits="hidden=hideclose"
+                           tooltiptext="&closeNotification.tooltip;"
+                           oncommand="document.getBindingParent(this).closeClicked();"/>
       </xul:hbox>
     </content>
     
@@ -168,9 +205,12 @@
             <children/>
           </xul:hbox>
         </xul:hbox>
-        <xul:toolbarbutton ondblclick="event.stopPropagation();"
-          class="messageCloseButton tabbable" xbl:inherits="hidden=hideclose"
-          tooltiptext="&closeNotification.tooltip;" oncommand="document.getBindingParent(this).close();"/>
+        <xul:toolbarbutton anonid="socialite-notification-close-button"
+                           ondblclick="event.stopPropagation();"
+                           class="messageCloseButton tabbable"
+                           xbl:inherits="hidden=hideclose"
+                           tooltiptext="&closeNotification.tooltip;"
+                           oncommand="document.getBindingParent(this).closeClicked();"/>
       </xul:hbox>
     </content>
     
@@ -447,7 +487,7 @@
         Components.utils.import("resource://socialite/socialite.jsm");
         
         // Add currently loaded sites
-        for (let site in Socialite.sites) {
+        for (let [siteID, site] in Socialite.sites) {
           this.addSite(site);
         }
 
