@@ -334,7 +334,7 @@ RedditSite.prototype.createBarSubmitUI = function(document) {
         // Degrade to general submission page if no subreddit is set.
         subredditURL = "";
       }
-      var submitURL = barSubmit.parentNode.url;
+      var submitURL = barSubmit.parentNode.URL;
       var submitTitle = barSubmit.textboxTitle.value;
       
       // Use ?resubmit GET parameter so reddit doesn't jump straight to the "already submitted" page

@@ -16,19 +16,18 @@ let SOCIALITE_SUBMIT_NOTIFICATION_VALUE = "socialite-submitbar-notification";
 var SocialiteProgressListener =
 {
   QueryInterface: function(aIID) {
-   if (aIID.equals(Components.interfaces.nsIWebProgressListener) ||
-       aIID.equals(Components.interfaces.nsISupportsWeakReference) ||
-       aIID.equals(Components.interfaces.nsISupports))
-     return this;
-   throw Components.results.NS_NOINTERFACE;
+    if (aIID.equals(Components.interfaces.nsIWebProgressListener) ||
+        aIID.equals(Components.interfaces.nsISupportsWeakReference) ||
+        aIID.equals(Components.interfaces.nsISupports))
+      return this;
+    throw Components.results.NS_NOINTERFACE;
   },
 
   onStateChange: function(aWebProgress, aRequest, aFlag, aStatus) {return 0;},
 
   onLocationChange: function(aProgress, aRequest, aURI) {
-    var window = aProgress.DOMWindow;
-    
-    if (window == window.top) {
+    let window = aProgress.DOMWindow;
+    if ((window == window.top) && aURI) {
       var isLoadingText;
       if (aProgress.isLoadingDocument) {
         isLoadingText = "(loading)"; 
@@ -36,7 +35,7 @@ var SocialiteProgressListener =
         isLoadingText = ""; 
       }
       logger.log("SocialiteProgressListener", "onLocationChange " + isLoadingText + ": " + aProgress.DOMWindow.location.href);
-      SocialiteWindow.linkStartLoad(window, aProgress.isLoadingDocument);
+      SocialiteWindow.linkStartLoad(aURI.spec, window, aProgress.isLoadingDocument);
     }
   },
   
@@ -70,28 +69,6 @@ var SocialiteWindow =
     SocialiteWindow.SiteUrlBarIcon.onLoad();
     SocialiteWindow.SiteMenuItem.onLoad();
     
-    gBrowser.addEventListener("DOMContentLoaded", function(event) {
-      var doc = event.originalTarget;
-      
-      if (doc instanceof HTMLDocument) {
-        var win = doc.defaultView;
-        if (win == win.top) {
-          Socialite.sites.onContentLoad(doc, win);
-        }
-      }
-    }, false);
-    
-    // Watch for new tabs to add progress listener to them
-    gBrowser.addEventListener("TabOpen", function(event) {
-      var browser = event.originalTarget.linkedBrowser;
-      var win = browser.contentWindow;
-      // Opening a new tab may not always have a URL set (e.g. CTRL-t)
-      if (browser.currentURI) {
-        logger.log("main", "Tab opened: " + browser.currentURI.spec);    
-        SocialiteWindow.linkStartLoad(win, true)
-      }
-    }, false);
-    
     gBrowser.addEventListener("TabClose", function(event) {
       // XXX: Call close methods for notifications if they exist, since they won't be called otherwise
       var selectedBrowser = event.originalTarget.linkedBrowser;
@@ -105,6 +82,55 @@ var SocialiteWindow =
       
       logger.log("main", "Tab closed: " + selectedBrowser.currentURI.spec);
     }, false);
+    
+    // Site content load handler
+    gBrowser.addEventListener("DOMContentLoaded", function(event) {
+      var doc = event.originalTarget;
+      
+      if (doc instanceof HTMLDocument) {
+        var win = doc.defaultView;
+        if (win == win.top) {
+          Socialite.sites.onContentLoad(doc, win);
+        }
+      }
+    }, false);
+    
+    // Kill javascript redirects dead
+    gBrowser.addEventListener("beforeunload", function(event) {
+      let doc = event.originalTarget;
+      let win = doc.defaultView;
+      let originalURL = doc.URL;
+      if ((doc instanceof HTMLDocument) && (win == win.top) && Socialite.watchedURLs.isWatched(originalURL)) {
+        let browser = gBrowser.getBrowserForDocument(doc);
+        if (browser) {
+          if (browser.docShell.isExecutingOnLoadHandler) {
+            logger.log("main", "Catching Javascript redirect...");
+            
+            // Interestingly, as far as I can tell from nsDocShell.cpp, we can't get the destination URL at this point
+            // However, the onLocationChange trigger on a ProgressListener will get called immediately after the page changes...
+            let redirectProgressListener = {
+              QueryInterface: function(aIID) {
+                if (aIID.equals(Components.interfaces.nsIWebProgressListener) ||
+                     aIID.equals(Components.interfaces.nsISupportsWeakReference) ||
+                     aIID.equals(Components.interfaces.nsISupports))
+                   return this;
+                 throw Components.results.NS_NOINTERFACE;
+              },
+              onStateChange: function(aWebProgress, aRequest, aFlag, aStatus) {return 0;},
+              onLocationChange: function(aProgress, aRequest, aURI) {
+                logger.log("main", "Detected Javascript redirect: "+ originalURL +" -> "+ aURI.spec);
+                Socialite.watchedURLs.addRedirect(originalURL, aURI.spec);
+                browser.removeProgressListener(redirectProgressListener);
+              },
+              onProgressChange: function() {return 0;},
+              onStatusChange: function() {return 0;},
+              onSecurityChange: function() {return 0;}
+            }
+            browser.addProgressListener(redirectProgressListener);
+          }
+        }
+      }
+    }, true);
     
     // Add progress listener to tabbrowser. This fires progress events for the current tab.
     SocialiteWindow.setupProgressListener(gBrowser);
@@ -124,7 +150,7 @@ var SocialiteWindow =
   
   setupProgressListener: function(browser) {
     logger.log("main", "Progress listener added.");
-    browser.addProgressListener(SocialiteProgressListener,  Components.interfaces.nsIWebProgress.NOTIFY_ALL);
+    browser.addProgressListener(SocialiteProgressListener, Components.interfaces.nsIWebProgress.NOTIFY_ALL);
   },
   
   unsetProgressListener: function(browser) {
@@ -132,31 +158,50 @@ var SocialiteWindow =
     browser.removeProgressListener(SocialiteProgressListener);
   },
 
-  linkStartLoad: function(win, isLoading) {
-    var href = win.location.href;
-    var browser = gBrowser.getBrowserForDocument(win.document);
-    var notificationBox = gBrowser.getNotificationBox(browser);
-  
-    socialiteBar = notificationBox.getNotificationWithValue(SOCIALITE_CONTENT_NOTIFICATION_VALUE);
+  linkStartLoad: function(URL, win, isLoading) {
+    let browser = gBrowser.getBrowserForDocument(win.document);
+    let notificationBox = gBrowser.getNotificationBox(browser);
+
+    // Check for and store a HTTP redirect
+    let channel = browser.docShell.currentDocumentChannel;
+    if (channel) {
+      let originalURL = channel.originalURI.spec;
+
+      if ((channel.loadFlags & Components.interfaces.nsIChannel.LOAD_REPLACE)
+          && Socialite.watchedURLs.isWatched(originalURL)) {
+        logger.log("linkStartLoad", "Detected redirect: "+ originalURL +" -> "+ URL);
+        Socialite.watchedURLs.addRedirect(originalURL, URL);
+      }
+    }
+    
+    // Handle an existing bar
+    let socialiteBar = notificationBox.getNotificationWithValue(SOCIALITE_CONTENT_NOTIFICATION_VALUE);
     if (socialiteBar) {
+      let isFromRedirect = Socialite.watchedURLs.isRedirect(socialiteBar.originalURL, URL);
+      let isPersistenceChange = persistence.onLocationChange(socialiteBar.URL, URL);
       // Handle persistence changes, if any.
-      if (!persistence.onLocationChange(socialiteBar.url, href)) {
+      if (!isFromRedirect && !isPersistenceChange) {
         notificationBox.removeNotification(socialiteBar);
         socialiteBar = null;
-      } else { 
+      } else {
+        // If we got redirected, update the bar URL so persistence rules are followed correctly.
+        if (isFromRedirect) {
+          socialiteBar.URL = URL;
+        }
         // If we're not closing the bar, refresh it.
         socialiteBar.refresh();
       }
-    } 
+    }
     
-    if (!socialiteBar && Socialite.watchedURLs.isWatched(href)) {
-      let watch = Socialite.watchedURLs.get(href);
-      if (!watch.hidden) {
+    // Open a new bar if one is not already open, and the link is watched
+    if (!socialiteBar && Socialite.watchedURLs.isWatched(URL)) {
+      let watchInfo = Socialite.watchedURLs.get(URL);
+      if (!watchInfo.hidden) {
         // This is a watched link. Create a notification box and initialize.
-        var newBar = SocialiteWindow.createContentBar(notificationBox, href);
+        var newBar = SocialiteWindow.createContentBar(notificationBox, URL);
         
         // Populate the bar
-        for each (let [siteID, linkInfo] in watch) {
+        for each (let [siteID, linkInfo] in watchInfo) {
           let site = Socialite.sites.byID[siteID];
           newBar.addSiteUI(site, site.createBarContentUI(document, linkInfo));
         }
@@ -164,7 +209,7 @@ var SocialiteWindow =
     }
   },
   
-  createContentBar: function(notificationBox, url) {
+  createContentBar: function(notificationBox, URL) {
     var notification = notificationBox.appendNotification(
       "",
       SOCIALITE_CONTENT_NOTIFICATION_VALUE,
@@ -179,12 +224,13 @@ var SocialiteWindow =
     notification.persistence = -1;
     
     // Set url property so we know the location the bar was originally opened for.
-    notification.url = url;
+    notification.originalURL = URL;
+    notification.URL = URL;
     
     // If the user closes the notification manually, we'll set the watch to hidden, suppressing automatic display.
     notification.addEventListener("SocialiteNotificationClosedByUser", function(event) {
-      if (Socialite.watchedURLs.isWatched(url)) {
-        Socialite.watchedURLs.get(url).hidden = true;
+      if (Socialite.watchedURLs.isWatched(notification.originalURL)) {
+        Socialite.watchedURLs.get(notification.originalURL).hidden = true;
       }
     }, false);
     
@@ -192,7 +238,7 @@ var SocialiteWindow =
     return notification;
   },
   
-  createSubmitBar: function(notificationBox, url) {
+  createSubmitBar: function(notificationBox, URL) {
     var notification = notificationBox.appendNotification(
       "",
       SOCIALITE_SUBMIT_NOTIFICATION_VALUE,
@@ -207,23 +253,23 @@ var SocialiteWindow =
     notification.persistence = -1;
     
     // Set url property so we know the location the bar was originally opened for.
-    notification.url = url;
+    notification.URL = URL;
     
     logger.log("SocialiteWindow", "Submit notification created");
     return notification;
   },
   
   linkContextAction: function(site, event, forceSubmit) {
-    var selectedBrowser = gBrowser.selectedBrowser;
-    var currentURL = selectedBrowser.currentURI.spec;
-    var notificationBox = gBrowser.getNotificationBox(selectedBrowser);
+    let selectedBrowser = gBrowser.selectedBrowser;
+    let currentURL = selectedBrowser.currentURI.spec;
+    let notificationBox = gBrowser.getNotificationBox(selectedBrowser);
    
     //
     // *** Helper functions ***
     //
     
     // Helper function to open the bar with some content.
-    var socialiteBar = notificationBox.getNotificationWithValue(SOCIALITE_CONTENT_NOTIFICATION_VALUE);
+    let socialiteBar = notificationBox.getNotificationWithValue(SOCIALITE_CONTENT_NOTIFICATION_VALUE);
     function openContentBarTo(site, siteUI) {
       if (socialiteBar && socialiteBar.url != currentURL) {
         // The bar was opened for another URL. We will replace it.
@@ -237,7 +283,7 @@ var SocialiteWindow =
     }
     
     // Helper function to open the submit bar with a particular destination site selected.
-    var submitBar = notificationBox.getNotificationWithValue(SOCIALITE_SUBMIT_NOTIFICATION_VALUE);
+    let submitBar = notificationBox.getNotificationWithValue(SOCIALITE_SUBMIT_NOTIFICATION_VALUE);
     function openSubmitBarTo(site) {
       if (!submitBar) {
         submitBar = SocialiteWindow.createSubmitBar(notificationBox, currentURL);
