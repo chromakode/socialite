@@ -168,7 +168,7 @@ var SocialiteWindow =
       let originalURL = channel.originalURI.spec;
 
       if ((channel.loadFlags & Components.interfaces.nsIChannel.LOAD_REPLACE)
-          && Socialite.watchedURLs.isWatched(originalURL)) {
+          && (Socialite.watchedURLs.isWatched(originalURL) || Socialite.watchedURLs.isWatched(URL))) {
         logger.log("linkStartLoad", "Detected redirect: "+ originalURL +" -> "+ URL);
         Socialite.watchedURLs.addRedirect(originalURL, URL);
       }

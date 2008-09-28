@@ -40,6 +40,7 @@ RedditSite.prototype.onLoad = function() {
   SocialiteSite.prototype.onLoad.apply(this, arguments);
   this.API = new RedditAPI();
   this.API.auth = new RedditAuth(this.siteURL);
+  this.API.auth.refreshAuthInfo().perform();
 }
 
 RedditSite.prototype.onSitePageLoad = function(doc, win) {
@@ -67,7 +68,7 @@ RedditSite.prototype.onSitePageLoad = function(doc, win) {
   // Snarf the authentication hash using wrappedJSObject
   // This should be safe, since Firefox 3 uses a XPCSafeJSObjectWrapper
   // See http://developer.mozilla.org/en/docs/XPConnect_wrappers#XPCSafeJSObjectWrapper
-  this.API.auth.snarfModHash(win.wrappedJSObject.modhash);
+  this.API.auth.snarfAuthInfo(doc, win);
 }
 
 RedditSite.prototype.linkClicked = function(event) {
@@ -288,6 +289,10 @@ RedditSite.prototype.createBarContentUI = function(document, linkInfo) {
       ).perform();
     }, false);
     
+    this.buttonProfile.addEventListener("click", function(e) {
+      Socialite.openUILink(subredditURL()+"user/"+barContent.linkInfo.redditAPI.auth.username+"/", e);
+    }, false);
+    
   };
   
   barContent.style.MozBinding = "url(chrome://socialite/content/reddit/redditBar.xml#reddit-content-ui)"; 
@@ -394,6 +399,7 @@ RedditSite.prototype.createPreferencesUI = function(document, propertiesWindow) 
   addBooleanPreferenceUI(displayGroup, "showSave", true);
   addBooleanPreferenceUI(displayGroup, "showHide", false);
   addBooleanPreferenceUI(displayGroup, "showRandom", false);
+  addBooleanPreferenceUI(displayGroup, "showProfile", false);
     
   return propertiesBox;  
 }
