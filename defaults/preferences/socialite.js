@@ -22,3 +22,5 @@ pref("extensions.socialite.sites.reddit.showComments", true);
 pref("extensions.socialite.sites.reddit.showSave", true);
 pref("extensions.socialite.sites.reddit.showHide", false);
 pref("extensions.socialite.sites.reddit.showRandom", false);
+pref("extensions.socialite.sites.reddit.showProfile", true);
+
