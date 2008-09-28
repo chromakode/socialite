@@ -62,30 +62,31 @@
         this.compactDisplay = this.sitePreferences.getBoolPref("compactDisplay");
         
         // Display preference change observer
+        let self = this;
         this.observer = {
           observe: function(subject, topic, data) {
             switch (data) {
               case "showScore":
-                this.labelScore.hidden = !this.sitePreferences.getBoolPref("showScore");
+                self.labelScore.hidden = !self.sitePreferences.getBoolPref("showScore");
                 break;
               case "showSubreddit":
-                this.labelSubreddit.hidden = !this.sitePreferences.getBoolPref("showSubreddit");
+                self.labelSubreddit.hidden = !self.sitePreferences.getBoolPref("showSubreddit");
                 break;
               case "showComments":
-                this.buttonComments.hidden = !this.sitePreferences.getBoolPref("showComments");
+                self.buttonComments.hidden = !self.sitePreferences.getBoolPref("showComments");
                 break;
               case "showSave":
-                this.buttonSave.hidden = !this.sitePreferences.getBoolPref("showSave");
+                self.buttonSave.hidden = !self.sitePreferences.getBoolPref("showSave");
                 break;
               case "showHide":
-                this.buttonHide.hidden = !this.sitePreferences.getBoolPref("showHide");
+                self.buttonHide.hidden = !self.sitePreferences.getBoolPref("showHide");
                 break;
               case "showRandom":
-                this.buttonRandom.hidden = !this.sitePreferences.getBoolPref("showRandom");
+                self.buttonRandom.hidden = !self.sitePreferences.getBoolPref("showRandom");
                 break;
               case "compactDisplay":
-                this.compactDisplay = this.sitePreferences.getBoolPref("compactDisplay");
-                this.update();
+                self.compactDisplay = self.sitePreferences.getBoolPref("compactDisplay");
+                self.update();
                 break;
             }
           }
