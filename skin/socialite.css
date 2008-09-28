@@ -60,15 +60,18 @@ notification[value="socialite-submitbar-notification"] {
 .socialite-button-compact {
   min-width: 0;
 }
-.socialite-button-compact .button-box {
-  margin-left: 3px;
-  margin-right: 3px;
-}
-.socialite-button-iconic .button-icon {
+.socialite-button-compact > .button-box {
   margin: 0;
+  padding: 0;
+  overflow-x: hidden;
+  width: 22px;
 }
-.socialite-button-iconic .button-text {
-  display: none;
+.socialite-button-iconic > .button-box > .button-icon {
+  padding-left: 3px;
+  padding-right: 3px;
+}
+.socialite-button-iconic > .button-box > .button-text {
+  /*display: none;*/
 }
 
 .socialite-urlbar-icon {
