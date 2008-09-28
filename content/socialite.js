@@ -28,13 +28,6 @@ var SocialiteProgressListener =
   onLocationChange: function(aProgress, aRequest, aURI) {
     let window = aProgress.DOMWindow;
     if ((window == window.top) && aURI) {
-      var isLoadingText;
-      if (aProgress.isLoadingDocument) {
-        isLoadingText = "(loading)"; 
-      } else {
-        isLoadingText = ""; 
-      }
-      logger.log("SocialiteProgressListener", "onLocationChange " + isLoadingText + ": " + aProgress.DOMWindow.location.href);
       SocialiteWindow.linkStartLoad(aURI.spec, window, aProgress.isLoadingDocument);
     }
   },

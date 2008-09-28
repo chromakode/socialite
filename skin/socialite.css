@@ -42,12 +42,13 @@ hbox[anonid="loadedSiteSelector"] {
 	-moz-binding: url(chrome://socialite/content/socialiteBar.xml#socialite-loaded-site-selector);
 }
 
+/* Google toolbar's blanket CSS rule for notifications will interfere unless these are !important */
 notification[value="socialite-contentbar-notification"] {
-  -moz-binding: url(chrome://socialite/content/socialiteBar.xml#socialite-content-bar);
+  -moz-binding: url(chrome://socialite/content/socialiteBar.xml#socialite-content-bar) !important;
 }
 
 notification[value="socialite-submitbar-notification"] {
-  -moz-binding: url(chrome://socialite/content/socialiteBar.xml#socialite-submit-bar);
+  -moz-binding: url(chrome://socialite/content/socialiteBar.xml#socialite-submit-bar) !important;
 }
 
 
