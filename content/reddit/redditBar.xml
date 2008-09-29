@@ -15,17 +15,17 @@
         <xul:label anonid="labelSubreddit" class="reddit-subreddit"/>
         <xul:spacer flex="9999"/>
         <xul:hbox anonid="boxButtons" align="stretch">
-          <xul:button anonid="buttonLike" type="checkbox" label="&like.label;" accesskey="&like.accesskey;" autoCheck="false"/>
-          <xul:button anonid="buttonDislike" type="checkbox" label="&dislike.label;" accesskey="&dislike.accesskey;" autoCheck="false"/>
-          <xul:button anonid="buttonComments" accesskey="&comments.accesskey;">
+          <xul:button anonid="buttonLike" class="socialite-notification-button" type="checkbox" label="&like.label;" accesskey="&like.accesskey;" autoCheck="false"/>
+          <xul:button anonid="buttonDislike" class="socialite-notification-button" type="checkbox" label="&dislike.label;" accesskey="&dislike.accesskey;" autoCheck="false"/>
+          <xul:button anonid="buttonComments" class="socialite-notification-button" accesskey="&comments.accesskey;">
             <xul:image anonid="imageComments" class="button-icon" src="chrome://socialite/content/reddit/comments.png" hidden="true" style="margin-right: 4px"/>
             <xul:label anonid="labelCommentsNum" class="button-text" value="?"/>
             <xul:label anonid="labelCommentsWord" class="button-text" value=" &comments-plural.label;" accesskey="&comments.accesskey;"/>
           </xul:button>
-          <xul:button anonid="buttonSave" label="&save.label;" accesskey="&save.accesskey;"/>
-          <xul:button anonid="buttonHide" label="&hide.label;" accesskey="&hide.accesskey;"/>
-          <xul:button anonid="buttonRandom" label="&random.label;" accesskey="&random.accesskey;"/>
-          <xul:button anonid="buttonProfile" label="&profile.label;" accesskey="&profile.accesskey;"/>
+          <xul:button anonid="buttonSave" class="socialite-notification-button" label="&save.label;" accesskey="&save.accesskey;"/>
+          <xul:button anonid="buttonHide" class="socialite-notification-button" label="&hide.label;" accesskey="&hide.accesskey;"/>
+          <xul:button anonid="buttonRandom" class="socialite-notification-button" label="&random.label;" accesskey="&random.accesskey;"/>
+          <xul:button anonid="buttonProfile" class="socialite-notification-button" label="&profile.label;" accesskey="&profile.accesskey;"/>
           <children/>
         </xul:hbox>
       </xul:hbox>
@@ -183,11 +183,11 @@
           var self = this;
           function updateButton(button, image, text) {
             if (self.compactDisplay) {
-              button.className = "socialite-button-compact socialite-button-iconic";
+              button.className = "socialite-button-compact socialite-button-iconic socialite-notification-button";
               button.image = image;
               button.tooltipText = text; 
             } else {
-              button.className = "";
+              button.className = "socialite-notification-button";
               button.label = text;
               button.image = "";
               button.tooltipText = "";
@@ -229,7 +229,7 @@
           <xul:menupopup anonid="menuSubreddits"/>
         </xul:menulist>
         <xul:textbox anonid="textboxTitle" emptytext="&textboxTitle.emptytext;" tooltiptext="&textboxTitle.tooltip;" flex="1"/>
-        <xul:button anonid="buttonSubmit" label="&submit.label;" accesskey="&submit.accesskey;"/>
+        <xul:button anonid="buttonSubmit" class="socialite-notification-button" label="&submit.label;" accesskey="&submit.accesskey;"/>
         <children/>
       </xul:hbox>
     </content>

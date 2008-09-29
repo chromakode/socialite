@@ -57,18 +57,23 @@ notification[value="socialite-submitbar-notification"] {
   margin-bottom: 0;
 }
 
+.socialite-notification-button[image] > .button-box > .button-icon,
+.socialite-notification-button > .button-box > .button-icon[src] {
+  margin-right: 3px;
+}
+
 .socialite-button-compact {
   min-width: 0 !important;
 }
-.socialite-button-compact .button-box {
+.socialite-button-compact > .button-box {
   min-width: 0 !important;
   padding: 0;
 }
-.socialite-button-iconic .button-icon {
+.socialite-button-iconic > .button-box > .button-icon {
   margin-left: 3px;
   margin-right: 3px;
 }
-.socialite-button-iconic .button-text {
+.socialite-button-iconic > .button-box >  .button-text {
   display: none;
 }
 
