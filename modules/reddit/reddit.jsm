@@ -194,16 +194,17 @@ RedditSite.prototype.createBarContentUI = function(document, linkInfo) {
   var site = this;
   barContent.afterBound = function() {
     
+    // Action failure handlers for info updates are disabled because the messages are too frequent and unhelpful.
     var voteUpdateHandler = function() {
       barContent.linkInfo.update(
-        hitchThis(barContent, barContent.update),
-        hitchThis(site, site.actionFailureHandler)
+        hitchThis(barContent, barContent.update)/*,
+        hitchThis(site, site.actionFailureHandler)*/
       ).perform(["score"]);
     }
     var updateHandler = function() {
       barContent.linkInfo.update(
-        hitchThis(barContent, barContent.update),
-        hitchThis(site, site.actionFailureHandler)
+        hitchThis(barContent, barContent.update)/*,
+        (hitchThis(site, site.actionFailureHandler)*/
       ).perform([]);
     }
     var subredditURL = function() {
