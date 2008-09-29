@@ -58,14 +58,15 @@ notification[value="socialite-submitbar-notification"] {
 }
 
 .socialite-button-compact {
-  min-width: 0;
+  min-width: 0 !important;
 }
 .socialite-button-compact .button-box {
-  margin-left: 3px;
-  margin-right: 3px;
+  min-width: 0 !important;
+  padding: 0;
 }
 .socialite-button-iconic .button-icon {
-  margin: 0;
+  margin-left: 3px;
+  margin-right: 3px;
 }
 .socialite-button-iconic .button-text {
   display: none;
