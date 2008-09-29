@@ -14,24 +14,23 @@
         <xul:description anonid="descriptionTitle" class="socialite-title" flex="1"/>
         <xul:label anonid="labelSubreddit" class="reddit-subreddit"/>
         <xul:spacer flex="9999"/>
-        <xul:button anonid="buttonLike" type="checkbox" class="messageButton socialite-notification-button" label="&like.label;" accesskey="&like.accesskey;" autoCheck="false"/>
-        <xul:button anonid="buttonDislike" type="checkbox" class="messageButton socialite-notification-button" label="&dislike.label;" accesskey="&dislike.accesskey;" autoCheck="false"/>
-        <xul:button anonid="buttonComments" class="messageButton socialite-notification-button" accesskey="&comments.accesskey;">
+        <xul:button anonid="buttonLike" type="checkbox" label="&like.label;" accesskey="&like.accesskey;" autoCheck="false"/>
+        <xul:button anonid="buttonDislike" type="checkbox" label="&dislike.label;" accesskey="&dislike.accesskey;" autoCheck="false"/>
+        <xul:button anonid="buttonComments" accesskey="&comments.accesskey;">
           <xul:image anonid="imageComments" class="button-icon" src="chrome://socialite/content/reddit/comments.png" hidden="true" style="margin-right: 4px"/>
           <xul:label anonid="labelCommentsNum" class="button-text" value="?"/>
           <xul:label anonid="labelCommentsWord" class="button-text" value=" &comments-plural.label;" accesskey="&comments.accesskey;"/>
         </xul:button>
-        <xul:button anonid="buttonSave" class="messageButton socialite-notification-button" label="&save.label;" accesskey="&save.accesskey;"/>
-        <xul:button anonid="buttonHide" class="messageButton socialite-notification-button" label="&hide.label;" accesskey="&hide.accesskey;"/>
-        <xul:button anonid="buttonRandom" class="messageButton socialite-notification-button" label="&random.label;" accesskey="&random.accesskey;"/>
-        <xul:button anonid="buttonProfile" class="messageButton socialite-notification-button" label="&profile.label;" accesskey="&profile.accesskey;"/>
+        <xul:button anonid="buttonSave" label="&save.label;" accesskey="&save.accesskey;"/>
+        <xul:button anonid="buttonHide" label="&hide.label;" accesskey="&hide.accesskey;"/>
+        <xul:button anonid="buttonRandom" label="&random.label;" accesskey="&random.accesskey;"/>
+        <xul:button anonid="buttonProfile" label="&profile.label;" accesskey="&profile.accesskey;"/>
         <children/>
       </xul:hbox>
     </content>
     
     <resources>
       <stylesheet src="chrome://global/skin/button.css"/>
-      <stylesheet src="chrome://global/skin/notification.css"/>
       <stylesheet src="chrome://socialite/skin/socialite.css"/>
       <stylesheet src="chrome://socialite/skin/reddit.css"/>
     </resources>
@@ -181,13 +180,12 @@
           // Helper for similar buttons to follow
           var self = this;
           function updateButton(button, image, text) {
-            const defaultClasses = "messageButton socialite-notification-button";
             if (self.compactDisplay) {
-              button.className = "socialite-button-compact socialite-button-iconic " + defaultClasses;
+              button.className = "socialite-button-compact socialite-button-iconic";
               button.image = image;
               button.tooltipText = text; 
             } else {
-              button.className = defaultClasses;
+              button.className = "";
               button.label = text;
               button.image = "";
               button.tooltipText = "";
