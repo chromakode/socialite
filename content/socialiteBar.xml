@@ -353,7 +353,7 @@
           // Site link click handler
           var labelSite = document.getAnonymousElementByAttribute(this, "anonid", "labelSite");
           labelSite.addEventListener("click", function(event) {
-            Socialite.openUILink(self.selectedSite.siteURL);
+            Socialite.openUILink(self.selectedSite.siteURL, event);
           }, false);
         ]]>
       </constructor>
