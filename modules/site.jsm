@@ -6,11 +6,14 @@ Components.utils.import("resource://socialite/utils/strUtils.jsm");
 var IOService = Components.classes["@mozilla.org/network/io-service;1"]
                 .getService(Components.interfaces.nsIIOService);
 
-var nativeJSON = Components.classes["@mozilla.org/dom/json;1"]
-                 .createInstance(Components.interfaces.nsIJSON);
-
 var observerService = Components.classes["@mozilla.org/observer-service;1"]
                       .getService(Components.interfaces.nsIObserverService);
+
+var prefService = Components.classes["@mozilla.org/preferences-service;1"]
+                  .getService(Components.interfaces.nsIPrefService);
+
+var nativeJSON = Components.classes["@mozilla.org/dom/json;1"]
+                 .createInstance(Components.interfaces.nsIJSON);
 
 var EXPORTED_SYMBOLS = ["SocialiteSite", "SiteCollection", "SiteClassRegistry"];
 
@@ -20,11 +23,6 @@ function SocialiteSite(siteID, siteName, siteURL) {
   this.siteURI = IOService.newURI(siteURL, null, null);
   this.siteURL = this.siteURI.spec;
   this.loaded = false;
-  
-  this.sitePreferences = Components.classes["@mozilla.org/preferences-service;1"]
-                                            .getService(Components.interfaces.nsIPrefService)
-                                            .getBranch("extensions.socialite.sites." + this.siteID + ".");
-  this.sitePreferences.QueryInterface(Components.interfaces.nsIPrefBranch2);
 }
 
 SocialiteSite.prototype.siteClassID = "SocialiteSite";
@@ -37,7 +35,13 @@ SocialiteSite.prototype.getIconURI = function() {
 }
 
 SocialiteSite.prototype.onLoad = function() {
+  this.sitePreferences = Components.classes["@mozilla.org/preferences-service;1"]
+                         .getService(Components.interfaces.nsIPrefService)
+                         .getBranch("extensions.socialite.sites."+this.siteID+"."+this.siteClassID+".");
+  this.sitePreferences.QueryInterface(Components.interfaces.nsIPrefBranch2);
+  
   faviconWatch.setFavicon(this.siteURL, this.getIconURI());  
+  
   this.loaded = true;  
 };
 
@@ -53,6 +57,7 @@ SocialiteSite.prototype.getLinkInfo = logger.makeStubFunction("SocialiteSite", "
 SocialiteSite.prototype.createBarContentUI = logger.makeStubFunction("SocialiteSite", "createBarContentUI");
 SocialiteSite.prototype.createBarSubmitUI = logger.makeStubFunction("SocialiteSite", "createBarSubmitUI");
 SocialiteSite.prototype.createPreferencesUI = logger.makeStubFunction("SocialiteSite", "createPreferencesUI");
+SocialiteSite.prototype.setDefaultPreferences = logger.makeStubFunction("SocialiteSite", "setDefaultPreferences");
 
 // ---
 
@@ -89,6 +94,10 @@ SiteCollection.prototype.loadSite = function(site) {
   } else {
     throw "Site with id \""+site.siteID+"\" already loaded";
   }
+  
+  // Initialize default preferences -- these don't get saved by the preference system
+  this.setSiteDefaultPreferences(site.siteID, SiteClassRegistry.getClass(site.siteClassID));
+  
   site.onLoad();
   observerService.notifyObservers(this, "socialite-load-site", site.siteID);
 }
@@ -135,30 +144,47 @@ SiteCollection.prototype.saveConfiguredSites = function() {
   Socialite.preferences.setCharPref("sites", nativeJSON.encode(siteIDs));
 }
 
-SiteCollection.prototype.requestID = function() {
-  for (var i=0; i<Number.MAX_VALUE; i++) {
-    if (!(i in this.byID)) {
-      // Reserve this ID
-      this.byID[i] = null;
-      
-      // Clear any existing preferences
-      Socialite.preferences.deleteBranch("sites."+i+".");
-      
-      return i;
+SiteCollection.prototype.requestID = function(siteID) {
+  if (!siteID) {
+    // Since a specific ID was not requested, we will search for an available numeric one.
+    for (var i=0; i<Number.MAX_VALUE; i++) {
+      if (!(i in this.byID)) {
+        siteID = i;
+        break;
+      }
     }
   }
-  throw "Unexpected ID search failure, unable to find free ID";
+  // If the specified siteID already exists, or we couldn't find one, return null.
+  if (siteID in this.byID) {
+    return null;
+  }
+  
+  // Reserve this ID
+  this.byID[siteID] = null;
+  
+  // Clear the preferences branch
+  Socialite.preferences.deleteBranch("sites."+siteID+".");
+  
+  return siteID;
 }
 
-SiteCollection.prototype.releaseID = function(id) {
-  if ((id in this.byID) && (this.byID[id] == null)) {
-    delete this.byID[id];
+SiteCollection.prototype.releaseID = function(siteID) {
+  if ((siteID in this.byID) && (this.byID[siteID] == null)) {
+    delete this.byID[siteID];
     
     // Delete preferences
-    Socialite.preferences.deleteBranch("sites."+id+".");
+    Socialite.preferences.deleteBranch("sites."+siteID+".");
   } else {
     throw "Cannot release ID, ID in use";  
   }
+}
+
+SiteCollection.prototype.setSiteDefaultPreferences = function(siteID, siteClass) {
+  // Clear any existing preferences and reset for a new site class
+  let siteBranchPath = "sites."+siteID+"."+siteClass.prototype.siteClassID+".";
+  let siteDefaultBranch = prefService.getDefaultBranch(Socialite.preferences.root+siteBranchPath);
+  
+  siteClass.prototype.setDefaultPreferences(siteDefaultBranch);
 }
 
 SiteCollection.prototype.createSite = function(siteClassID, siteID, siteName, siteURL) {

@@ -31,8 +31,8 @@ var SocialiteSiteProperties = {
     this.textboxSiteURL = document.getElementById("textboxSiteURL");
     this.labelSiteURLError = document.getElementById("labelSiteURLError");
     
-    this.prefSiteName = this.addSitePreference("prefSiteName", "siteName", "string");
-    this.prefSiteURL = this.addSitePreference("prefSiteURL", "siteURL", "string");
+    this.prefSiteName = this._addBaseSitePreference("prefSiteName", "siteName", "string");
+    this.prefSiteURL = this._addBaseSitePreference("prefSiteURL", "siteURL", "string");
     
     // Site class dropdown menu initialization (populate)
     let buttonSiteClass = document.getElementById("buttonSiteClass");
@@ -51,22 +51,24 @@ var SocialiteSiteProperties = {
     // Handler to update preferences pane for site class
     this.boxSiteProperties = document.getElementById("boxSiteProperties");
     buttonSiteClass.addEventListener("ValueChange", function(event) {
-      let container = SocialiteSiteProperties.boxSiteProperties;
+      let container = SSP.boxSiteProperties;
       
       // Remove old pane
       if (container.hasChildNodes()) {
         container.removeChild(container.firstChild);
       }
       
-      // Add new pane
+      // Add new pane and reset preferences
       let siteClassID = buttonSiteClass.selectedItem.value;
-      let siteClass = SiteClassRegistry.getClass(siteClassID);
-      let pane = siteClass.prototype.createPreferencesUI(document, SocialiteSiteProperties);
+      SSP.siteClass = SiteClassRegistry.getClass(siteClassID);
+      
+      Socialite.sites.setSiteDefaultPreferences(SSP.siteID, SSP.siteClass);
+      let pane = SSP.siteClass.prototype.createPreferencesUI(document, SSP);
       container.appendChild(pane);
     }, false);
     
     // Site class preference initialization
-    this.prefSiteClassID = this.addSitePreference("prefSiteClassID", "siteClassID", "string");
+    this.prefSiteClassID = this._addBaseSitePreference("prefSiteClassID", "siteClassID", "string");
     if (this.isNewSite) {
       this.prefSiteClassID.value = menuSiteClass.childNodes.item(0).value;
     } else {
@@ -77,13 +79,17 @@ var SocialiteSiteProperties = {
     this.validate();
   },
   
-  addSitePreference: function SSProps_addSitePreference(prefID, prefName, prefType) {
+  _addBaseSitePreference: function SSProps_addBaseSitePreference(prefID, prefName, prefType) {
     let preference = document.createElement("preference");
     preference.setAttribute("id", prefID);
     preference.setAttribute("name", "extensions.socialite.sites."+this.siteID+"."+prefName);
     preference.setAttribute("type", prefType);    
     this.preferences.appendChild(preference);
     return preference;
+  },
+  
+  addSitePreference: function SSProps_addSitePreference(prefID, prefName, prefType) {
+    return this._addBaseSitePreference(prefID, this.siteClass.prototype.siteClassID+"."+prefName, prefType);
   },
   
   onAccept: function SSProps_onAccept(event) {
@@ -143,3 +149,4 @@ var SocialiteSiteProperties = {
   }
 
 };
+var SSP = SocialiteSiteProperties;

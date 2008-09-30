@@ -254,14 +254,6 @@
     
     <implementation>
       <field name="siteID"/>
-      <field name="sitePreferences"/>
-      
-      <constructor>
-        this.sitePreferences = Components.classes["@mozilla.org/preferences-service;1"]
-            .getService(Components.interfaces.nsIPrefService)
-            .getBranch("extensions.socialite.sites."+this.siteID+".");
-        this.sitePreferences.QueryInterface(Components.interfaces.nsIPrefBranch2);
-      </constructor>
       
       <method name="destroy">
         <body>
@@ -276,17 +268,7 @@
     </content>
     
     <implementation>
-      <field name="linkInfo"/>
-      <field name="siteID"/>
-      <field name="sitePreferences"/>
       <field name="refreshCallback"/>
-      
-      <constructor>
-        this.sitePreferences = Components.classes["@mozilla.org/preferences-service;1"]
-            .getService(Components.interfaces.nsIPrefService)
-            .getBranch("extensions.socialite.sites."+this.siteID+".");
-        this.sitePreferences.QueryInterface(Components.interfaces.nsIPrefBranch2);
-      </constructor>
 
       <method name="refresh">
         <body>

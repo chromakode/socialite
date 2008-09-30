@@ -15,23 +15,8 @@ stringBundle = Components.classes["@mozilla.org/intl/stringbundle;1"]
                                   .getService(Components.interfaces.nsIStringBundleService)
                                   .createBundle("chrome://socialite/locale/reddit.properties")
 
-var XPathResult = Components.interfaces.nsIDOMXPathResult;
-
 function RedditSite(siteID, siteName, siteURL) {
   SocialiteSite.apply(this, arguments);
-    
-  /*
-  this.bookmarkletAPI = new BookmarkletAPI(this);
-  this.authenticate = Action("reddit.authenticate", function(action) {
-    getAuthHash(
-      hitchThis(this, function success(auth) {
-        this.API.auth = auth;
-        action.success(auth);
-      }),
-      function failure() { action.failure(); }
-    ).perform(this.siteURL);
-  });
-  */
 }
 
 RedditSite.prototype.__proto__ = SocialiteSite.prototype;
@@ -41,10 +26,22 @@ RedditSite.prototype.onLoad = function() {
   this.API = new RedditAPI();
   this.API.auth = new RedditAuth(this.siteURL);
   this.API.auth.refreshAuthInfo().perform();
-}
+};
+
+RedditSite.prototype.setDefaultPreferences = function(siteDefaultBranch) {
+  siteDefaultBranch.setBoolPref("compactDisplay", true);
+  siteDefaultBranch.setBoolPref("showScore", true);
+  siteDefaultBranch.setBoolPref("showSubreddit", true);
+  siteDefaultBranch.setBoolPref("showComments", true);
+  siteDefaultBranch.setBoolPref("showSave", true);
+  siteDefaultBranch.setBoolPref("showHide", false);
+  siteDefaultBranch.setBoolPref("showRandom", false);
+  siteDefaultBranch.setBoolPref("showProfile", false);
+};
 
 RedditSite.prototype.onSitePageLoad = function(doc, win) {
   // Iterate over each article link and register event listener
+  const XPathResult = Components.interfaces.nsIDOMXPathResult;
   var res = doc.evaluate('//a[@class="title loggedin"]', doc.documentElement, null, XPathResult.UNORDERED_NODE_SNAPSHOT_TYPE, null );
    
   for (var i=0; i < res.snapshotLength; i++) {
@@ -69,7 +66,7 @@ RedditSite.prototype.onSitePageLoad = function(doc, win) {
   // This should be safe, since Firefox 3 uses a XPCSafeJSObjectWrapper
   // See http://developer.mozilla.org/en/docs/XPConnect_wrappers#XPCSafeJSObjectWrapper
   this.API.auth.snarfAuthInfo(doc, win);
-}
+};
 
 RedditSite.prototype.linkClicked = function(event) {
   var link = event.target;
@@ -160,7 +157,7 @@ RedditSite.prototype.linkClicked = function(event) {
     // Add the information we collected to the watch list  
     Socialite.watchedURLs.watch(linkInfo.url, this, linkInfo);
   }
-}
+};
 
 RedditSite.prototype.getLinkInfo = function(URL, callback) {
   var infoCall = this.API.info(
@@ -178,7 +175,7 @@ RedditSite.prototype.getLinkInfo = function(URL, callback) {
   
   // We supply null since we do not know the subreddit.
   infoCall.perform(URL, null);
-}
+};
 
 
 RedditSite.prototype.createBarContentUI = function(document, linkInfo) {
@@ -187,6 +184,7 @@ RedditSite.prototype.createBarContentUI = function(document, linkInfo) {
   
   barContent.siteID = this.siteID;
   barContent.linkInfo = linkInfo;
+  barContent.sitePreferences = this.sitePreferences;
   
   // We define behaviors here since I intend the RedditBarContent XBL to only be responsible for the display of a RedditLinkInfo instance.
   // In other words, we'll treat it more like a support widget and define handlers for its commands here. This is helpful because the scripting scope in XBL is limited.
@@ -298,7 +296,7 @@ RedditSite.prototype.createBarContentUI = function(document, linkInfo) {
   
   barContent.style.MozBinding = "url(chrome://socialite/content/reddit/redditBar.xml#reddit-content-ui)"; 
   return barContent;
-}
+};
 
 RedditSite.prototype.createBarSubmitUI = function(document) {
   var barSubmit = document.createElement("hbox");
@@ -355,7 +353,7 @@ RedditSite.prototype.createBarSubmitUI = function(document) {
   
   barSubmit.style.MozBinding = "url(chrome://socialite/content/reddit/redditBar.xml#reddit-submit-ui)"; 
   return barSubmit;
-}
+};
 
 RedditSite.prototype.createPreferencesUI = function(document, propertiesWindow) {
   var propertiesBox = document.createElement("vbox");
@@ -381,29 +379,25 @@ RedditSite.prototype.createPreferencesUI = function(document, propertiesWindow) 
     checkbox.setAttribute("label", stringBundle.GetStringFromName(prefName+"Preference.label"));
     checkbox.setAttribute("accesskey", stringBundle.GetStringFromName(prefName+"Preference.accesskey"));
     checkbox.setAttribute("preference", prefID);
+    preference.setElementValue(checkbox);
     
-    if (propertiesWindow.isNewSite) {
-      // FIXME: why isn't it enough to set the preference value?
-      checkbox.setAttribute("checked", defaultValue);
-      preference.value = defaultValue;
-    }
     parent.appendChild(checkbox);
   }
   
   var generalGroup = addGroupbox(stringBundle.GetStringFromName("generalGroup.caption"));
-  addBooleanPreferenceUI(generalGroup, "compactDisplay", true);
+  addBooleanPreferenceUI(generalGroup, "compactDisplay");
   
   var displayGroup = addGroupbox(stringBundle.GetStringFromName("displayGroup.caption"));
-  addBooleanPreferenceUI(displayGroup, "showScore", true);
-  addBooleanPreferenceUI(displayGroup, "showSubreddit", true);
-  addBooleanPreferenceUI(displayGroup, "showComments", true);
-  addBooleanPreferenceUI(displayGroup, "showSave", true);
-  addBooleanPreferenceUI(displayGroup, "showHide", false);
-  addBooleanPreferenceUI(displayGroup, "showRandom", false);
-  addBooleanPreferenceUI(displayGroup, "showProfile", false);
+  addBooleanPreferenceUI(displayGroup, "showScore");
+  addBooleanPreferenceUI(displayGroup, "showSubreddit");
+  addBooleanPreferenceUI(displayGroup, "showComments");
+  addBooleanPreferenceUI(displayGroup, "showSave");
+  addBooleanPreferenceUI(displayGroup, "showHide");
+  addBooleanPreferenceUI(displayGroup, "showRandom");
+  addBooleanPreferenceUI(displayGroup, "showProfile");
     
   return propertiesBox;  
-}
+};
 
 RedditSite.prototype.actionFailureHandler = function(r, action) {
   // 5xx error codes
@@ -414,7 +408,7 @@ RedditSite.prototype.actionFailureHandler = function(r, action) {
   }
   
   Socialite.siteFailureMessage(this, action.name, text);
-}
+};
 
 // Register this class for instantiation
 RedditSite.prototype.siteClassID = "RedditSite";
