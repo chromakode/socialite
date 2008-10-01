@@ -34,6 +34,7 @@
     <resources>
       <stylesheet src="chrome://global/skin/button.css"/>
       <stylesheet src="chrome://socialite/skin/socialite.css"/>
+      <stylesheet src="chrome://socialite/skin/socialite-platform.css"/>
       <stylesheet src="chrome://socialite/skin/reddit.css"/>
     </resources>
     

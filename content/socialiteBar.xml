@@ -249,9 +249,10 @@
   </binding>
   
   <binding id="socialite-site-ui">
-    <content>
-    </content>
-    
+    <resources>
+      <stylesheet src="chrome://socialite/skin/socialite-platform.css"/>
+    </resources>
+
     <implementation>
       <field name="siteID"/>
       
@@ -264,9 +265,6 @@
   </binding>
   
   <binding id="socialite-site-content-ui" extends="chrome://socialite/content/socialiteBar.xml#socialite-site-ui">
-    <content>
-    </content>
-    
     <implementation>
       <field name="refreshCallback"/>
 
