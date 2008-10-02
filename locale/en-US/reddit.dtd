@@ -20,7 +20,7 @@
 
 <!ENTITY subreddit.tooltip "Subreddit">
 <!ENTITY subreddit.loadingtext "Loading...">
-<!ENTITY textboxTitle.emptytext "Please enter a title describing this location.">
+<!ENTITY textboxTitle.emptytext "Please enter a title describing this web page.">
 <!ENTITY textboxTitle.tooltip "Post Title">
 <!ENTITY submit.label "Submit...">
 <!ENTITY submit.accesskey "s">
