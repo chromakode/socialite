@@ -293,6 +293,7 @@
     
     <resources>
       <stylesheet src="chrome://socialite/skin/socialite.css"/>
+      <stylesheet src="chrome://socialite/skin/socialite-platform.css"/>
       <stylesheet src="chrome://global/skin/notification.css"/>
     </resources>
     

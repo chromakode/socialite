@@ -21,3 +21,7 @@
 .socialite-notification-button:hover:active {
   background-image: url("chrome://global/skin/icons/white-gray-gradient-active.gif");
 }
+
+.socialite-site-name {
+  color: -moz-mac-accentregularhighlight !important;
+}
