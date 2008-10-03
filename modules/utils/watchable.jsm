@@ -15,6 +15,10 @@ Watchable.prototype = {
     return removeFunction;
   },
   
+  get count() {
+    return this.watches.length;
+  },
+  
   send: function() {
     let args = arguments;
     this.watches.forEach(function(callback) {
