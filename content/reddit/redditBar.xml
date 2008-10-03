@@ -24,7 +24,7 @@
           </xul:button> 
           <xul:button anonid="buttonSave" class="socialite-notification-button reddit-logged-in" label="&save.label;" accesskey="&save.accesskey;"/>
           <xul:button anonid="buttonHide" class="socialite-notification-button reddit-logged-in" label="&hide.label;" accesskey="&hide.accesskey;"/>
-          <xul:button anonid="buttonRandom" class="socialite-notification-button reddit-logged-in" label="&random.label;" accesskey="&random.accesskey;"/>
+          <xul:button anonid="buttonRandom" class="socialite-notification-button" label="&random.label;" accesskey="&random.accesskey;"/>
           <xul:button anonid="buttonProfile" class="socialite-notification-button reddit-logged-in" label="&profile.label;" accesskey="&profile.accesskey;"/>
           <xul:button anonid="buttonLogin" class="socialite-notification-button reddit-not-logged-in" label="&login.label;" accesskey="&login.accesskey;" image="chrome://socialite/content/reddit/login.png"/>
           <children/>
@@ -209,12 +209,17 @@
           var self = this;
           function updateButton(button, image, text) {
             if (self.compactDisplay) {
-              button._oldClassName = button.className;
-              button.className = button._oldClassName + " socialite-button-compact socialite-button-iconic";
+              if (button._oldClassName == null) {
+                button._oldClassName = button.className;
+                button.className = button.className + " socialite-button-compact socialite-button-iconic";
+              }
               if (text) { button.tooltipText = text; }
               if (image) { button.image = image; }
             } else {
-              button.className = button._oldClassName;
+              if (button._oldClassName != null) {
+                button.className = button._oldClassName;
+                button._oldClassName = null;
+              }
               if (text) {
                 button.label = text;
                 button.tooltipText = "";
