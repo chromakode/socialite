@@ -252,7 +252,7 @@ var SocialiteWindow =
     return notification;
   },
   
-  linkContextAction: function(site, event, forceSubmit) {
+  linkContextAction: function(site, event, forceSubmit, finishedCallback) {
     let selectedBrowser = gBrowser.selectedBrowser;
     let currentURL = selectedBrowser.currentURI.spec;
     let notificationBox = gBrowser.getNotificationBox(selectedBrowser);
@@ -262,8 +262,8 @@ var SocialiteWindow =
     //
     
     // Helper function to open the bar with some content.
-    let socialiteBar = notificationBox.getNotificationWithValue(SOCIALITE_CONTENT_NOTIFICATION_VALUE);
     function openContentBarTo(site, siteUI) {
+      let socialiteBar = notificationBox.getNotificationWithValue(SOCIALITE_CONTENT_NOTIFICATION_VALUE);
       if (socialiteBar && socialiteBar.url != currentURL) {
         // The bar was opened for another URL. We will replace it.
         socialiteBar.close();
@@ -276,8 +276,8 @@ var SocialiteWindow =
     }
     
     // Helper function to open the submit bar with a particular destination site selected.
-    let submitBar = notificationBox.getNotificationWithValue(SOCIALITE_SUBMIT_NOTIFICATION_VALUE);
     function openSubmitBarTo(site) {
+      let submitBar = notificationBox.getNotificationWithValue(SOCIALITE_SUBMIT_NOTIFICATION_VALUE);
       if (!submitBar) {
         submitBar = SocialiteWindow.createSubmitBar(notificationBox, currentURL);
       }
@@ -332,17 +332,26 @@ var SocialiteWindow =
     // *** Context Logic ***
     //
     
-    // *** Step 1: UI cases where the intended action is clearly to submit
-    if (event.button == 1 || forceSubmit) {
-      // Middle-click forces submit action
-      openSubmitBarTo(site)
-    } else if (submitBar) {
-      // If the submit bar is already open, we will simply update it
+    let currentSocialiteBar = notificationBox.getNotificationWithValue(SOCIALITE_CONTENT_NOTIFICATION_VALUE);
+    let currentSubmitBar = notificationBox.getNotificationWithValue(SOCIALITE_SUBMIT_NOTIFICATION_VALUE);
+    
+    // *** Step 1: Identify UI cases where the intended action is clearly to submit
+    
+    let shouldSubmit = false;
+    
+    // Middle-click forces submit action
+    shouldSubmit |= (event.button == 1 || forceSubmit);
+    
+    // If the submit bar is already open, we will simply update it
+    shouldSubmit |= (currentSubmitBar != null);
+    
+    // If the content bar is already open, we will open the submit bar, with one exception:
+    // If a single site has been specified, and the content bar does not have it loaded, we should perform a lookup instead.
+    shouldSubmit |= ((currentSocialiteBar != null) && ((site == null) || currentSocialiteBar.hasSiteUI(site)));
+    
+    if (shouldSubmit) {
       openSubmitBarTo(site);
-    } else if (socialiteBar && (!site || socialiteBar.hasSiteUI(site))) {
-      // If the content bar is already open, we will open the submit bar, with one exception:
-      // If a single site has been specified, and the content bar does not have  
-      openSubmitBarTo(site);
+      finishedCallback();
     } else {
       
       // *** Step 2: We must check the link info and figure out whether the link has been posted before.
@@ -360,6 +369,7 @@ var SocialiteWindow =
             // If we didn't find any linkInfo, open the submit bar
             openSubmitBarTo(site);
           }
+          finishedCallback();
         });
         
       } else {
@@ -373,6 +383,7 @@ var SocialiteWindow =
             // If we didn't find a single site that knows about this link, open the submit bar 
             openSubmitBarTo();
           }
+          finishedCallback();
         });
       }
     }

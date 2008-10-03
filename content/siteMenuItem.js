@@ -10,6 +10,8 @@ SocialiteWindow.SiteMenuItem = {
   SITE_MENUITEM_ID: "socialite-site-menuitem-",
   SITE_MENUITEM_CLASS: "socialite-site-menuitem",
   MENUITEM_CLASS: "socialite-menuitem",
+  
+  GENERAL_ICON: "chrome://socialite/content/socialite-small.png",
   GENERAL_MENUITEM_ID: "socialite-menuitem",
   
   create: function(site) {
@@ -19,7 +21,7 @@ SocialiteWindow.SiteMenuItem = {
     
     siteMenuItem.id = this.SITE_MENUITEM_ID + site.siteID;
     siteMenuItem.className = [this.SITE_MENUITEM_CLASS, this.MENUITEM_CLASS].join(" ");
-    siteMenuItem.removeFaviconWatch = faviconWatch.useFaviconAsAttribute(siteMenuItem, "image", site.siteURL);
+    siteMenuItem._removeFaviconWatch = faviconWatch.useFaviconAsAttribute(siteMenuItem, "image", site.siteURL);
     
     siteMenuItem.updateVisibility = function(visible, consolidated) {
       siteMenuItem.setAttribute("hidden", !visible || consolidated);
@@ -59,7 +61,7 @@ SocialiteWindow.SiteMenuItem = {
     
     siteMenuItem.id = this.GENERAL_MENUITEM_ID;
     siteMenuItem.className = this.MENUITEM_CLASS;
-    siteMenuItem.setAttribute("src", "chrome://socialite/content/socialite-small.png");
+    siteMenuItem.setAttribute("src", SocialiteWindow.SiteUrlBarIcon.GENERAL_ICON);
     siteMenuItem.setAttribute("label", SocialiteWindow.stringBundle.GetStringFromName("generalMenuItem.label"));
     
     siteMenuItem.updateVisibility = function(visible, consolidated) {
@@ -90,7 +92,7 @@ SocialiteWindow.SiteMenuItem = {
   remove: function(site) {
     let fileMenuPopup = document.getElementById("menu_FilePopup");
     let siteMenuItem = this.get(site);
-    if (siteMenuItem.removeFaviconWatch) { siteMenuItem.removeFaviconWatch(); }
+    if (siteMenuItem._removeFaviconWatch) { siteMenuItem._removeFaviconWatch(); }
     fileMenuPopup.removeChild(siteMenuItem);
   },
   
@@ -117,7 +119,7 @@ SocialiteWindow.SiteMenuItem = {
   
   onUnload: function() {
     Array.forEach(this.getAll(), function(siteMenuItem) {
-      if (siteMenuItem.removeFaviconWatch) { siteMenuItem.removeFaviconWatch(); }
+      if (siteMenuItem._removeFaviconWatch) { siteMenuItem._removeFaviconWatch(); }
     });
   }
 }

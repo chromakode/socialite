@@ -390,7 +390,7 @@
             }
             menuItem.updateSiteIcon = function() {
               faviconWatch = Components.utils.import("resource://socialite/utils/faviconWatch.jsm");
-              menuItem.setAttribute("image", faviconWatch.getFavicon(site.siteURL));
+              menuItem.setAttribute("image", faviconWatch.getFaviconURL(site.siteURL));
             }
             
             var self = this;

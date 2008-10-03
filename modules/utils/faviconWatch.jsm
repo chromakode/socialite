@@ -7,7 +7,7 @@ var faviconService = Components.classes["@mozilla.org/browser/favicon-service;1"
 var historyService = Components.classes["@mozilla.org/browser/nav-history-service;1"]
                      .getService(Components.interfaces.nsINavHistoryService);
 
-var EXPORTED_SYMBOLS = ["setFavicon", "getFavicon", "addFaviconWatch", "removeFaviconWatch", "useFaviconAsAttribute"];
+var EXPORTED_SYMBOLS = ["setFavicon", "getFaviconURL", "addFaviconWatch", "removeFaviconWatch", "useFaviconAsAttribute"];
 
 var watches = {};
 
@@ -21,7 +21,7 @@ function setFavicon(siteURL, faviconURL, skipLoad) {
   return faviconService.getFaviconImageForPage(siteURI).spec;
 }
 
-function getFavicon(siteURL) {
+function getFaviconURL(siteURL) {
   var siteURI = IOService.newURI(siteURL, null, null);
   return faviconService.getFaviconImageForPage(siteURI).spec;
 }
@@ -64,7 +64,7 @@ function useFaviconAsAttribute(element, attributeName, siteURL) {
   }
   
   var removeFunction = addFaviconWatch(siteURL, update);
-  update(getFavicon(siteURL));
+  update(getFaviconURL(siteURL));
   return removeFunction;
 }
 
