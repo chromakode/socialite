@@ -351,7 +351,7 @@ var SocialiteWindow =
     
     if (shouldSubmit) {
       openSubmitBarTo(site);
-      finishedCallback();
+      if (finishedCallback) { finishedCallback(); }
     } else {
       
       // *** Step 2: We must check the link info and figure out whether the link has been posted before.
@@ -369,7 +369,7 @@ var SocialiteWindow =
             // If we didn't find any linkInfo, open the submit bar
             openSubmitBarTo(site);
           }
-          finishedCallback();
+          if (finishedCallback) { finishedCallback(); }
         });
         
       } else {
@@ -383,7 +383,7 @@ var SocialiteWindow =
             // If we didn't find a single site that knows about this link, open the submit bar 
             openSubmitBarTo();
           }
-          finishedCallback();
+          if (finishedCallback) { finishedCallback(); }
         });
       }
     }
