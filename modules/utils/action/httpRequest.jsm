@@ -8,7 +8,7 @@ var EXPORTED_SYMBOLS = ["RequestAction", "GetAction", "PostAction"];
 STATUS_SUCCESS = 200;
 
 function RequestAction(method, url, parameters, successCallback, failureCallback) {
-  var act = _HTTPRequestAction(successCallback, failureCallback);
+  let act = _HTTPRequestAction(successCallback, failureCallback);
   
   act.url = url;
   
@@ -28,7 +28,7 @@ function RequestAction(method, url, parameters, successCallback, failureCallback
   if (parameters) {
     act.parameters = parameters;
   } else {
-    act.parameters = {}
+    act.parameters = {};
   }
   
   act.request = Components.classes["@mozilla.org/xmlextras/xmlhttprequest;1"].createInstance();
@@ -48,8 +48,8 @@ function PostAction(url, parameters, successCallback, failureCallback) {
 // From http://code.reddit.com/browser/r2/r2/public/static/utils.js
 // Modified by chromakode to merge in and remove prototyped Object.__iter__
 function make_get_params(obj) {
-  var res = [];
-  for(var o in obj) {
+  let res = [];
+  for (let o in obj) {
     if(!(o in Object.prototype)) {
       res.unshift( o+"="+encodeURIComponent(obj[o]) );
     }
@@ -58,8 +58,8 @@ function make_get_params(obj) {
 }
 
 var _HTTPRequestAction = Action("httpRequest", function(action) {
-  var onLoad = function(e) {
-    var request = e.target;
+  let onLoad = function(e) {
+    let request = e.target;
     if (request.status == STATUS_SUCCESS) {
       action.success(request);
     } else {
@@ -67,10 +67,13 @@ var _HTTPRequestAction = Action("httpRequest", function(action) {
     }
   };
   
-  var formattedParams = make_get_params(action.parameters);
+  let formattedParams = make_get_params(action.parameters);
   
   if (action.method == "get") {
-    var target = action.url + "?" + formattedParams;
+    let target = action.url;
+    if (formattedParams) {
+      target += "?" + formattedParams;
+    }
     logger.log("httpRequest", "GET request to " + target);
     action.request.open("get", target, true);
     action.request.onload = onLoad;
