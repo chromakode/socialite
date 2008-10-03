@@ -109,12 +109,21 @@
         }
         this.sitePreferences.addObserver("", this.observer, false);
         
-        // Watch the site's authentication status and change UI accordingly
         let auth = this.linkInfo.API.auth;
-        this.setAttribute("isloggedin", auth.isLoggedIn());
-        this._removeStateChangeWatch = auth.onStateChange.watch(function(isLoggedIn) {
-          self.setAttribute("isloggedin", isLoggedIn);
-        });
+
+        // Watch the site's authentication status and change UI accordingly
+        function updateLoggedIn(loggedIn) {
+          self.setAttribute("isloggedin", loggedIn);
+        }
+        updateLoggedIn(auth.isLoggedIn());
+        this._removeAuthStateWatch = auth.onStateChange.watch(updateLoggedIn);
+        
+        // Watch for changes in logged in username and update the button
+        function updateUsername(username) {
+          self.buttonProfile.setAttribute("tooltiptext", "&profile.tooltipPre; ("+username+")");
+        }
+        updateUsername(auth.username);
+        this._removeUsernameWatch = auth.onUsernameChange.watch(updateUsername);
         
         this.update();
         this.afterBound();
@@ -126,7 +135,8 @@
       
       <method name="destroy">
         <body>
-          this._removeStateChangeWatch();
+          this._removeAuthStateWatch();
+          this._removeUsernameWatch();
           this.sitePreferences.removeObserver("", this.observer);
         </body>
       </method>
@@ -201,13 +211,15 @@
             if (self.compactDisplay) {
               button._oldClassName = button.className;
               button.className = button._oldClassName + " socialite-button-compact socialite-button-iconic";
-              button.image = image;
-              button.tooltipText = text; 
+              if (text) { button.tooltipText = text; }
+              if (image) { button.image = image; }
             } else {
               button.className = button._oldClassName;
-              button.label = text;
-              button.image = "";
-              button.tooltipText = "";
+              if (text) {
+                button.label = text;
+                button.tooltipText = "";
+              }
+              if (image) { button.image = ""; }
             }
           }
           
@@ -233,7 +245,7 @@
           updateButton(this.buttonRandom, "chrome://socialite/content/reddit/8ball.png", "&random.label;");
           
           // Profile button
-          updateButton(this.buttonProfile, "chrome://socialite/content/reddit/profile.png", "&profile.label;");
+          updateButton(this.buttonProfile, "chrome://socialite/content/reddit/profile.png", null);
         </body>
       </method>
     </implementation>
