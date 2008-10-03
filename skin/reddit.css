@@ -1,3 +1,11 @@
+.reddit-content-ui[isloggedin="false"] .buttonbox > .reddit-logged-in {
+  display: none;
+}
+
+.reddit-content-ui[isloggedin="true"] .buttonbox > .reddit-not-logged-in {
+  display: none;
+}
+
 .reddit-score {
   font-weight: bold;
   color: #969696;

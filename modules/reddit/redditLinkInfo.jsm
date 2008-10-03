@@ -40,7 +40,7 @@ function RedditLinkInfoFromJSON(api, json) {
  * A high-level object for dealing with a single link on Reddit.
  */
 function RedditLinkInfo(api, url, fullname) {
-  this.redditAPI = api;
+  this.API = api;
   this.url = url;
   this.fullname = fullname;
   
@@ -49,7 +49,7 @@ function RedditLinkInfo(api, url, fullname) {
 }
 
 RedditLinkInfo.prototype.update = Action("RedditLinkInfo.update", function(omittedFields, action) {  
-  var infoCall = this.redditAPI.info(
+  var infoCall = this.API.info(
     hitchThis(this, function success(r, json) {
       // Ensure the received data is not older than the last update (for instance, due to lag)
       if (action.startTime >= this.state.lastUpdated) {
@@ -93,7 +93,7 @@ RedditLinkInfo.prototype.vote = Action("RedditLinkInfo.vote", function(isLiked, 
 
     // Submit the vote, and then update state.
     // (proceeding after each AJAX call completes)
-    var submit = this.redditAPI.vote(
+    var submit = this.API.vote(
       function success(r) { action.success(r); },
       function failure(r) {
         this.revertLocalState(submit.startTime, ["isLiked", "score"])
@@ -109,7 +109,7 @@ RedditLinkInfo.prototype.hide = Action("RedditLinkInfo.hide", function(action) {
   if (!this.localState.isHidden) {
    this.localState.isHidden = true;
   
-   var submit = this.redditAPI.hide(
+   var submit = this.API.hide(
       function success(r) { action.success(r); },
       function failure(r) {
         this.revertLocalState(submit.startTime, ["isHidden"])
@@ -125,7 +125,7 @@ RedditLinkInfo.prototype.unhide = Action("RedditLinkInfo.unhide", function(actio
   if (this.localState.isHidden) {
    this.localState.isHidden = false;
   
-   var submit = this.redditAPI.unhide(
+   var submit = this.API.unhide(
       function success(r) { action.success(r); },
       function failure(r) {
         this.revertLocalState(submit.startTime, ["isHidden"])
@@ -141,7 +141,7 @@ RedditLinkInfo.prototype.save = Action("RedditLinkInfo.save", function(action) {
   if (!this.localState.isSaved) {
    this.localState.isSaved = true;
   
-   var submit = this.redditAPI.save(
+   var submit = this.API.save(
       function success(r) { action.success(r); },
       function failure(r) {
         this.revertLocalState(submit.startTime, ["isSaved"])
@@ -157,7 +157,7 @@ RedditLinkInfo.prototype.unsave = Action("RedditLinkInfo.unsave", function(actio
   if (this.localState.isSaved) {
    this.localState.isSaved = false;
   
-   var submit = this.redditAPI.unsave(
+   var submit = this.API.unsave(
       function success(r) { action.success(r); },
       function failure(r) {
         this.revertLocalState(submit.startTime, ["isSaved"])

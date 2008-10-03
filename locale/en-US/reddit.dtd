@@ -15,8 +15,10 @@
 <!ENTITY unhide.accesskey "n">
 <!ENTITY random.label "Serendipity!">
 <!ENTITY random.accesskey "r">
-<!ENTITY profile.label "User Profile">
+<!ENTITY profile.label "My Profile">
 <!ENTITY profile.accesskey "p">
+<!ENTITY login.label "Log in...">
+<!ENTITY login.accesskey "i">
 
 <!ENTITY subreddit.tooltip "Subreddit">
 <!ENTITY subreddit.loadingtext "Loading...">

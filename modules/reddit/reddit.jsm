@@ -191,21 +191,20 @@ RedditSite.prototype.createBarContentUI = function(document, linkInfo) {
   // FIXME: We'll use this 'afterBound' hack because I'm tired of trying to figure out how to make XBL apply synchronously.
   var site = this;
   barContent.afterBound = function() {
-    
     // Action failure handlers for info updates are disabled because the messages are too frequent and unhelpful.
-    var voteUpdateHandler = function() {
+    let voteUpdateHandler = function() {
       barContent.linkInfo.update(
         hitchThis(barContent, barContent.update)/*,
         hitchThis(site, site.actionFailureHandler)*/
       ).perform(["score"]);
     }
-    var updateHandler = function() {
+    let updateHandler = function() {
       barContent.linkInfo.update(
         hitchThis(barContent, barContent.update)/*,
         (hitchThis(site, site.actionFailureHandler)*/
       ).perform([]);
     }
-    var subredditURL = function() {
+    let subredditURL = function() {
       return site.siteURL+"r/"+barContent.linkInfo.localState.subreddit+"/";
     }
     
@@ -216,7 +215,7 @@ RedditSite.prototype.createBarContentUI = function(document, linkInfo) {
     }, false);
         
     this.buttonLike.addEventListener("click", function(e) {
-      var vote = barContent.linkInfo.vote(
+      let vote = barContent.linkInfo.vote(
         voteUpdateHandler,
         site.actionFailureHandler
       );
@@ -229,7 +228,7 @@ RedditSite.prototype.createBarContentUI = function(document, linkInfo) {
     }, false);
     
     this.buttonDislike.addEventListener("click", function(e) {
-      var vote = barContent.linkInfo.vote(
+      let vote = barContent.linkInfo.vote(
         voteUpdateHandler,
         site.actionFailureHandler
       );
@@ -246,41 +245,43 @@ RedditSite.prototype.createBarContentUI = function(document, linkInfo) {
     }, false);
     
     this.buttonSave.addEventListener("click", function(e) {
+      let modify;
       if (barContent.linkInfo.localState.isSaved) {
-        var submit = barContent.linkInfo.unsave(
+        modify = barContent.linkInfo.unsave(
           updateHandler,
           site.actionFailureHandler
         );
       } else {
-        var submit = barContent.linkInfo.save(
+        modify = barContent.linkInfo.save(
           updateHandler,
           site.actionFailureHandler
         );
       }
-      submit.perform()
+      modify.perform();
       barContent.update();
     }, false);
     
     this.buttonHide.addEventListener("click", function(e) {
+      let modify;
       if (barContent.linkInfo.localState.isHidden) {
-        var submit = barContent.linkInfo.unhide(
+        modify = barContent.linkInfo.unhide(
           updateHandler,
           site.actionFailureHandler
         );
       } else {
-        var submit = barContent.linkInfo.hide(
+        modify = barContent.linkInfo.hide(
           updateHandler,
           site.actionFailureHandler
         );
       }
-      submit.perform()
+      modify.perform();
       barContent.update();
     }, false);
     
     this.buttonRandom.addEventListener("click", function(e) {
       site.API.randomrising(
         function (r, json) {
-          var linkInfo = RedditLinkInfoFromJSON(site.API, json);
+          let linkInfo = RedditLinkInfoFromJSON(site.API, json);
           Socialite.watchedURLs.watch(linkInfo.url, site, linkInfo);
           Socialite.openUILink(linkInfo.url, e);
         },
@@ -292,6 +293,9 @@ RedditSite.prototype.createBarContentUI = function(document, linkInfo) {
       Socialite.openUILink(subredditURL()+"user/"+barContent.linkInfo.redditAPI.auth.username+"/", e);
     }, false);
     
+    this.buttonLogin.addEventListener("click", function(e) {
+      Socialite.openUILink(site.siteURL + "login/", e);
+    }, false);
   };
   
   barContent.style.MozBinding = "url(chrome://socialite/content/reddit/redditBar.xml#reddit-content-ui)"; 

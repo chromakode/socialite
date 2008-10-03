@@ -36,6 +36,7 @@ function formatEntry(entry) {
 }
 
 function log() {
+  let entry
   if (arguments.length == 2) {
     entry = {section: arguments[0], msg: arguments[1]};
   } else if (arguments.length == 3) {

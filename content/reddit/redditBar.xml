@@ -5,7 +5,7 @@
 
   <binding id="reddit-content-ui" extends="chrome://socialite/content/socialiteBar.xml#socialite-site-content-ui">
     <content>
-      <xul:hbox anonid="container" flex="1" align="center">
+      <xul:hbox anonid="reddit-content-ui-container" flex="1" align="center">
         <xul:box tooltip="_child">
           <!-- A parent box element seems to be necessary to make tooltips work.-->
           <xul:tooltip anonid="tooltipScore" class="reddit-score-tooltip"/>
@@ -14,18 +14,19 @@
         <xul:description anonid="descriptionTitle" class="socialite-title" flex="1"/>
         <xul:label anonid="labelSubreddit" class="reddit-subreddit"/>
         <xul:spacer flex="9999"/>
-        <xul:hbox anonid="boxButtons" align="stretch">
-          <xul:button anonid="buttonLike" class="socialite-notification-button" type="checkbox" label="&like.label;" accesskey="&like.accesskey;" autoCheck="false"/>
-          <xul:button anonid="buttonDislike" class="socialite-notification-button" type="checkbox" label="&dislike.label;" accesskey="&dislike.accesskey;" autoCheck="false"/>
+        <xul:hbox anonid="boxButtons" class="buttonbox" align="stretch">
+          <xul:button anonid="buttonLike" class="socialite-notification-button reddit-logged-in" type="checkbox" label="&like.label;" accesskey="&like.accesskey;" autoCheck="false"/>
+          <xul:button anonid="buttonDislike" class="socialite-notification-button reddit-logged-in" type="checkbox" label="&dislike.label;" accesskey="&dislike.accesskey;" autoCheck="false"/>
           <xul:button anonid="buttonComments" class="socialite-notification-button" accesskey="&comments.accesskey;">
             <xul:image anonid="imageComments" class="button-icon" src="chrome://socialite/content/reddit/comments.png" hidden="true" style="margin-right: 4px"/>
             <xul:label anonid="labelCommentsNum" class="button-text" value="?"/>
             <xul:label anonid="labelCommentsWord" class="button-text" value=" &comments-plural.label;" accesskey="&comments.accesskey;"/>
-          </xul:button>
-          <xul:button anonid="buttonSave" class="socialite-notification-button" label="&save.label;" accesskey="&save.accesskey;"/>
-          <xul:button anonid="buttonHide" class="socialite-notification-button" label="&hide.label;" accesskey="&hide.accesskey;"/>
-          <xul:button anonid="buttonRandom" class="socialite-notification-button" label="&random.label;" accesskey="&random.accesskey;"/>
-          <xul:button anonid="buttonProfile" class="socialite-notification-button" label="&profile.label;" accesskey="&profile.accesskey;"/>
+          </xul:button> 
+          <xul:button anonid="buttonSave" class="socialite-notification-button reddit-logged-in" label="&save.label;" accesskey="&save.accesskey;"/>
+          <xul:button anonid="buttonHide" class="socialite-notification-button reddit-logged-in" label="&hide.label;" accesskey="&hide.accesskey;"/>
+          <xul:button anonid="buttonRandom" class="socialite-notification-button reddit-logged-in" label="&random.label;" accesskey="&random.accesskey;"/>
+          <xul:button anonid="buttonProfile" class="socialite-notification-button reddit-logged-in" label="&profile.label;" accesskey="&profile.accesskey;"/>
+          <xul:button anonid="buttonLogin" class="socialite-notification-button reddit-not-logged-in" label="&login.label;" accesskey="&login.accesskey;" image="chrome://socialite/content/reddit/login.png"/>
           <children/>
         </xul:hbox>
       </xul:hbox>
@@ -41,7 +42,12 @@
     <implementation implements="nsIObserver">
       <field name="afterBound"/>
       
+      <property name="isLoggedIn"
+                onget="return this.getAttribute('isloggedin') == 'true';"/>
+      
       <constructor>
+        this.className += " reddit-content-ui";
+      
         // Public members for easy access
         this.labelScore = document.getAnonymousElementByAttribute(this, "anonid", "labelScore");
         this.buttonLike = document.getAnonymousElementByAttribute(this, "anonid", "buttonLike");
@@ -55,6 +61,7 @@
         this.buttonHide = document.getAnonymousElementByAttribute(this, "anonid", "buttonHide");
         this.buttonRandom = document.getAnonymousElementByAttribute(this, "anonid", "buttonRandom");
         this.buttonProfile = document.getAnonymousElementByAttribute(this, "anonid", "buttonProfile");
+        this.buttonLogin = document.getAnonymousElementByAttribute(this, "anonid", "buttonLogin");
         
         // Display preferences
         this.labelScore.hidden = !this.sitePreferences.getBoolPref("showScore");
@@ -102,6 +109,13 @@
         }
         this.sitePreferences.addObserver("", this.observer, false);
         
+        // Watch the site's authentication status and change UI accordingly
+        let auth = this.linkInfo.API.auth;
+        this.setAttribute("isloggedin", auth.isLoggedIn());
+        this._removeStateChangeWatch = auth.onStateChange.watch(function(isLoggedIn) {
+          self.setAttribute("isloggedin", isLoggedIn);
+        });
+        
         this.update();
         this.afterBound();
       </constructor>
@@ -112,6 +126,7 @@
       
       <method name="destroy">
         <body>
+          this._removeStateChangeWatch();
           this.sitePreferences.removeObserver("", this.observer);
         </body>
       </method>
@@ -184,11 +199,12 @@
           var self = this;
           function updateButton(button, image, text) {
             if (self.compactDisplay) {
-              button.className = "socialite-button-compact socialite-button-iconic socialite-notification-button";
+              button._oldClassName = button.className;
+              button.className = button._oldClassName + " socialite-button-compact socialite-button-iconic";
               button.image = image;
               button.tooltipText = text; 
             } else {
-              button.className = "socialite-notification-button";
+              button.className = button._oldClassName;
               button.label = text;
               button.image = "";
               button.tooltipText = "";
