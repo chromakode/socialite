@@ -8,8 +8,9 @@ Watchable.prototype = {
     let index = this.watches.length;
     this.watches.push(callback);
     
+    let self = this;
     function removeFunction() {
-      this.watches.splice(index, 1);
+      self.watches.splice(index, 1);
     }
     return removeFunction;
   },
