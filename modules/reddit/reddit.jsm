@@ -241,7 +241,7 @@ RedditSite.prototype.createBarContentUI = function(document, linkInfo) {
     }, false);
     
     this.buttonComments.addEventListener("click", function(e) {
-      Socialite.openUILink(subredditURL()+"info/"+barContent.linkInfo.getID()+"/comments/", e);
+      Socialite.openUILink(subredditURL()+"comments/"+barContent.linkInfo.getID()+"/", e);
     }, false);
     
     this.buttonSave.addEventListener("click", function(e) {
