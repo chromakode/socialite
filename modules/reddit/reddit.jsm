@@ -331,7 +331,10 @@ RedditSite.prototype.createBarSubmitUI = function(document) {
         
         barSubmit.menulistSubreddit.selectedIndex = 0;
       },
-      site.actionFailureHandler
+      function failure() {
+        // Silently handle error -- the user could be logged out
+        barSubmit.menulistSubreddit.hidden = true;
+      }
     ).perform();
     
     this.buttonSubmit.addEventListener("click", function(e) {
