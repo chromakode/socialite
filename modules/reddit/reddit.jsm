@@ -42,7 +42,7 @@ RedditSite.prototype.setDefaultPreferences = function(siteDefaultBranch) {
 RedditSite.prototype.onSitePageLoad = function(doc, win) {
   // Iterate over each article link and register event listener
   const XPathResult = Components.interfaces.nsIDOMXPathResult;
-  var res = doc.evaluate('//a[@class="title loggedin"]', doc.documentElement, null, XPathResult.UNORDERED_NODE_SNAPSHOT_TYPE, null );
+  var res = doc.evaluate('//div[@class="entry"]//a[contains(@class, "title")]', doc.documentElement, null, XPathResult.UNORDERED_NODE_SNAPSHOT_TYPE, null );
    
   for (var i=0; i < res.snapshotLength; i++) {
     var siteLink = res.snapshotItem(i);
