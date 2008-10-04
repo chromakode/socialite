@@ -39,7 +39,7 @@
       <stylesheet src="chrome://socialite/skin/reddit.css"/>
     </resources>
     
-    <implementation implements="nsIObserver">
+    <implementation>
       <field name="afterBound"/>
       
       <property name="isLoggedIn"
@@ -273,7 +273,7 @@
       <stylesheet src="chrome://socialite/skin/reddit.css"/>
     </resources>
     
-    <implementation implements="nsIObserver">
+    <implementation>
       <field name="afterBound"/>
       
       <constructor>

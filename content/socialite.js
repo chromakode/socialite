@@ -408,9 +408,6 @@ var SocialiteWindow =
             socialiteBar = gBrowser.getNotificationBox(browser).getNotificationWithValue(SOCIALITE_CONTENT_NOTIFICATION_VALUE);
             if (socialiteBar) {
               socialiteBar.removeSiteUI(site);
-              if (socialiteBar.contentCount == 0) {
-                 socialiteBar.close(); 
-              }
             }
           }
           break;

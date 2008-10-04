@@ -114,10 +114,21 @@
         
         // Site selector change handler
         siteSelector.addEventListener("command", function(event) {
-          var index = self.getContentIndex(siteSelector.selectedSite);
-          if (index != -1) {
-            deckContent.selectedIndex = index
-            self.childNodes[index].refresh();
+          let site = siteSelector.selectedSite;
+          if (site != null) {
+            let index = self.getContentIndex(siteSelector.selectedSite);
+            if (index != -1) {
+              deckContent.selectedIndex = index
+              self.childNodes[index].refresh();
+            }
+          } else {
+            // If the selected site is null, the selected site was likely removed.
+            // We should attempt to select another site, or close if the bar is empty.
+            if (self.contentCount > 0) {
+              siteSelector.selectIndex(0);
+            } else {
+              self.close();
+            }          
           }
         }, false);
         
@@ -139,6 +150,10 @@
             
             var siteSelector = document.getAnonymousElementByAttribute(this, "anonid", "siteSelector");
             siteSelector.addSite(site);
+            
+            if (this.contentCount == 1) {
+              siteSelector.selectSite(site);
+            }
           ]]>
         </body>
       </method>
@@ -232,9 +247,20 @@
             self.removeChild(self.firstChild);
           }
           
-          // Add new UI
-          var siteSubmitUI = self.siteSelector.selectedSite.createBarSubmitUI(document);
-          self.appendChild(siteSubmitUI);
+          let site = self.siteSelector.selectedSite;
+          if (site != null) {
+            // Add new UI
+            var siteSubmitUI = site.createBarSubmitUI(document);
+            self.appendChild(siteSubmitUI);
+          } else {
+            // If the selected site is null, the selected site was likely removed.
+            // We should attempt to select another site, or close if the bar is empty.
+            if (siteSelector.siteCount > 0) {
+              siteSelector.selectIndex(0);
+            } else {
+              self.close();
+            }          
+          }
         }, false);
         
         // XXX: Clean up children that must remove observers since XBL destructors don't work 
@@ -298,7 +324,7 @@
     </resources>
     
     <implementation>
-      <field name="menuItems"/>
+      <field name="siteItems"/>
       <field name="selectedSite"/>
       <field name="preferences"/>
     
@@ -311,9 +337,10 @@
               .getBranch("extensions.socialite.sites.");
           this.preferences.QueryInterface(Components.interfaces.nsIPrefBranch2);
           
-          this.menuItems = {};
+          this.siteItems = {};
+          this.menuSites = document.getAnonymousElementByAttribute(this, "anonid", "menuSites");
           
-          var self = this;
+          let self = this;
           
           // Site name change observer
           this.observer = {
@@ -325,15 +352,15 @@
               
               // Update the UI if the site name changes.
               if (prefName == "siteName") {
-                var newSiteName = self.preferences.getCharPref(data);
+                let newSiteName = self.preferences.getCharPref(data);
                 
-                var menuItem = self.menuItems[siteID];
+                let menuItem = self.siteItems[siteID];
                 if (menuItem) {
                   menuItem.updateSiteName(newSiteName);
                 }
                 
                 if (self.selectedSite.siteID == siteID) {
-                  var siteName = document.getAnonymousElementByAttribute(self, "anonid", "labelSite");
+                  let siteName = document.getAnonymousElementByAttribute(self, "anonid", "labelSite");
                   siteName.value = newSiteName;
                 }
               }
@@ -342,15 +369,15 @@
           this.preferences.addObserver("", this.observer, false);
           
           // Site menu updater
-          var menuSites = document.getAnonymousElementByAttribute(this, "anonid", "menuSites");
-          menuSites.addEventListener("popupshowing", function(event) {
-            Array.map(menuSites.childNodes, function(menuitem) {
+          
+          this.menuSites.addEventListener("popupshowing", function(event) {
+            Array.map(self.menuSites.childNodes, function(menuitem) {
               menuitem.updateSiteIcon();
             });
           }, false);
           
           // Site link click handler
-          var labelSite = document.getAnonymousElementByAttribute(this, "anonid", "labelSite");
+          let labelSite = document.getAnonymousElementByAttribute(this, "anonid", "labelSite");
           labelSite.addEventListener("click", function(event) {
             Socialite.openUILink(self.selectedSite.siteURL, event);
           }, false);
@@ -371,18 +398,26 @@
         </body>
       </method>
       
+      <property name="siteCount">
+        <getter>
+          <![CDATA[
+            return this.menuSites.childNodes.length;
+          ]]>
+        </getter>
+      </property>
+      
       <method name="addSite">
         <parameter name="site"/>
         <body>
           <![CDATA[
-            var menuSites = document.getAnonymousElementByAttribute(this, "anonid", "menuSites");
-            
-            var menuItem = document.createElement("menuitem");
+            let self = this;
+          
+            let menuItem = document.createElement("menuitem");
             menuItem.class = "menuitem-iconic";
             menuItem.updateSiteName = function(newName) {
               Components.utils.import("resource://socialite/utils/domUtils.jsm");
               menuItem.setAttribute("label", newName);
-              addSorted(menuItem, menuSites, function(item1, item2) {
+              addSorted(menuItem, self.menuSites, function(item1, item2) {
                 let label1 = item1.getAttribute("label"); 
                 let label2 = item2.getAttribute("label"); 
                 return label1.localeCompare(label2);
@@ -393,19 +428,16 @@
               menuItem.setAttribute("image", faviconWatch.getFaviconURL(site.siteURL));
             }
             
-            var self = this;
             menuItem.addEventListener("command", function(event) {
               self.selectSite(site);
               event.stopPropagation();
             }, false);
             
             menuItem.updateSiteName(site.siteName);
-            this.menuItems[site.siteID] = menuItem;
+            this.siteItems[site.siteID] = menuItem;
             
-            if (menuSites.childNodes.length == 1) {
-              this.selectSite(site);
-            } else {
-              var buttonSiteSelector = document.getAnonymousElementByAttribute(this, "anonid", "buttonSiteSelector");
+            if (this.menuSites.childNodes.length > 1) {
+              let buttonSiteSelector = document.getAnonymousElementByAttribute(this, "anonid", "buttonSiteSelector");
               buttonSiteSelector.hidden = false;
             }
           ]]>
@@ -416,20 +448,16 @@
         <parameter name="site"/>
         <body>
           <![CDATA[
-            var menuSites = document.getAnonymousElementByAttribute(this, "anonid", "menuSites");
-            menuSites.removeChild(this.menuItems[site.siteID]);
-             delete this.menuItems[site.siteID];
+            this.menuSites.removeChild(this.siteItems[site.siteID]);
+             delete this.siteItems[site.siteID];
             
-            if (menuSites.childNodes.length == 1) {
-              var buttonSiteSelector = document.getAnonymousElementByAttribute(this, "anonid", "buttonSiteSelector");
+            if (this.menuSites.childNodes.length == 1) {
+              let buttonSiteSelector = document.getAnonymousElementByAttribute(this, "anonid", "buttonSiteSelector");
               buttonSiteSelector.hidden = true;
             }
             
-            if (this.selectedSite == site) {
-              // Select the first site
-              if (menuSites.hasChildNodes()) {
-                menuSites.firstChild.doCommand();
-              }
+            if (site == this.selectedSite) {
+              this.selectSite(null);
             }
           ]]>
         </body>
@@ -439,22 +467,37 @@
         <parameter name="site"/>
         <body>
           <![CDATA[
+            let siteImage = document.getAnonymousElementByAttribute(this, "anonid", "imageSite");
+            let siteName = document.getAnonymousElementByAttribute(this, "anonid", "labelSite");
             if (site != this.selectedSite) {
-              var siteImage = document.getAnonymousElementByAttribute(this, "anonid", "imageSite");
-              var siteName = document.getAnonymousElementByAttribute(this, "anonid", "labelSite");
-              
-              siteName.value = site.siteName;
-              
-              faviconWatch = Components.utils.import("resource://socialite/utils/faviconWatch.jsm");
-              if (siteImage.removeFaviconWatch) { siteImage.removeFaviconWatch(); }
-              siteImage.removeFaviconWatch = faviconWatch.useFaviconAsAttribute(siteImage, "src", site.siteURL);
+              if (site != null) {
+                siteName.value = site.siteName;
+                
+                faviconWatch = Components.utils.import("resource://socialite/utils/faviconWatch.jsm");
+                if (siteImage.removeFaviconWatch) { siteImage.removeFaviconWatch(); }
+                siteImage.removeFaviconWatch = faviconWatch.useFaviconAsAttribute(siteImage, "src", site.siteURL);
+              } else {
+                siteName.value = "";
+                siteImage.setAttribute("src", "");
+              }
               
               this.selectedSite = site;
               
               // Fire event
               var event = document.createEvent("UIEvent");
-              event.initUIEvent("command", true, true, window, site.siteID);
+              event.initUIEvent("command", true, true, window, site ? site.siteID : null);
               this.dispatchEvent(event);
+            }
+          ]]>
+        </body>
+      </method>
+      
+      <method name="selectIndex">
+        <parameter name="index"/>
+        <body>
+          <![CDATA[
+            if (index >= 0 && index < this.menuSites.childNodes.length) {
+              this.menuSites.childNodes[index].doCommand();
             }
           ]]>
         </body>
@@ -472,11 +515,11 @@
           this.addSite(site);
         }
 
-        var observerService = Components.classes["@mozilla.org/observer-service;1"]
+        let observerService = Components.classes["@mozilla.org/observer-service;1"]
                               .getService(Components.interfaces.nsIObserverService);
 
         // Site name change observer
-        var self = this;
+        let self = this;
         this.observer = {
           observe: function(subject, topic, data) {
             if (topic == "socialite-load-site") {
@@ -497,7 +540,7 @@
       <method name="destroyLoadedSiteSelector">
         <body>
           <![CDATA[
-            var observerService = Components.classes["@mozilla.org/observer-service;1"]
+            let observerService = Components.classes["@mozilla.org/observer-service;1"]
                                   .getService(Components.interfaces.nsIObserverService);
             observerService.removeObserver(this.observer, "socialite-load-site");
             observerService.removeObserver(this.observer, "socialite-unload-site");
