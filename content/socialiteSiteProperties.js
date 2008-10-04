@@ -22,6 +22,7 @@ var SocialiteSiteProperties = {
       this.site = window.arguments[0].site;
       this.siteID = this.site.siteID
     }
+    this.newSiteInfo = window.arguments[0].newSiteInfo;
     
     // Set up preferences for the site
     this.preferences = document.getElementById("preferencesSocialite");
@@ -94,7 +95,13 @@ var SocialiteSiteProperties = {
   
   onAccept: function SSProps_onAccept(event) {
     if (this.isNewSite) {
-      this.site = Socialite.sites.createSite(this.prefSiteClassID.value, this.siteID, this.prefSiteName.value, this.prefSiteURL.value)
+      // Apparently, any XMLHttpRequests called from this method "disappear" and never call their callbacks because the window closes immediately.
+      // Some sites may make XMLHttpRequests (particularly for authentication) when they are loaded, so we must ensure XMLHttpRequests work.
+      // Thus, we'll return the information required to create and load the site to the parent preferences window and create the site there.
+      this.newSiteInfo["siteClassID"] = this.prefSiteClassID.value;
+      this.newSiteInfo["siteID"] = this.siteID;
+      this.newSiteInfo["siteName"] = this.prefSiteName.value;
+      this.newSiteInfo["siteURL"] = this.prefSiteURL.value;
       return true;
     } else {
       let needsReload = false;
