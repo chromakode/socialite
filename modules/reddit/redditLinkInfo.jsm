@@ -95,10 +95,10 @@ RedditLinkInfo.prototype.vote = Action("RedditLinkInfo.vote", function(isLiked, 
     // (proceeding after each AJAX call completes)
     var submit = this.API.vote(
       function success(r) { action.success(r); },
-      function failure(r) {
-        this.revertLocalState(submit.startTime, ["isLiked", "score"])
+      hitchThis(this, function failure(r) {
+        this.revertLocalState(["isLiked", "score"], submit.startTime);
         action.failure(r);
-      }
+      })
     );    
       
     submit.perform(this.fullname, this.localState.isLiked);
@@ -111,10 +111,10 @@ RedditLinkInfo.prototype.hide = Action("RedditLinkInfo.hide", function(action) {
   
    var submit = this.API.hide(
       function success(r) { action.success(r); },
-      function failure(r) {
-        this.revertLocalState(submit.startTime, ["isHidden"])
+      hitchThis(this, function failure(r) {
+        this.revertLocalState(["isHidden"], submit.startTime);
         action.failure(r);
-      }
+      })
     )
     
     submit.perform(this.fullname);
@@ -127,10 +127,10 @@ RedditLinkInfo.prototype.unhide = Action("RedditLinkInfo.unhide", function(actio
   
    var submit = this.API.unhide(
       function success(r) { action.success(r); },
-      function failure(r) {
-        this.revertLocalState(submit.startTime, ["isHidden"])
+      hitchThis(this, function failure(r) {
+        this.revertLocalState(["isHidden"], submit.startTime);
         action.failure(r);
-      }
+      })
     )
     
     submit.perform(this.fullname);
@@ -143,10 +143,10 @@ RedditLinkInfo.prototype.save = Action("RedditLinkInfo.save", function(action) {
   
    var submit = this.API.save(
       function success(r) { action.success(r); },
-      function failure(r) {
-        this.revertLocalState(submit.startTime, ["isSaved"])
+      hitchThis(this, function failure(r) {
+        this.revertLocalState(["isSaved"], submit.startTime);
         action.failure(r);
-      }
+      })
     )
     
     submit.perform(this.fullname);
@@ -159,10 +159,10 @@ RedditLinkInfo.prototype.unsave = Action("RedditLinkInfo.unsave", function(actio
   
    var submit = this.API.unsave(
       function success(r) { action.success(r); },
-      function failure(r) {
-        this.revertLocalState(submit.startTime, ["isSaved"])
+      hitchThis(this, function failure(r) {
+        this.revertLocalState(["isSaved"], submit.startTime);
         action.failure(r);
-      }
+      })
     )
     
     submit.perform(this.fullname);

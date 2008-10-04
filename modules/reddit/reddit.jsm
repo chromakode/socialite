@@ -205,6 +205,10 @@ RedditSite.prototype.createBarContentUI = function(document, linkInfo) {
         (hitchThis(site, site.actionFailureHandler)*/
       ).perform([]);
     }
+    let failureHandler = function(r, action) {
+      barContent.update();
+      site.actionFailureHandler(r, action);
+    }
     let subredditURL = function() {
       return site.siteURL+"r/"+barContent.linkInfo.localState.subreddit+"/";
     }
@@ -218,7 +222,7 @@ RedditSite.prototype.createBarContentUI = function(document, linkInfo) {
     this.buttonLike.addEventListener("click", function(e) {
       let vote = barContent.linkInfo.vote(
         voteUpdateHandler,
-        site.actionFailureHandler
+        failureHandler
       );
       if (barContent.linkInfo.localState.isLiked == true) {
         vote.perform(null);
@@ -231,7 +235,7 @@ RedditSite.prototype.createBarContentUI = function(document, linkInfo) {
     this.buttonDislike.addEventListener("click", function(e) {
       let vote = barContent.linkInfo.vote(
         voteUpdateHandler,
-        site.actionFailureHandler
+        failureHandler
       );
       if (barContent.linkInfo.localState.isLiked == false) {
         vote.perform(null);
@@ -250,12 +254,12 @@ RedditSite.prototype.createBarContentUI = function(document, linkInfo) {
       if (barContent.linkInfo.localState.isSaved) {
         modify = barContent.linkInfo.unsave(
           updateHandler,
-          site.actionFailureHandler
+          failureHandler
         );
       } else {
         modify = barContent.linkInfo.save(
           updateHandler,
-          site.actionFailureHandler
+          failureHandler
         );
       }
       modify.perform();
@@ -267,12 +271,12 @@ RedditSite.prototype.createBarContentUI = function(document, linkInfo) {
       if (barContent.linkInfo.localState.isHidden) {
         modify = barContent.linkInfo.unhide(
           updateHandler,
-          site.actionFailureHandler
+          failureHandler
         );
       } else {
         modify = barContent.linkInfo.hide(
           updateHandler,
-          site.actionFailureHandler
+          failureHandler
         );
       }
       modify.perform();
@@ -286,7 +290,7 @@ RedditSite.prototype.createBarContentUI = function(document, linkInfo) {
           Socialite.watchedURLs.watch(linkInfo.url, site, linkInfo);
           Socialite.openUILink(linkInfo.url, e);
         },
-        site.actionFailureHandler
+        failureHandler
       ).perform();
     }, false);
     
