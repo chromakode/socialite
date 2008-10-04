@@ -121,8 +121,9 @@ RedditSite.prototype.linkClicked = function(event) {
         linkInfo.localState.commentCount = 0;
       }
       
-      var linkSave               = doc.getElementById("save_"+linkInfo.fullname+"_a");
-      var linkUnsave             = doc.getElementById("unsave_"+linkInfo.fullname+"_a");
+      // XXX The second cases only exist to support older installations of reddit
+      var linkSave               = doc.getElementById("a_save_"+linkInfo.fullname) || doc.getElementById("save_"+linkInfo.fullname+"_a");
+      var linkUnsave             = doc.getElementById("a_unsave_"+linkInfo.fullname) || doc.getElementById("unsave_"+linkInfo.fullname+"_a");
       
       if (linkSave != null) {
         // If there's a save link
@@ -139,8 +140,8 @@ RedditSite.prototype.linkClicked = function(event) {
       
       // You'd think the link was hidden, the user couldn't have clicked on it
       // But they could find it in their hidden links list.
-      var linkHide             = doc.getElementById("hide_"+linkInfo.fullname+"_a");
-      var linkUnhide           = doc.getElementById("unsave_"+linkInfo.fullname+"_a");
+      var linkHide             = doc.getElementById("a_hide_"+linkInfo.fullname+"_a") || doc.getElementById("hide_"+linkInfo.fullname+"_a");
+      var linkUnhide           = doc.getElementById("a_unsave_"+linkInfo.fullname+"_a") || doc.getElementById("unsave_"+linkInfo.fullname+"_a");
       
       if (linkHide != null) {
         linkInfo.localState.isHidden = false;
