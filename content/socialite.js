@@ -264,7 +264,7 @@ var SocialiteWindow =
     // Helper function to open the bar with some content.
     function openContentBarTo(site, siteUI) {
       let socialiteBar = notificationBox.getNotificationWithValue(SOCIALITE_CONTENT_NOTIFICATION_VALUE);
-      if (socialiteBar && socialiteBar.url != currentURL) {
+      if (socialiteBar && socialiteBar.URL != currentURL) {
         // The bar was opened for another URL. We will replace it.
         socialiteBar.close();
         socialiteBar = null;
