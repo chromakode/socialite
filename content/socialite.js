@@ -3,6 +3,7 @@ let importModule = function(name) Components.utils.import(name, modules);
 
 let Socialite = importModule("resource://socialite/socialite.jsm").Socialite;
 let logger = importModule("resource://socialite/utils/log.jsm");
+let extUtils = importModule("resource://socialite/utils/extUtils.jsm");
 let persistence = importModule("resource://socialite/persistence.jsm");
 
 let observerService = Components.classes["@mozilla.org/observer-service;1"]
@@ -10,6 +11,7 @@ let observerService = Components.classes["@mozilla.org/observer-service;1"]
 
 let SOCIALITE_CONTENT_NOTIFICATION_VALUE = "socialite-contentbar-notification";
 let SOCIALITE_SUBMIT_NOTIFICATION_VALUE = "socialite-submitbar-notification"; 
+let SOCIALITE_NOSITES_NOTIFICATION_VALUE = "socialite-nosites-notification";
 
 // ---
 
@@ -203,7 +205,7 @@ var SocialiteWindow =
   },
   
   createContentBar: function(notificationBox, URL) {
-    var notification = notificationBox.appendNotification(
+    let notification = notificationBox.appendNotification(
       "",
       SOCIALITE_CONTENT_NOTIFICATION_VALUE,
       "",
@@ -232,7 +234,7 @@ var SocialiteWindow =
   },
   
   createSubmitBar: function(notificationBox, URL) {
-    var notification = notificationBox.appendNotification(
+    let notification = notificationBox.appendNotification(
       "",
       SOCIALITE_SUBMIT_NOTIFICATION_VALUE,
       "",
@@ -249,6 +251,28 @@ var SocialiteWindow =
     notification.URL = URL;
     
     logger.log("SocialiteWindow", "Submit notification created");
+    return notification;
+  },
+  
+  createNoSitesNotification: function(notificationBox, URL) {
+    let notification = notificationBox.getNotificationWithValue(SOCIALITE_NOSITES_NOTIFICATION_VALUE);
+    if (!notification) {
+      notification = notificationBox.appendNotification(
+        SocialiteWindow.stringBundle.GetStringFromName("windowNoSitesNotification.label"),
+        SOCIALITE_NOSITES_NOTIFICATION_VALUE,
+        "",
+        notificationBox.PRIORITY_INFO_MEDIUM, // Appear on top of socialite content notifications
+        [
+           {
+             label: SocialiteWindow.stringBundle.GetStringFromName("windowNoSitesNotification.editButton.label"),
+             accessKey: SocialiteWindow.stringBundle.GetStringFromName("windowNoSitesNotification.editButton.accesskey"),
+             callback: function() {
+               extUtils.openPreferences(window, "chrome://socialite/content/socialitePreferences.xul", "socialitePreferencesSitesPane");
+             }
+           }
+        ]
+      );
+    }
     return notification;
   },
   
@@ -334,10 +358,18 @@ var SocialiteWindow =
     // *** Context Logic ***
     //
     
+    // *** Step 0: Check that we have sites loaded
+    
+    if (Socialite.sites.count == 0) {
+      SocialiteWindow.createNoSitesNotification(notificationBox);
+      if (finishedCallback) { finishedCallback(); }
+      return;
+    }
+   
+    // *** Step 1: Identify UI cases where the intended action is clearly to submit
+    
     let currentSocialiteBar = notificationBox.getNotificationWithValue(SOCIALITE_CONTENT_NOTIFICATION_VALUE);
     let currentSubmitBar = notificationBox.getNotificationWithValue(SOCIALITE_SUBMIT_NOTIFICATION_VALUE);
-    
-    // *** Step 1: Identify UI cases where the intended action is clearly to submit
     
     let shouldSubmit = false;
     
