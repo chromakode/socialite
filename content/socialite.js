@@ -133,7 +133,7 @@ var SocialiteWindow =
     SocialiteWindow.SiteUrlBarIcon.onUnload();
     SocialiteWindow.SiteMenuItem.onUnload();
     
-    Socialite.preferences.removeObserver("", this.preferenceObserver);
+    Socialite.preferences.removeObserver("", SocialiteWindow.preferenceObserver);
     
     observerService.removeObserver(SocialiteWindow.siteObserver, "socialite-load-site");
     observerService.removeObserver(SocialiteWindow.siteObserver, "socialite-unload-site");
