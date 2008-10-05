@@ -312,12 +312,11 @@ var SocialiteWindow =
     // Since each call happens asynchronously, we iterate by making a chain of callbacks.
     function getSiteWatchLinkInfos(URL, sites, callback) {
       linkInfos = [];
-      
-      // Iterate over each site given
+
       siteIterator = Iterator(sites);
       
-      function next(linkInfo) {
-        linkInfos.push(linkInfo);
+      function next(linkInfo, start) {
+        if (!start) { linkInfos.push(linkInfo); }
         try {
           let [siteID, site] = siteIterator.next();
           getWatchLinkInfo(URL, site, next);
@@ -328,8 +327,7 @@ var SocialiteWindow =
       }
       
       // Get the sequence started.
-      let [siteID, site] = siteIterator.next();
-      getWatchLinkInfo(URL, site, next);
+      next(null, true);
     }
     
     //
@@ -407,6 +405,8 @@ var SocialiteWindow =
         case "socialite-unload-site":
           SocialiteWindow.SiteUrlBarIcon.remove(site);
           SocialiteWindow.SiteMenuItem.remove(site);
+          
+          // Remove site from open notifications
           for (let i=0; i<gBrowser.browsers.length; i++) {
             let browser = gBrowser.browsers[i];
             socialiteBar = gBrowser.getNotificationBox(browser).getNotificationWithValue(SOCIALITE_CONTENT_NOTIFICATION_VALUE);
