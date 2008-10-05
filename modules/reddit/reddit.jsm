@@ -295,7 +295,7 @@ RedditSite.prototype.createBarContentUI = function(document, linkInfo) {
     }, false);
     
     this.buttonProfile.addEventListener("click", function(e) {
-      Socialite.utils.openUILink(subredditURL()+"user/"+barContent.linkInfo.redditAPI.auth.username+"/", e);
+      Socialite.utils.openUILink(subredditURL()+"user/"+barContent.linkInfo.API.auth.username+"/", e);
     }, false);
     
     this.buttonLogin.addEventListener("click", function(e) {
