@@ -216,7 +216,7 @@ RedditSite.prototype.createBarContentUI = function(document, linkInfo) {
     this.refreshCallback = updateHandler;
     
     this.labelSubreddit.addEventListener("click", function(e) {
-      Socialite.openUILink(subredditURL(), e);
+      Socialite.utils.openUILink(subredditURL(), e);
     }, false);
         
     this.buttonLike.addEventListener("click", function(e) {
@@ -246,7 +246,7 @@ RedditSite.prototype.createBarContentUI = function(document, linkInfo) {
     }, false);
     
     this.buttonComments.addEventListener("click", function(e) {
-      Socialite.openUILink(subredditURL()+"comments/"+barContent.linkInfo.getID()+"/", e);
+      Socialite.utils.openUILink(subredditURL()+"comments/"+barContent.linkInfo.getID()+"/", e);
     }, false);
     
     this.buttonSave.addEventListener("click", function(e) {
@@ -288,18 +288,18 @@ RedditSite.prototype.createBarContentUI = function(document, linkInfo) {
         function (r, json) {
           let linkInfo = RedditLinkInfoFromJSON(site.API, json);
           Socialite.watchedURLs.watch(linkInfo.url, site, linkInfo);
-          Socialite.openUILink(linkInfo.url, e);
+          Socialite.utils.openUILink(linkInfo.url, e);
         },
         failureHandler
       ).perform();
     }, false);
     
     this.buttonProfile.addEventListener("click", function(e) {
-      Socialite.openUILink(subredditURL()+"user/"+barContent.linkInfo.redditAPI.auth.username+"/", e);
+      Socialite.utils.openUILink(subredditURL()+"user/"+barContent.linkInfo.redditAPI.auth.username+"/", e);
     }, false);
     
     this.buttonLogin.addEventListener("click", function(e) {
-      Socialite.openUILink(site.siteURL + "login/", e);
+      Socialite.utils.openUILinkIn(site.siteURL + "login/", "tab");
     }, false);
   };
   
@@ -358,7 +358,7 @@ RedditSite.prototype.createBarSubmitUI = function(document) {
                   "&url="+encodeURIComponent(submitURL)+
                   "&title="+encodeURIComponent(submitTitle);
       
-      Socialite.openUILink(formURL, e);
+      Socialite.utils.openUILink(formURL, e);
       barSubmit.parentNode.close();
     }, false);
   };

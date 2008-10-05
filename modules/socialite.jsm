@@ -45,10 +45,19 @@ var Socialite =
   siteFailureMessage: function(site, subject, message) {
     Socialite.failureMessage(site.siteName, subject+": "+message);
   },
+  
+  utils: {
 
-  openUILink: function(url, e) {
-    window = windowManager.getMostRecentWindow("navigator:browser");
-    window.openUILink(url, e);
+    openUILink: function(url, e) {
+      window = windowManager.getMostRecentWindow("navigator:browser");
+      window.openUILink(url, e);
+    },
+    
+    openUILinkIn: function(url, where) {
+      window = windowManager.getMostRecentWindow("navigator:browser");
+      window.openUILinkIn(url, where);
+    }
+    
   }
 
 }
