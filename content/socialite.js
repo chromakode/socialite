@@ -283,6 +283,10 @@ var SocialiteWindow =
       }
       if (site) {
         submitBar.siteSelector.selectSite(site);
+      } else {
+        if (submitBar.siteSelector.siteCount > 0) {
+          submitBar.siteSelector.selectIndex(0);
+        }
       }
     }
     
