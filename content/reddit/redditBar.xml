@@ -281,6 +281,17 @@
         this.menuSubreddits = document.getAnonymousElementByAttribute(this, "anonid", "menuSubreddits");
         this.textboxTitle = document.getAnonymousElementByAttribute(this, "anonid", "textboxTitle");
         this.buttonSubmit = document.getAnonymousElementByAttribute(this, "anonid", "buttonSubmit");
+        
+        // Pressing the enter key submits.
+        let self = this;
+        this.textboxTitle.addEventListener("keypress", function(event) {
+          if (event.keyCode == KeyEvent.DOM_VK_RETURN) {
+            self.buttonSubmit.click()
+          }
+        }, false);
+        
+        this.textboxTitle.focus();
+        
         this.afterBound();
       </constructor>
       
