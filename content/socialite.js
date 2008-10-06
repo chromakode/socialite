@@ -45,10 +45,6 @@ var SocialiteWindow =
 {
   
   init: function() {
-    SocialiteWindow.stringBundle = Components.classes["@mozilla.org/intl/stringbundle;1"]
-                                   .getService(Components.interfaces.nsIStringBundleService)
-                                   .createBundle("chrome://socialite/locale/socialite.properties")
-                                   
     window.addEventListener("load", SocialiteWindow.onLoad, false);
     window.addEventListener("unload", SocialiteWindow.onUnload, false);
   },
@@ -258,14 +254,14 @@ var SocialiteWindow =
     let notification = notificationBox.getNotificationWithValue(SOCIALITE_NOSITES_NOTIFICATION_VALUE);
     if (!notification) {
       notification = notificationBox.appendNotification(
-        SocialiteWindow.stringBundle.GetStringFromName("windowNoSitesNotification.label"),
+        Socialite.stringBundle.GetStringFromName("windowNoSitesNotification.label"),
         SOCIALITE_NOSITES_NOTIFICATION_VALUE,
         "",
         notificationBox.PRIORITY_INFO_MEDIUM, // Appear on top of socialite content notifications
         [
            {
-             label: SocialiteWindow.stringBundle.GetStringFromName("windowNoSitesNotification.editButton.label"),
-             accessKey: SocialiteWindow.stringBundle.GetStringFromName("windowNoSitesNotification.editButton.accesskey"),
+             label: Socialite.stringBundle.GetStringFromName("windowNoSitesNotification.editButton.label"),
+             accessKey: Socialite.stringBundle.GetStringFromName("windowNoSitesNotification.editButton.accesskey"),
              callback: function() {
                extUtils.openPreferences(window, "chrome://socialite/content/socialitePreferences.xul", "socialitePreferencesSitesPane");
              }

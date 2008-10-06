@@ -88,7 +88,7 @@ SocialiteWindow.SiteUrlBarIcon = {
     urlBarIcon.id = this.GENERAL_URLBARICON_ID;
     urlBarIcon.className = [this.URLBARICON_CLASS, "urlbar-icon"].join(" ");
     urlBarIcon.setAttribute("src", SocialiteWindow.SiteUrlBarIcon.GENERAL_ICON);
-    urlBarIcon.setAttribute("tooltiptext", SocialiteWindow.stringBundle.GetStringFromName("generalUrlBarIcon.tooltip"));
+    urlBarIcon.setAttribute("tooltiptext", Socialite.stringBundle.GetStringFromName("generalUrlBarIcon.tooltip"));
    
     urlBarIcon.updateVisibility = function(visible, consolidated) {
       urlBarIcon.setAttribute("hidden", !visible || !consolidated);

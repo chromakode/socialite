@@ -414,9 +414,9 @@ RedditSite.prototype.createPreferencesUI = function(document, propertiesWindow) 
 RedditSite.prototype.actionFailureHandler = function(r, action) {
   // 5xx error codes
   if (r.status >= 500 && r.status < 600) {
-    text = "Unable to perform the requested action. Please try again.";
+    text = stringBundle.GetStringFromName("failureMsg.tryAgain");
   } else {
-    text = "HTTP status " + r.status + " recieved.";
+    text = stringBundle.formatStringFromName("failureMsg.httpStatus", [ r.status ], 1);
   }
   
   Socialite.siteFailureMessage(this, action.name, text);

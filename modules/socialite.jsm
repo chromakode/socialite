@@ -15,6 +15,10 @@ var Socialite =
     
     Socialite.sites = new SiteCollection();
     Socialite.watchedURLs = new WatchedURLs();
+    
+    Socialite.stringBundle = Components.classes["@mozilla.org/intl/stringbundle;1"]
+                             .getService(Components.interfaces.nsIStringBundleService)
+                             .createBundle("chrome://socialite/locale/socialite.properties")
   },
   
   load: function() {
@@ -36,7 +40,7 @@ var Socialite =
     
     alertsService.showAlertNotification(
       "chrome://global/skin/icons/Error.png",
-      "Socialite Error" + titlePart,
+      Socialite.stringBundle.GetStringFromName("failureMessage.title") + titlePart,
       message, 
       null, null, null, "socialite-failure"
     );
