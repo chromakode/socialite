@@ -1,11 +1,11 @@
-The following images in the directory "content/reddit/" are (C) 2008 CondeNet, Inc. All rights reserved:
+ilThe following images in the directory "content/reddit/" are (C) 2008 CondeNet, Inc. All rights reserved:
 	reddit.ico
 	upgray.png
 	upmod.png
 	downgray.png
 	downmod.png
 	
-The following images in the directory "content/reddit" are (C) 2008 Mark James, licensed under the Creative Commons Attribution 2.5 License:
+The following images in the directory "content/reddit/" are (C) 2008 Mark James, licensed under the Creative Commons Attribution 2.5 License:
 	comments.png
 	saved.png
 	savedgray.png
@@ -17,7 +17,9 @@ The following images are derivative works and thus (C) 2008 Chromakode, licensed
 	profile.png (originally status_online.png)
 More silk icons by Mark James can be found at http://www.famfamfam.com/lab/icons/silk/.
 
-The icon in "skin/general-preferences.png" uses a wrench icon from the Tango Project (http://tango.freedesktop.org) licensed under Creative Commons Attribution Share-Alike 2.5. The icon is thus also Creative Commons Attribution Share-Alike 2.5.
+The image "content/reddit/working.gif" is from http://ajaxload.info/ and "totally free for use" as per the origin page footer.
+
+The image in "skin/general-preferences.png" uses a wrench icon from the Tango Project (http://tango.freedesktop.org) licensed under Creative Commons Attribution Share-Alike 2.5. The derivative icon is thus also Creative Commons Attribution Share-Alike 2.5.
 
 The following license applies to all other files unless noted within the file:
 

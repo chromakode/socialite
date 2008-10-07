@@ -9,7 +9,7 @@
       <Description>
         <em:locale>en-US</em:locale>
         <em:name>Socialite</em:name>
-        <em:description>Displays a social bookmarking toolbar above pages from reddit.com.</em:description>
+        <em:description>A social bookmarking toolbar for reddit.com and reddit sites.</em:description>
         <em:creator>Chromakode</em:creator>
       </Description>
     </em:localized>
