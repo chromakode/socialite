@@ -14,7 +14,7 @@
 }
 
 .reddit-score-tooltip {
-	-moz-binding: url(chrome://socialite/content/reddit/scoreTooltip.xml#scoretooltip);
+  -moz-binding: url(chrome://socialite/content/reddit/scoreTooltip.xml#scoretooltip);
 }
 
 .reddit-liked {

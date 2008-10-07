@@ -3,7 +3,7 @@
 /* Mimic default fancy OSX notification bar buttons */
 
 .socialite-notification-button {
-	-moz-appearance: none;
+  -moz-appearance: none;
   background: url("chrome://global/skin/icons/white-gray-gradient.gif") transparent repeat-x center center;
   -moz-background-clip: padding;
   border: 1px solid;

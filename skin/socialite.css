@@ -16,8 +16,8 @@
 }
 
 .socialite-menulist-iconic > menupopup > .menuitem-iconic  > .menu-iconic-left {
-	/* Why on earth do I have to do this? */
-	display: -moz-box;
+  /* Why on earth do I have to do this? */
+  display: -moz-box;
 }
 
 .socialite-menulist-compact > menupopup > menuitem {
@@ -35,11 +35,11 @@
 
 
 hbox[anonid="siteSelector"] {
-	-moz-binding: url(chrome://socialite/content/socialiteBar.xml#socialite-site-selector);
+  -moz-binding: url(chrome://socialite/content/socialiteBar.xml#socialite-site-selector);
 }
 
 hbox[anonid="loadedSiteSelector"] {
-	-moz-binding: url(chrome://socialite/content/socialiteBar.xml#socialite-loaded-site-selector);
+  -moz-binding: url(chrome://socialite/content/socialiteBar.xml#socialite-loaded-site-selector);
 }
 
 /* Google toolbar's blanket CSS rule for notifications will interfere unless these are !important */
