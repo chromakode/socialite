@@ -15,6 +15,10 @@ var Socialite =
     
     Socialite.sites = new SiteCollection();
     Socialite.watchedURLs = new WatchedURLs();
+    
+    Socialite.stringBundle = Components.classes["@mozilla.org/intl/stringbundle;1"]
+                             .getService(Components.interfaces.nsIStringBundleService)
+                             .createBundle("chrome://socialite/locale/socialite.properties")
   },
   
   load: function() {
@@ -36,7 +40,7 @@ var Socialite =
     
     alertsService.showAlertNotification(
       "chrome://global/skin/icons/Error.png",
-      "Socialite Error" + titlePart,
+      Socialite.stringBundle.GetStringFromName("failureMessage.title") + titlePart,
       message, 
       null, null, null, "socialite-failure"
     );
@@ -45,10 +49,19 @@ var Socialite =
   siteFailureMessage: function(site, subject, message) {
     Socialite.failureMessage(site.siteName, subject+": "+message);
   },
+  
+  utils: {
 
-  openUILink: function(url, e) {
-    window = windowManager.getMostRecentWindow("navigator:browser");
-    window.openUILink(url, e);
+    openUILink: function(url, e) {
+      window = windowManager.getMostRecentWindow("navigator:browser");
+      window.openUILink(url, e);
+    },
+    
+    openUILinkIn: function(url, where) {
+      window = windowManager.getMostRecentWindow("navigator:browser");
+      window.openUILinkIn(url, where);
+    }
+    
   }
 
 }

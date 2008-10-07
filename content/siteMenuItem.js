@@ -36,7 +36,7 @@ SocialiteWindow.SiteMenuItem = {
     }, false);
     
     siteMenuItem.updateSiteName = function(newSiteName) {
-      siteMenuItem.setAttribute("label", SocialiteWindow.stringBundle.formatStringFromName("shareMenuItem.label", [ newSiteName ], 1));
+      siteMenuItem.setAttribute("label", Socialite.stringBundle.formatStringFromName("shareMenuItem.label", [ newSiteName ], 1));
       
       let siteMenuItems = SocialiteWindow.SiteMenuItem.getAll();
       if (siteMenuItems.length == 0) {
@@ -62,7 +62,7 @@ SocialiteWindow.SiteMenuItem = {
     siteMenuItem.id = this.GENERAL_MENUITEM_ID;
     siteMenuItem.className = this.MENUITEM_CLASS;
     siteMenuItem.setAttribute("src", SocialiteWindow.SiteUrlBarIcon.GENERAL_ICON);
-    siteMenuItem.setAttribute("label", SocialiteWindow.stringBundle.GetStringFromName("generalMenuItem.label"));
+    siteMenuItem.setAttribute("label", Socialite.stringBundle.GetStringFromName("generalMenuItem.label"));
     
     siteMenuItem.updateVisibility = function(visible, consolidated) {
       siteMenuItem.setAttribute("hidden", !visible || !consolidated);

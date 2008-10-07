@@ -3,6 +3,7 @@ let importModule = function(name) Components.utils.import(name, modules);
 
 let Socialite = importModule("resource://socialite/socialite.jsm").Socialite;
 let logger = importModule("resource://socialite/utils/log.jsm");
+let extUtils = importModule("resource://socialite/utils/extUtils.jsm");
 let persistence = importModule("resource://socialite/persistence.jsm");
 
 let observerService = Components.classes["@mozilla.org/observer-service;1"]
@@ -10,6 +11,7 @@ let observerService = Components.classes["@mozilla.org/observer-service;1"]
 
 let SOCIALITE_CONTENT_NOTIFICATION_VALUE = "socialite-contentbar-notification";
 let SOCIALITE_SUBMIT_NOTIFICATION_VALUE = "socialite-submitbar-notification"; 
+let SOCIALITE_NOSITES_NOTIFICATION_VALUE = "socialite-nosites-notification";
 
 // ---
 
@@ -43,10 +45,6 @@ var SocialiteWindow =
 {
   
   init: function() {
-    SocialiteWindow.stringBundle = Components.classes["@mozilla.org/intl/stringbundle;1"]
-                                   .getService(Components.interfaces.nsIStringBundleService)
-                                   .createBundle("chrome://socialite/locale/socialite.properties")
-                                   
     window.addEventListener("load", SocialiteWindow.onLoad, false);
     window.addEventListener("unload", SocialiteWindow.onUnload, false);
   },
@@ -133,7 +131,7 @@ var SocialiteWindow =
     SocialiteWindow.SiteUrlBarIcon.onUnload();
     SocialiteWindow.SiteMenuItem.onUnload();
     
-    Socialite.preferences.removeObserver("", this.preferenceObserver);
+    Socialite.preferences.removeObserver("", SocialiteWindow.preferenceObserver);
     
     observerService.removeObserver(SocialiteWindow.siteObserver, "socialite-load-site");
     observerService.removeObserver(SocialiteWindow.siteObserver, "socialite-unload-site");
@@ -203,7 +201,7 @@ var SocialiteWindow =
   },
   
   createContentBar: function(notificationBox, URL) {
-    var notification = notificationBox.appendNotification(
+    let notification = notificationBox.appendNotification(
       "",
       SOCIALITE_CONTENT_NOTIFICATION_VALUE,
       "",
@@ -232,7 +230,7 @@ var SocialiteWindow =
   },
   
   createSubmitBar: function(notificationBox, URL) {
-    var notification = notificationBox.appendNotification(
+    let notification = notificationBox.appendNotification(
       "",
       SOCIALITE_SUBMIT_NOTIFICATION_VALUE,
       "",
@@ -252,6 +250,28 @@ var SocialiteWindow =
     return notification;
   },
   
+  createNoSitesNotification: function(notificationBox, URL) {
+    let notification = notificationBox.getNotificationWithValue(SOCIALITE_NOSITES_NOTIFICATION_VALUE);
+    if (!notification) {
+      notification = notificationBox.appendNotification(
+        Socialite.stringBundle.GetStringFromName("windowNoSitesNotification.label"),
+        SOCIALITE_NOSITES_NOTIFICATION_VALUE,
+        "",
+        notificationBox.PRIORITY_INFO_MEDIUM, // Appear on top of socialite content notifications
+        [
+           {
+             label: Socialite.stringBundle.GetStringFromName("windowNoSitesNotification.editButton.label"),
+             accessKey: Socialite.stringBundle.GetStringFromName("windowNoSitesNotification.editButton.accesskey"),
+             callback: function() {
+               extUtils.openPreferences(window, "chrome://socialite/content/socialitePreferences.xul", "socialitePreferencesSitesPane");
+             }
+           }
+        ]
+      );
+    }
+    return notification;
+  },
+  
   linkContextAction: function(site, event, forceSubmit, finishedCallback) {
     let selectedBrowser = gBrowser.selectedBrowser;
     let currentURL = selectedBrowser.currentURI.spec;
@@ -264,7 +284,7 @@ var SocialiteWindow =
     // Helper function to open the bar with some content.
     function openContentBarTo(site, siteUI) {
       let socialiteBar = notificationBox.getNotificationWithValue(SOCIALITE_CONTENT_NOTIFICATION_VALUE);
-      if (socialiteBar && socialiteBar.url != currentURL) {
+      if (socialiteBar && socialiteBar.URL != currentURL) {
         // The bar was opened for another URL. We will replace it.
         socialiteBar.close();
         socialiteBar = null;
@@ -283,6 +303,10 @@ var SocialiteWindow =
       }
       if (site) {
         submitBar.siteSelector.selectSite(site);
+      } else {
+        if (submitBar.siteSelector.siteCount > 0) {
+          submitBar.siteSelector.selectIndex(0);
+        }
       }
     }
     
@@ -308,12 +332,11 @@ var SocialiteWindow =
     // Since each call happens asynchronously, we iterate by making a chain of callbacks.
     function getSiteWatchLinkInfos(URL, sites, callback) {
       linkInfos = [];
-      
-      // Iterate over each site given
+
       siteIterator = Iterator(sites);
       
-      function next(linkInfo) {
-        linkInfos.push(linkInfo);
+      function next(linkInfo, start) {
+        if (!start) { linkInfos.push(linkInfo); }
         try {
           let [siteID, site] = siteIterator.next();
           getWatchLinkInfo(URL, site, next);
@@ -324,18 +347,25 @@ var SocialiteWindow =
       }
       
       // Get the sequence started.
-      let [siteID, site] = siteIterator.next();
-      getWatchLinkInfo(URL, site, next);
+      next(null, true);
     }
     
     //
     // *** Context Logic ***
     //
     
+    // *** Step 0: Check that we have sites loaded
+    
+    if (Socialite.sites.count == 0) {
+      SocialiteWindow.createNoSitesNotification(notificationBox);
+      if (finishedCallback) { finishedCallback(); }
+      return;
+    }
+   
+    // *** Step 1: Identify UI cases where the intended action is clearly to submit
+    
     let currentSocialiteBar = notificationBox.getNotificationWithValue(SOCIALITE_CONTENT_NOTIFICATION_VALUE);
     let currentSubmitBar = notificationBox.getNotificationWithValue(SOCIALITE_SUBMIT_NOTIFICATION_VALUE);
-    
-    // *** Step 1: Identify UI cases where the intended action is clearly to submit
     
     let shouldSubmit = false;
     
@@ -403,14 +433,13 @@ var SocialiteWindow =
         case "socialite-unload-site":
           SocialiteWindow.SiteUrlBarIcon.remove(site);
           SocialiteWindow.SiteMenuItem.remove(site);
+          
+          // Remove site from open notifications
           for (let i=0; i<gBrowser.browsers.length; i++) {
             let browser = gBrowser.browsers[i];
             socialiteBar = gBrowser.getNotificationBox(browser).getNotificationWithValue(SOCIALITE_CONTENT_NOTIFICATION_VALUE);
             if (socialiteBar) {
               socialiteBar.removeSiteUI(site);
-              if (socialiteBar.contentCount == 0) {
-                 socialiteBar.close(); 
-              }
             }
           }
           break;

@@ -121,8 +121,9 @@ RedditSite.prototype.linkClicked = function(event) {
         linkInfo.localState.commentCount = 0;
       }
       
-      var linkSave               = doc.getElementById("save_"+linkInfo.fullname+"_a");
-      var linkUnsave             = doc.getElementById("unsave_"+linkInfo.fullname+"_a");
+      // XXX The second cases only exist to support older installations of reddit
+      var linkSave               = doc.getElementById("a_save_"+linkInfo.fullname) || doc.getElementById("save_"+linkInfo.fullname+"_a");
+      var linkUnsave             = doc.getElementById("a_unsave_"+linkInfo.fullname) || doc.getElementById("unsave_"+linkInfo.fullname+"_a");
       
       if (linkSave != null) {
         // If there's a save link
@@ -139,8 +140,8 @@ RedditSite.prototype.linkClicked = function(event) {
       
       // You'd think the link was hidden, the user couldn't have clicked on it
       // But they could find it in their hidden links list.
-      var linkHide             = doc.getElementById("hide_"+linkInfo.fullname+"_a");
-      var linkUnhide           = doc.getElementById("unsave_"+linkInfo.fullname+"_a");
+      var linkHide             = doc.getElementById("a_hide_"+linkInfo.fullname+"_a") || doc.getElementById("hide_"+linkInfo.fullname+"_a");
+      var linkUnhide           = doc.getElementById("a_unsave_"+linkInfo.fullname+"_a") || doc.getElementById("unsave_"+linkInfo.fullname+"_a");
       
       if (linkHide != null) {
         linkInfo.localState.isHidden = false;
@@ -204,6 +205,10 @@ RedditSite.prototype.createBarContentUI = function(document, linkInfo) {
         (hitchThis(site, site.actionFailureHandler)*/
       ).perform([]);
     }
+    let failureHandler = function(r, action) {
+      barContent.update();
+      site.actionFailureHandler(r, action);
+    }
     let subredditURL = function() {
       return site.siteURL+"r/"+barContent.linkInfo.localState.subreddit+"/";
     }
@@ -211,13 +216,13 @@ RedditSite.prototype.createBarContentUI = function(document, linkInfo) {
     this.refreshCallback = updateHandler;
     
     this.labelSubreddit.addEventListener("click", function(e) {
-      Socialite.openUILink(subredditURL(), e);
+      Socialite.utils.openUILink(subredditURL(), e);
     }, false);
         
     this.buttonLike.addEventListener("click", function(e) {
       let vote = barContent.linkInfo.vote(
         voteUpdateHandler,
-        site.actionFailureHandler
+        failureHandler
       );
       if (barContent.linkInfo.localState.isLiked == true) {
         vote.perform(null);
@@ -230,7 +235,7 @@ RedditSite.prototype.createBarContentUI = function(document, linkInfo) {
     this.buttonDislike.addEventListener("click", function(e) {
       let vote = barContent.linkInfo.vote(
         voteUpdateHandler,
-        site.actionFailureHandler
+        failureHandler
       );
       if (barContent.linkInfo.localState.isLiked == false) {
         vote.perform(null);
@@ -241,7 +246,7 @@ RedditSite.prototype.createBarContentUI = function(document, linkInfo) {
     }, false);
     
     this.buttonComments.addEventListener("click", function(e) {
-      Socialite.openUILink(subredditURL()+"info/"+barContent.linkInfo.getID()+"/comments/", e);
+      Socialite.utils.openUILink(subredditURL()+"comments/"+barContent.linkInfo.getID()+"/", e);
     }, false);
     
     this.buttonSave.addEventListener("click", function(e) {
@@ -249,12 +254,12 @@ RedditSite.prototype.createBarContentUI = function(document, linkInfo) {
       if (barContent.linkInfo.localState.isSaved) {
         modify = barContent.linkInfo.unsave(
           updateHandler,
-          site.actionFailureHandler
+          failureHandler
         );
       } else {
         modify = barContent.linkInfo.save(
           updateHandler,
-          site.actionFailureHandler
+          failureHandler
         );
       }
       modify.perform();
@@ -266,12 +271,12 @@ RedditSite.prototype.createBarContentUI = function(document, linkInfo) {
       if (barContent.linkInfo.localState.isHidden) {
         modify = barContent.linkInfo.unhide(
           updateHandler,
-          site.actionFailureHandler
+          failureHandler
         );
       } else {
         modify = barContent.linkInfo.hide(
           updateHandler,
-          site.actionFailureHandler
+          failureHandler
         );
       }
       modify.perform();
@@ -283,18 +288,18 @@ RedditSite.prototype.createBarContentUI = function(document, linkInfo) {
         function (r, json) {
           let linkInfo = RedditLinkInfoFromJSON(site.API, json);
           Socialite.watchedURLs.watch(linkInfo.url, site, linkInfo);
-          Socialite.openUILink(linkInfo.url, e);
+          Socialite.utils.openUILink(linkInfo.url, e);
         },
-        site.actionFailureHandler
+        failureHandler
       ).perform();
     }, false);
     
     this.buttonProfile.addEventListener("click", function(e) {
-      Socialite.openUILink(subredditURL()+"user/"+barContent.linkInfo.redditAPI.auth.username+"/", e);
+      Socialite.utils.openUILink(subredditURL()+"user/"+barContent.linkInfo.API.auth.username+"/", e);
     }, false);
     
     this.buttonLogin.addEventListener("click", function(e) {
-      Socialite.openUILink(site.siteURL + "login/", e);
+      Socialite.utils.openUILinkIn(site.siteURL + "login/", "tab");
     }, false);
   };
   
@@ -353,7 +358,7 @@ RedditSite.prototype.createBarSubmitUI = function(document) {
                   "&url="+encodeURIComponent(submitURL)+
                   "&title="+encodeURIComponent(submitTitle);
       
-      Socialite.openUILink(formURL, e);
+      Socialite.utils.openUILink(formURL, e);
       barSubmit.parentNode.close();
     }, false);
   };
@@ -409,9 +414,9 @@ RedditSite.prototype.createPreferencesUI = function(document, propertiesWindow) 
 RedditSite.prototype.actionFailureHandler = function(r, action) {
   // 5xx error codes
   if (r.status >= 500 && r.status < 600) {
-    text = "Unable to perform the requested action. Please try again.";
+    text = stringBundle.GetStringFromName("failureMsg.tryAgain");
   } else {
-    text = "HTTP status " + r.status + " recieved.";
+    text = stringBundle.formatStringFromName("failureMsg.httpStatus", [ r.status ], 1);
   }
   
   Socialite.siteFailureMessage(this, action.name, text);

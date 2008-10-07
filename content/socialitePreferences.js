@@ -89,10 +89,13 @@ var SocialiteSitePreferences = {
   },
 
   siteAdd: function SSPrefs_siteAdd(event) {
-    var dialog = document.documentElement.openSubDialog("chrome://socialite/content/socialiteSiteProperties.xul", "", {
-      isNewSite: true
+    var newSiteInfo = {};
+    let dialog = document.documentElement.openSubDialog("chrome://socialite/content/socialiteSiteProperties.xul", "", {
+      isNewSite: true,
+      newSiteInfo: newSiteInfo
     });
     
+    this.site = Socialite.sites.createSite(newSiteInfo["siteClassID"], newSiteInfo["siteID"], newSiteInfo["siteName"], newSiteInfo["siteURL"])
   },
   
   siteProperties: function SSPrefs_siteProperties(event) {

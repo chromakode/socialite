@@ -63,6 +63,7 @@ SocialiteSite.prototype.setDefaultPreferences = logger.makeStubFunction("Sociali
 
 function SiteCollection() {
   this.byID = {};
+  this.count = 0;
 }
 
 SiteCollection.prototype.__iterator__ = function() {
@@ -75,13 +76,15 @@ SiteCollection.prototype.__iterator__ = function() {
 }
 
 SiteCollection.prototype.onContentLoad = function(doc, win) {
-  for (let [siteID, site] in this) {
-    // Remove www.
-    var baseRegex = /www\.?/;
-    var baseSiteHost = site.siteURI.spec.replace(baseRegex, "");
-    var baseURL = doc.location.href.replace(baseRegex, "");
-    if (strStartsWith(baseURL, baseSiteHost)) {
-      site.onSitePageLoad(doc, win);
+  if (doc.location) {
+    for (let [siteID, site] in this) {
+      // Remove www.
+      var baseRegex = /www\.?/;
+      var baseSiteHost = site.siteURI.spec.replace(baseRegex, "");
+      var baseURL = doc.location.href.replace(baseRegex, "");
+      if (strStartsWith(baseURL, baseSiteHost)) {
+        site.onSitePageLoad(doc, win);
+      }
     }
   }
 }
@@ -94,6 +97,7 @@ SiteCollection.prototype.loadSite = function(site) {
   } else {
     throw "Site with id \""+site.siteID+"\" already loaded";
   }
+  this.count += 1;
   
   // Initialize default preferences -- these don't get saved by the preference system
   this.setSiteDefaultPreferences(site.siteID, SiteClassRegistry.getClass(site.siteClassID));
@@ -107,6 +111,7 @@ SiteCollection.prototype.unloadSite = function(site) {
   observerService.notifyObservers(this, "socialite-unload-site", site.siteID);
   site.onUnload();
   this.byID[site.siteID] = null;
+  this.count -= 1;
   Socialite.watchedURLs.removeSite(site);
 }
 
