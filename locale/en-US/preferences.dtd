@@ -11,7 +11,7 @@
 <!ENTITY consolidateSites.accesskey "C">
 
 <!ENTITY persistGroup.caption "Info Bar Persistence">
-<!ENTITY doNotPersist.label "Info bar closes upon navigation to another page">
+<!ENTITY doNotPersist.label "Close info bar upon navigation to another page">
 <!ENTITY doNotPersist.accesskey "n">
 <!ENTITY sitePersist.label "Retain info bar for the current site">
 <!ENTITY sitePersist.accesskey "t">
