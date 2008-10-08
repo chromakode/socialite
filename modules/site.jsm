@@ -52,12 +52,13 @@ SocialiteSite.prototype.onUnload = function() {
 SocialiteSite.prototype.onCreate = logger.makeStubFunction("SocialiteSite", "onCreate");
 SocialiteSite.prototype.onDelete = logger.makeStubFunction("SocialiteSite", "onDelete");
 
+SocialiteSite.prototype.setDefaultPreferences = logger.makeStubFunction("SocialiteSite", "setDefaultPreferences");
+
 SocialiteSite.prototype.onSitePageLoad = logger.makeStubFunction("SocialiteSite", "onSitePageLoad");
 SocialiteSite.prototype.getLinkInfo = logger.makeStubFunction("SocialiteSite", "getLinkInfo");
 SocialiteSite.prototype.createBarContentUI = logger.makeStubFunction("SocialiteSite", "createBarContentUI");
 SocialiteSite.prototype.createBarSubmitUI = logger.makeStubFunction("SocialiteSite", "createBarSubmitUI");
 SocialiteSite.prototype.createPreferencesUI = logger.makeStubFunction("SocialiteSite", "createPreferencesUI");
-SocialiteSite.prototype.setDefaultPreferences = logger.makeStubFunction("SocialiteSite", "setDefaultPreferences");
 
 // ---
 
