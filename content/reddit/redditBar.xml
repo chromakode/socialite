@@ -290,11 +290,14 @@
           }
         }, false);
         
-        this.textboxTitle.focus();
-        
         this.afterBound();
       </constructor>
       
+      <method name="focus">
+        <body>
+          this.parentNode.focusTextbox(this.textboxTitle);
+        </body>
+      </method>
     </implementation>
   </binding>
   

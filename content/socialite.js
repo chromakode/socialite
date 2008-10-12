@@ -302,7 +302,7 @@ var SocialiteWindow =
         submitBar = SocialiteWindow.createSubmitBar(notificationBox, currentURL);
       }
       if (site) {
-        submitBar.siteSelector.selectSite(site);
+        submitBar.selectSite(site);
       } else {
         if (submitBar.siteSelector.siteCount > 0) {
           submitBar.siteSelector.selectIndex(0);

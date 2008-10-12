@@ -70,6 +70,29 @@
           ]]>
         </body>
       </method>
+      
+      <method name="focusTextbox">
+        <parameter name="textbox"/>
+        <body>
+          // While the notification is opening, if we focus the textbox, there will be a jarring flicker.
+          // This is a helper method to provide a workaround to this problem.
+          
+          // XXX: This is a hack to poll until the notification is finished loading (opacity == 1 after fade-in)
+          // There should really be an event to listen to here, though that might be an even uglier hack.
+          let self = this;
+          let tries = 5;
+          function checkNotification() {
+            if (self.style.opacity == "" || self.style.opacity == "1") {
+              textbox.focus();
+            } else if (tries > 0) {
+              tries -= 1;
+              setTimeout(checkNotification, 200);
+            }
+          }
+          
+          checkNotification();
+        </body>
+      </method>
     </implementation>
   </binding>
   
@@ -243,7 +266,7 @@
         // Site selector change handler
         siteSelector.addEventListener("command", function(event) {
           // Remove existing UI
-          if (self.hasChildNodes()){
+          if (self.hasChildNodes()) {
             self.removeChild(self.firstChild);
           }
           
@@ -271,6 +294,17 @@
           siteSelector.destroyLoadedSiteSelector();
         }, false)
       </constructor>
+      
+      <method name="selectSite">
+        <parameter name="site"/>
+        <body>
+          this.siteSelector.selectSite(site);
+          
+          if (this.hasChildNodes()) {
+            this.firstChild.focus();
+          }
+        </body>
+      </method>
     </implementation>
   </binding>
   
