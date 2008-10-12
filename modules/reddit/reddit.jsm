@@ -316,29 +316,34 @@ RedditSite.prototype.createBarSubmitUI = function(document) {
     // Get subreddit listing and initialize menu
     site.API.mysubreddits(
       function success(r, json) {
-        // Sort the subreddits like on the submit page.
-        json.data.children.sort(subredditSort);
-                
-        if (json.data.children.length == 0) {
-          Socialite.siteFailureMessage(site, "createBarSubmitUI", "No subscribed subreddits found.");
-          barSubmit.menulistSubreddit.hidden = true;
-        } else {
-          for each (var subredditInfo in json.data.children) {
-            let subredditURL = subredditInfo.data.url;
-            let subredditURLName = /^\/r\/(.+)\/$/.exec(subredditURL)[1];
-            
-            // Remove the '/' at the beginning
-            subredditURL = subredditURL.substring(1);
-            
-            barSubmit.menulistSubreddit.appendItem(subredditURLName, subredditURL);
+        // Check that the bar hasn't been removed
+        if (barSubmit.parentNode != null) {
+          // Sort the subreddits like on the submit page.
+          json.data.children.sort(subredditSort);
+          
+          if (json.data.children.length == 0) {
+            Socialite.siteFailureMessage(site, "createBarSubmitUI", "No subscribed subreddits found.");
+            barSubmit.menulistSubreddit.hidden = true;
+          } else {
+            for each (var subredditInfo in json.data.children) {
+              let subredditURL = subredditInfo.data.url;
+              let subredditURLName = /^\/r\/(.+)\/$/.exec(subredditURL)[1];
+              
+              // Remove the '/' at the beginning
+              subredditURL = subredditURL.substring(1);
+              
+              barSubmit.menulistSubreddit.appendItem(subredditURLName, subredditURL);
+            }
           }
-        }
         
         barSubmit.menulistSubreddit.selectedIndex = 0;
+        }
       },
       function failure() {
-        // Silently handle error -- the user could be logged out
-        barSubmit.menulistSubreddit.hidden = true;
+        if (barSubmit.parentNode != null) {
+          // Silently handle error -- the user could be logged out
+          barSubmit.menulistSubreddit.hidden = true;
+        }
       }
     ).perform();
     
@@ -354,9 +359,9 @@ RedditSite.prototype.createBarSubmitUI = function(document) {
       var submitTitle = barSubmit.textboxTitle.value;
       
       // Use ?resubmit GET parameter so reddit doesn't jump straight to the "already submitted" page
-      formURL = site.siteURL+subredditURL+"submit/?resubmit=true"+
-                  "&url="+encodeURIComponent(submitURL)+
-                  "&title="+encodeURIComponent(submitTitle);
+      let formURL = site.siteURL+subredditURL+"submit/?resubmit=true"+
+                    "&url="+encodeURIComponent(submitURL)+
+                    "&title="+encodeURIComponent(submitTitle);
       
       Socialite.utils.openUILink(formURL, e);
       barSubmit.parentNode.close();
