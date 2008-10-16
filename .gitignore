@@ -1,3 +1,6 @@
 *.pyc
 *~
 socialite.xpi
+.settings
+.project
+.pydevproject
