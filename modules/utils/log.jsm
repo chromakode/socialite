@@ -53,9 +53,9 @@ function log() {
     } else {
       dump(logText);
     }
+    
+    logHistory.push(entry);
   }
-  
-  logHistory.push(entry);
 }
 
 function getHistory() {
