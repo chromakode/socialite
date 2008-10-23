@@ -1,26 +1,23 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<RDF xmlns="http://www.w3.org/1999/02/22-rdf-syntax-ns#" 
- xmlns:em="http://www.mozilla.org/2004/em-rdf#">
-  <Description about="urn:mozilla:install-manifest">
-    <em:id>socialite@chromakode</em:id>
-    <em:version>1.2.2</em:version>
-    <em:type>2</em:type>
-    <em:localized>
-      <Description>
-        <em:locale>en-US</em:locale>
-        <em:name>Socialite</em:name>
-        <em:description>Vote on and submit stories to reddit social news sites.</em:description>
-        <em:creator>Chromakode</em:creator>
-      </Description>
-    </em:localized>
-    <em:iconURL>chrome://socialite/content/socialite.png</em:iconURL>
-    <em:optionsURL>chrome://socialite/content/socialitePreferences.xul</em:optionsURL>
-    <em:targetApplication>
-      <Description>
-        <em:id>{ec8030f7-c20a-464f-9b0e-13a3a9e97384}</em:id> <!-- firefox -->
-        <em:minVersion>3.0</em:minVersion>
-        <em:maxVersion>3.0.*</em:maxVersion>
-      </Description>
-    </em:targetApplication>
-  </Description>
-</RDF>
+<?xml version="1.0"?>
+<RDF:RDF xmlns:em="http://www.mozilla.org/2004/em-rdf#"
+         xmlns:NC="http://home.netscape.com/NC-rdf#"
+         xmlns:RDF="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
+  <RDF:Description RDF:about="rdf:#$tddXp3"
+                   em:id="{ec8030f7-c20a-464f-9b0e-13a3a9e97384}"
+                   em:minVersion="3.0"
+                   em:maxVersion="3.0.*" />
+  <RDF:Description RDF:about="urn:mozilla:install-manifest"
+                   em:id="socialite@chromakode"
+                   em:version="1.2.3"
+                   em:type="2"
+                   em:iconURL="chrome://socialite/content/socialite.png"
+                   em:optionsURL="chrome://socialite/content/socialitePreferences.xul">
+    <em:localized RDF:resource="rdf:#$lddXp3"/>
+    <em:targetApplication RDF:resource="rdf:#$tddXp3"/>
+  </RDF:Description>
+  <RDF:Description RDF:about="rdf:#$lddXp3"
+                   em:locale="en-US"
+                   em:name="Socialite"
+                   em:description="Vote on and submit stories to reddit social news sites."
+                   em:creator="Chromakode" />
+</RDF:RDF>
