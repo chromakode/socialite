@@ -1,12 +1,4 @@
-var alertsService = Components.classes["@mozilla.org/alerts-service;1"]
-                    .getService(Components.interfaces.nsIAlertsService);
-
-var windowManager = Components.classes['@mozilla.org/appshell/window-mediator;1']
-                    .getService(Components.interfaces.nsIWindowMediator);
-
 var EXPORTED_SYMBOLS = ["Socialite"];
-
-// ---
 
 var Socialite =
 {  
@@ -38,12 +30,14 @@ var Socialite =
       titlePart = "";
     }
     
-    alertsService.showAlertNotification(
-      "chrome://global/skin/icons/Error.png",
-      Socialite.stringBundle.GetStringFromName("failureMessage.title") + titlePart,
-      message, 
-      null, null, null, "socialite-failure"
-    );
+    if (alertsService) {
+      alertsService.showAlertNotification(
+        "chrome://global/skin/icons/Error.png",
+        Socialite.stringBundle.GetStringFromName("failureMessage.title") + titlePart,
+        message,
+        null, null, null, "socialite-failure"
+      );
+    }
   },
   
   siteFailureMessage: function(site, subject, message) {
@@ -66,25 +60,38 @@ var Socialite =
 
 }
 
-// Bring up the preferences first thing
+// *** Bring up the preferences first thing ***
 Socialite.preferences = Components.classes["@mozilla.org/preferences-service;1"]
                                            .getService(Components.interfaces.nsIPrefService)
                                            .getBranch("extensions.socialite.");
 Socialite.preferences.QueryInterface(Components.interfaces.nsIPrefBranch2);
 
-// Now, initialize the logging system
-logger = Components.utils.import("resource://socialite/utils/log.jsm");
+// *** Now, initialize the logging system ***
+let logger = Components.utils.import("resource://socialite/utils/log.jsm");
 logger.init("Socialite", {
   enabled:    Socialite.preferences.getBoolPref("debug"),
   useConsole: Socialite.preferences.getBoolPref("debugInErrorConsole")
 });
 
-// Import application components now that we're initialized and Socialite is defined
+// *** Load some useful XPCOM imports ***
+let alertsService = null;
+try {
+  // This seems to fail sometimes on OSX (if Growl is not installed?)
+  alertsService = Components.classes["@mozilla.org/alerts-service;1"]
+                  .getService(Components.interfaces.nsIAlertsService);
+} catch (e) {
+  logger.log("Socialite", "Unable to load alerts service. For the duration of this serssion, alerts will be logged, but not displayed.");
+}
+
+let windowManager = Components.classes['@mozilla.org/appshell/window-mediator;1']
+                    .getService(Components.interfaces.nsIWindowMediator);
+
+// *** Import application components now that we're initialized and Socialite is defined ***
 Components.utils.import("resource://socialite/site.jsm");
 Components.utils.import("resource://socialite/watchedURLs.jsm");
 
-// Finish initialization (now that the environment is set up)
+// *** Finish initialization (now that the environment is set up) ***
 Socialite.init();
 
-// Load built-in sites
+// *** Load built-in sites ***
 Components.utils.import("resource://socialite/reddit/reddit.jsm");
