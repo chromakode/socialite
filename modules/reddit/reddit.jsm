@@ -37,35 +37,38 @@ RedditSite.prototype.setDefaultPreferences = function(siteDefaultBranch) {
   siteDefaultBranch.setBoolPref("showHide", false);
   siteDefaultBranch.setBoolPref("showRandom", false);
   siteDefaultBranch.setBoolPref("showProfile", false);
+  siteDefaultBranch.setBoolPref("watchRedditLinks", true);
 };
 
 RedditSite.prototype.onSitePageLoad = function(doc, win) {
-  // Iterate over each article link and register event listener
-  const XPathResult = Components.interfaces.nsIDOMXPathResult;
-  var res = doc.evaluate('//div[@class="entry"]//a[contains(@class, "title")]', doc.documentElement, null, XPathResult.UNORDERED_NODE_SNAPSHOT_TYPE, null );
-   
-  for (var i=0; i < res.snapshotLength; i++) {
-    var siteLink = res.snapshotItem(i);
+  if (this.sitePreferences.getBoolPref("watchRedditLinks")) {
+    // Iterate over each article link and register event listener
+    const XPathResult = Components.interfaces.nsIDOMXPathResult;
+    var res = doc.evaluate('//div[@class="entry"]//a[contains(@class, "title")]', doc.documentElement, null, XPathResult.UNORDERED_NODE_SNAPSHOT_TYPE, null );
+     
+    for (var i=0; i < res.snapshotLength; i++) {
+      var siteLink = res.snapshotItem(i);
+      
+      // FIXME: click event listeners can persist after unloading, preventing the site from unloading properly and being garbage collected.
+      // I'll allow this to happen for now, with a "loaded" check to cause the handlers to do nothing once the site is unloaded.
+      // This is hopefully less demanding than keeping track of and cleaning up the listeners, or simply watching all links that are seen.
+      siteLink.addEventListener("mouseup", hitchThis(this, function(e) {
+        if (this.loaded) {
+          this.linkClicked(e);
+        }
+      }), false);
+      
+      // For debugging purposes
+      //siteLink.style.color = "red";
+    }
     
-    // FIXME: click event listeners can persist after unloading, preventing the site from unloading properly and being garbage collected.
-    // I'll allow this to happen for now, with a "loaded" check to cause the handlers to do nothing once the site is unloaded.
-    // This is hopefully less demanding than keeping track of and cleaning up the listeners, or simply watching all links that are seen.
-    siteLink.addEventListener("mouseup", hitchThis(this, function(e) {
-      if (this.loaded) {
-        this.linkClicked(e);
-      }
-    }), false);
+    logger.log("RedditSite", this.siteName, "Added click handlers to " + res.snapshotLength + " links on " + win.location.href);
     
-    // For debugging purposes
-    //siteLink.style.color = "red";
+    // Snarf the authentication hash using wrappedJSObject
+    // This should be safe, since Firefox 3 uses a XPCSafeJSObjectWrapper
+    // See http://developer.mozilla.org/en/docs/XPConnect_wrappers#XPCSafeJSObjectWrapper
+    this.API.auth.snarfAuthInfo(doc, win);
   }
-  
-  logger.log("RedditSite", this.siteName, "Added click handlers to " + res.snapshotLength + " links on " + win.location.href);
-  
-  // Snarf the authentication hash using wrappedJSObject
-  // This should be safe, since Firefox 3 uses a XPCSafeJSObjectWrapper
-  // See http://developer.mozilla.org/en/docs/XPConnect_wrappers#XPCSafeJSObjectWrapper
-  this.API.auth.snarfAuthInfo(doc, win);
 };
 
 RedditSite.prototype.linkClicked = function(event) {
