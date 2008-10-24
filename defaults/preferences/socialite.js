@@ -23,4 +23,4 @@ pref("extensions.socialite.sites.reddit.RedditSite.showSave", true);
 pref("extensions.socialite.sites.reddit.RedditSite.showHide", false);
 pref("extensions.socialite.sites.reddit.RedditSite.showRandom", false);
 pref("extensions.socialite.sites.reddit.RedditSite.showProfile", false);
-
+pref("extensions.socialite.sites.reddit.RedditSite.watchRedditLinks", true);
