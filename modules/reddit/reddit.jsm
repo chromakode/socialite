@@ -37,11 +37,11 @@ RedditSite.prototype.setDefaultPreferences = function(siteDefaultBranch) {
   siteDefaultBranch.setBoolPref("showHide", false);
   siteDefaultBranch.setBoolPref("showRandom", false);
   siteDefaultBranch.setBoolPref("showProfile", false);
-  siteDefaultBranch.setBoolPref("watchRedditLinks", true);
+  siteDefaultBranch.setBoolPref("watchRedditSiteLinks", true);
 };
 
 RedditSite.prototype.onSitePageLoad = function(doc, win) {
-  if (this.sitePreferences.getBoolPref("watchRedditLinks")) {
+  if (this.sitePreferences.getBoolPref("watchRedditSiteLinks")) {
     // Iterate over each article link and register event listener
     const XPathResult = Components.interfaces.nsIDOMXPathResult;
     var res = doc.evaluate('//div[@class="entry"]//a[contains(@class, "title")]', doc.documentElement, null, XPathResult.UNORDERED_NODE_SNAPSHOT_TYPE, null );
