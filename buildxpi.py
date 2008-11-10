@@ -5,10 +5,12 @@
 # Based on the functionality of build.sh by Nickolay Ponomarev, Nathan Yergler.
 
 import sys
-from os import system, path, curdir, pardir, sep, walk, remove
-from shutil import rmtree
 import re
 import time
+from os import system, path, curdir, pardir, sep, walk, remove
+from shutil import rmtree
+import subprocess
+from xml.dom import minidom
 from zipfile import ZipFile, ZipInfo, ZIP_STORED, ZIP_DEFLATED
 
 # From Python 2.6: posixpath.py
@@ -50,6 +52,8 @@ def remove_if_exists(p):
 class XPIBuilder:
     def __init__(self, basepath, config, verbose=False):        
         self.basepath = basepath
+        
+        self.info = None
 
         # Config variables
         self.c = config
@@ -61,6 +65,10 @@ class XPIBuilder:
         self.n["jar_loc"] = "chrome/" + self.n["jar"]
         self.n["xpi"] = self.c["app_name"]+".xpi"
     
+    def statusmsg(self, msg):
+        if self.verbose:
+            print(msg)
+    
     def p(self, p):
         """Return a path relative to the the base path"""
         return path.join(self.basepath, p)
@@ -68,10 +76,6 @@ class XPIBuilder:
     def pn(self, n):
         """Return a path for the named file relative to the base path"""            
         return self.p(self.n[n])
-    
-    def statusmsg(self, msg):
-        if self.verbose:
-            print(msg)
     
     def add_file_to_zip(self, p, zip, base=None):
         # Don't ever add the zip file itself
@@ -93,6 +97,22 @@ class XPIBuilder:
                     p = path.join(root, filename)
                     self.add_file_to_zip(p, zip, base)
     
+    def read_info(self):
+        self.statusmsg("Reading info from install.rdf file...")
+        
+        rdf_dom = minidom.parse(self.p("install.rdf"))
+        descs = rdf_dom.getElementsByTagName("RDF:Description")
+        for desc in descs:
+            if desc.getAttribute("RDF:about") == "urn:mozilla:install-manifest": break
+        else:
+            print("Warning: Unable to locate install-manifest in install.rdf file.")
+            return
+        
+        self.info = {}
+        self.info["id"] = desc.getAttribute("em:id")
+        self.info["version"] = desc.getAttribute("em:version")
+        self.info["type"] = int(desc.getAttribute("em:type"))
+    
     def clean(self):
         """Remove any files from the previous build"""
         self.statusmsg("Cleaning build directory...")
@@ -105,20 +125,28 @@ class XPIBuilder:
             remove_if_exists(self.pn("jar"))
     
     def build(self):
+        def runcalls(calls):
+            for call in calls:
+                if type(call) is str:
+                    system(call)
+                else:
+                    call(self)
+                    
         self.statusmsg("Starting XPI build...")
-             
-        if "before_cmd" in self.c:
-            self.statusmsg("Executing before_cmd...")
-            system(self.c["before_cmd"])
+        
+        self.read_info()
+        if "before" in self.c:
+            self.statusmsg("Calling pre-build hooks...")
+            runcalls(self.c["before"])
         
         self.clean()
         self.build_jar()
         self.build_xpi()
         self.cleanup()
         
-        if "after_cmd" in self.c:
-            self.statusmsg("Executing after_cmd...")
-            system(self.c["after_cmd"])
+        if "after" in self.c:
+            self.statusmsg("Calling post-build hooks...")
+            runcalls(self.c["after"])
             
         self.statusmsg("Done.")
             
@@ -170,6 +198,43 @@ class XPIBuilder:
         xpifile.writestr(chrome_manifest_zi, chrome_manifest_str)
         
         xpifile.close()
+        
+def run_spock(spock_path, input_path, output_path, **args):
+    spock_args = {"key_dir_path"    :"-d",
+                  "extension_id"    :"-i",
+                  "destination_url" :"-u",
+                  "xpi_path"        :"-f",
+                  "version"         :"-v"}
+    
+    def update_extension_id(id, type):
+        if type == 2:
+            pre = "urn:mozilla:extension:"
+        elif type == 4:
+            pre = "urn:mozilla:theme:"
+        else:
+            pre = "urn:mozilla:item:"
+        
+        return pre+id
+
+    def run(builder):
+        builder.statusmsg("Running spock...")
+        args["xpi_path"] = builder.pn("xpi")
+        args["version"] = builder.info["version"]
+        args["extension_id"] = update_extension_id(builder.info["id"], builder.info["type"])
+        full_input_path = builder.p(input_path)
+        full_output_path = builder.p(output_path)
+        
+        arglist = [spock_path]
+        for arg, value in args.iteritems():
+            if arg in spock_args:
+                arglist.append(spock_args[arg])
+                arglist.append(value)
+        arglist.append(full_input_path)
+        
+        output_file = open(full_output_path, "w")
+        subprocess.call(arglist, stdout=output_file)
+        output_file.close()
+    return run
                 
 def load_config():
     try:
@@ -178,6 +243,14 @@ def load_config():
         sys.exit("Error: Unable to import the build configuration data. Please make sure the module build_xpi_config exists and is properly formatted.")
 
     config.setdefault("clean_up", True)
+    
+    # Import local build configuration
+    try:
+        from buildxpi_config_local import config as config_local
+    except ImportError:
+        pass
+    
+    config.update(config_local)
 
     return config
 
