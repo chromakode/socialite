@@ -269,11 +269,10 @@ def load_config():
     # Import local build configuration
     try:
         from buildxpi_config_local import config as config_local
+        config.update(config_local)
     except ImportError:
         pass
     
-    config.update(config_local)
-
     return config
 
 def main():
