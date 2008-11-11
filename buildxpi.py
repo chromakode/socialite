@@ -7,11 +7,21 @@
 import sys
 import re
 import time
-from os import system, path, curdir, pardir, sep, walk, remove
+from os import system, path, curdir, pardir, sep, walk, stat, remove
 from shutil import rmtree
 import subprocess
 from xml.dom import minidom
 from zipfile import ZipFile, ZipInfo, ZIP_STORED, ZIP_DEFLATED
+
+try:
+    import hashlib
+    def sha_hash(data):
+        return ("SHA256", hashlib.sha256(data).hexdigest())
+except ImportError:
+    # Python <2.5 compatibility
+    import sha
+    def sha_hash(data):
+        return ("SHA1", sha.new(data).hexdigest())
 
 # From Python 2.6: posixpath.py
 # Should work on windows too, since we're not going to run into case inconsistencies or UNC paths 
@@ -50,13 +60,14 @@ def remove_if_exists(p):
         remove(p)
 
 class XPIBuilder:
-    def __init__(self, basepath, config, verbose=False):        
+    def __init__(self, basepath, config, quiet=False, verbose=False):
         self.basepath = basepath
         
         self.info = None
 
         # Config variables
         self.c = config
+        self.quiet = quiet
         self.verbose = verbose
 
         # Special paths/names
@@ -65,8 +76,8 @@ class XPIBuilder:
         self.n["jar_loc"] = "chrome/" + self.n["jar"]
         self.n["xpi"] = self.c["app_name"]+".xpi"
     
-    def statusmsg(self, msg):
-        if self.verbose:
+    def msg(self, msg, verbose=True):
+        if not self.quiet and (not verbose or self.verbose):
             print(msg)
     
     def p(self, p):
@@ -85,7 +96,7 @@ class XPIBuilder:
             else:
                 rp = p
                 
-            self.statusmsg("\t\tAdding %s" % rp)
+            self.msg("\t\tAdding %s" % rp)
                 
             zip.write(p, rp)
 
@@ -98,7 +109,7 @@ class XPIBuilder:
                     self.add_file_to_zip(p, zip, base)
     
     def read_info(self):
-        self.statusmsg("Reading info from install.rdf file...")
+        self.msg("Reading info from install.rdf file...")
         
         rdf_dom = minidom.parse(self.p("install.rdf"))
         descs = rdf_dom.getElementsByTagName("RDF:Description")
@@ -112,15 +123,25 @@ class XPIBuilder:
         self.info["id"] = desc.getAttribute("em:id")
         self.info["version"] = desc.getAttribute("em:version")
         self.info["type"] = int(desc.getAttribute("em:type"))
+        
+    def print_info(self):
+        self.msg("Built [%s]." % self.info["id"], False)
+        self.msg(" - Version: %s" % self.info["version"], False)
+        self.msg(" - Filename: %s" % self.pn("xpi"), False)
+        
+        xpifile = open(self.pn("xpi"), "r")
+        hashname, hash = sha_hash(xpifile.read())
+        xpifile.close()
+        self.msg(" - %s: %s" % (hashname, hash), False)
     
     def clean(self):
         """Remove any files from the previous build"""
-        self.statusmsg("Cleaning build directory...")
+        self.msg("Cleaning build directory...")
         remove_if_exists(self.pn("jar"))
         remove_if_exists(self.pn("xpi"))
     
     def cleanup(self):
-        self.statusmsg("Cleaning up finished build directory...")
+        self.msg("Cleaning up finished build directory...")
         if (self.c["clean_up"]):
             remove_if_exists(self.pn("jar"))
     
@@ -132,11 +153,11 @@ class XPIBuilder:
                 else:
                     call(self)
                     
-        self.statusmsg("Starting XPI build...")
+        self.msg("Starting XPI build...")
         
         self.read_info()
         if "before" in self.c:
-            self.statusmsg("Calling pre-build hooks...")
+            self.msg("Calling pre-build hooks...")
             runcalls(self.c["before"])
         
         self.clean()
@@ -145,13 +166,14 @@ class XPIBuilder:
         self.cleanup()
         
         if "after" in self.c:
-            self.statusmsg("Calling post-build hooks...")
+            self.msg("Calling post-build hooks...")
             runcalls(self.c["after"])
             
-        self.statusmsg("Done.")
+        self.msg("Done.")
+        self.print_info()
             
     def process_chrome_manifest(self):
-        self.statusmsg("\tProcessing chrome.manifest file...")
+        self.msg("\tProcessing chrome.manifest file...")
         
         try:
             chrome_manifest_str = open(self.p("chrome.manifest")).read()
@@ -166,36 +188,52 @@ class XPIBuilder:
         return jar_chrome_manifest_str
             
     def build_jar(self):
-        self.statusmsg("Creating JAR file %s..." % relpath(self.pn("jar")))
+        self.msg("Creating JAR file %s..." % relpath(self.pn("jar")))
         jarfile = ZipFile(self.pn("jar"), "w", ZIP_STORED)
         
         for chromedir in self.c["chrome_dirs"]:
-            self.statusmsg("\tAdding chrome directory \"%s\":" % chromedir)
+            self.msg("\tAdding chrome directory \"%s\":" % chromedir)
             self.add_dir_to_zip(self.p(chromedir), jarfile, self.basepath)
                 
         jarfile.close()
             
     def build_xpi(self):
-        self.statusmsg("Creating XPI file %s..." % relpath(self.pn("xpi")))
+        self.msg("Creating XPI file %s..." % relpath(self.pn("xpi")))
         xpifile = ZipFile(self.pn("xpi"), "w", ZIP_DEFLATED)
         
         for rootdir in self.c["root_dirs"]:
-            self.statusmsg("\tAdding root directory \"%s\":" % rootdir)
+            self.msg("\tAdding root directory \"%s\":" % rootdir)
             self.add_dir_to_zip(self.p(rootdir), xpifile, self.basepath)
             
-        self.statusmsg("\tAdding root files")
+        self.msg("\tAdding root files")
         for rootfile in self.c["root_files"]+["install.rdf"]:
             self.add_file_to_zip(self.p(rootfile), xpifile, self.basepath)
         
-        self.statusmsg("\tAdding %s" % self.n["jar"])
-        xpifile.write(self.pn("jar"), self.n["jar_loc"])
+        # Adding the .jar file
+        self.msg("\tAdding %s" % self.n["jar"])
         
-        chrome_manifest_str = self.process_chrome_manifest()
-        self.statusmsg("\tAdding chrome.manifest")
+        # Find the latest modification date in the .jar contents
+        # Note: while it is inefficient to reopen the zipfile, it's useful to ensure that build_xpi() could be run independently from build_jar().
+        jarzip = ZipFile(self.pn("jar"), "r", ZIP_STORED)
+        max_date = max([info.date_time for info in jarzip.infolist()])
+        jarzip.close()
+        
+        # Add the .jar to the .xpi
+        # The .jar is assigned the latest modification date above.
+        # This is done to prevent the .jar generation timestamp from changing the .xpi hash each build.
+        jarinfo = ZipInfo(self.n["jar_loc"], max_date)
+        xpifile.writestr(jarinfo, open(self.pn("jar"), "r").read())
+        
+        # Process the chrome.manifest
+        cm_str = self.process_chrome_manifest()
+        self.msg("\tAdding chrome.manifest")
+        
         # Add the chrome.manifest to the XPI
-        chrome_manifest_zi = ZipInfo("chrome.manifest", time.localtime())
-        chrome_manifest_zi.external_attr = 0644<<16
-        xpifile.writestr(chrome_manifest_zi, chrome_manifest_str)
+        cm_st = stat(self.p("chrome.manifest"))
+        cm_mtime = time.localtime(cm_st.st_mtime)
+        cm_zi = ZipInfo("chrome.manifest", cm_mtime[0:6])
+        cm_zi.external_attr = 0644<<16
+        xpifile.writestr(cm_zi, cm_str)
         
         xpifile.close()
         
@@ -217,7 +255,7 @@ def run_spock(spock_path, input_path, output_path, **args):
         return pre+id
 
     def run(builder):
-        builder.statusmsg("Running spock...")
+        builder.msg("Running spock...")
         args["xpi_path"] = builder.pn("xpi")
         args["version"] = builder.info["version"]
         args["extension_id"] = update_extension_id(builder.info["id"], builder.info["type"])
@@ -247,20 +285,22 @@ def load_config():
     # Import local build configuration
     try:
         from buildxpi_config_local import config as config_local
+        config.update(config_local)
     except ImportError:
         pass
     
-    config.update(config_local)
-
     return config
 
 def main():
     from optparse import OptionParser
     
     parser = OptionParser()
+    parser.add_option("-q", "--quiet",
+                      action="store_true", dest="quiet", default=False,
+                      help="disable all status messages")
     parser.add_option("-v", "--verbose",
                       action="store_true", dest="verbose", default=False,
-                      help="display verbose status messages")
+                      help="enable verbose status messages")
     parser.add_option("-p", "--path",
                       action="store", dest="path", default=sys.path[0],
                       help="build the XPI sources located at this path")
@@ -271,7 +311,7 @@ def main():
     if options.path not in sys.path:
         sys.path.append(options.path)
     
-    builder = XPIBuilder(options.path, load_config(), options.verbose)
+    builder = XPIBuilder(options.path, load_config(), options.quiet, options.verbose)
     builder.build()
 
 if __name__ == "__main__":
