@@ -7,7 +7,7 @@
 import sys
 import re
 import time
-from os import system, path, curdir, pardir, sep, walk, stat, remove
+from os import system, path, curdir, pardir, sep, walk, remove, stat, access, R_OK
 from shutil import rmtree
 import subprocess
 from xml.dom import minidom
@@ -64,6 +64,7 @@ class XPIBuilder:
         self.basepath = basepath
         
         self.info = None
+        self.success_msgs = []
 
         # Config variables
         self.c = config
@@ -133,6 +134,9 @@ class XPIBuilder:
         hashname, hash = sha_hash(xpifile.read())
         xpifile.close()
         self.msg(" - %s: %s" % (hashname, hash), False)
+        
+        for success_msg in self.success_msgs:
+            self.msg(success_msg, False)
     
     def clean(self):
         """Remove any files from the previous build"""
@@ -255,12 +259,19 @@ def run_spock(spock_path, input_path, output_path, **args):
         return pre+id
 
     def run(builder):
+        full_input_path = builder.p(input_path)
+        full_output_path = builder.p(output_path)
+        
+        if not access(full_input_path, R_OK):
+            errormsg = "unable to access input file \"%s\"." % input_path
+            builder.msg("Skipping spock run: %s" % errormsg)
+            builder.success_msgs.append(" ! Spock run failed: %s" % errormsg)
+            return
+        
         builder.msg("Running spock...")
         args["xpi_path"] = builder.pn("xpi")
         args["version"] = builder.info["version"]
         args["extension_id"] = update_extension_id(builder.info["id"], builder.info["type"])
-        full_input_path = builder.p(input_path)
-        full_output_path = builder.p(output_path)
         
         arglist = [spock_path]
         for arg, value in args.iteritems():
@@ -272,6 +283,8 @@ def run_spock(spock_path, input_path, output_path, **args):
         output_file = open(full_output_path, "w")
         subprocess.call(arglist, stdout=output_file)
         output_file.close()
+        
+        builder.success_msgs.append(" + Spock created %s successfully." % output_path)
     return run
                 
 def load_config():
