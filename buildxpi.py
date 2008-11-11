@@ -7,7 +7,7 @@
 import sys
 import re
 import time
-from os import system, path, curdir, pardir, sep, walk, remove
+from os import system, path, curdir, pardir, sep, walk, stat, remove
 from shutil import rmtree
 import subprocess
 from xml.dom import minidom
@@ -209,15 +209,31 @@ class XPIBuilder:
         for rootfile in self.c["root_files"]+["install.rdf"]:
             self.add_file_to_zip(self.p(rootfile), xpifile, self.basepath)
         
+        # Adding the .jar file
         self.msg("\tAdding %s" % self.n["jar"])
-        xpifile.write(self.pn("jar"), self.n["jar_loc"])
         
-        chrome_manifest_str = self.process_chrome_manifest()
+        # Find the latest modification date in the .jar contents
+        # Note: while it is inefficient to reopen the zipfile, it's useful to ensure that build_xpi() could be run independently from build_jar().
+        jarzip = ZipFile(self.pn("jar"), "r", ZIP_STORED)
+        max_date = max([info.date_time for info in jarzip.infolist()])
+        jarzip.close()
+        
+        # Add the .jar to the .xpi
+        # The .jar is assigned the latest modification date above.
+        # This is done to prevent the .jar generation timestamp from changing the .xpi hash each build.
+        jarinfo = ZipInfo(self.n["jar_loc"], max_date)
+        xpifile.writestr(jarinfo, open(self.pn("jar"), "r").read())
+        
+        # Process the chrome.manifest
+        cm_str = self.process_chrome_manifest()
         self.msg("\tAdding chrome.manifest")
+        
         # Add the chrome.manifest to the XPI
-        chrome_manifest_zi = ZipInfo("chrome.manifest", time.localtime())
-        chrome_manifest_zi.external_attr = 0644<<16
-        xpifile.writestr(chrome_manifest_zi, chrome_manifest_str)
+        cm_st = stat(self.p("chrome.manifest"))
+        cm_mtime = time.localtime(cm_st.st_mtime)
+        cm_zi = ZipInfo("chrome.manifest", cm_mtime[0:6])
+        cm_zi.external_attr = 0644<<16
+        xpifile.writestr(cm_zi, cm_str)
         
         xpifile.close()
         
