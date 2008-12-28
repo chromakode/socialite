@@ -53,7 +53,7 @@ TimestampedData.prototype.getTimestamp = function(name) {
  * @param timestamp
  *          The timestamp (number of milliseconds since epoch).
  * @param omit
- *          If true, fields given will be ommitted and all other fields will be
+ *          If true, fields given will be omitted and all other fields will be
  *          copied.
  */
 TimestampedData.prototype.copy = function(data, fields, timestamp, omit) {

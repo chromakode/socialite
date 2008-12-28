@@ -1,4 +1,6 @@
-var EXPORTED_SYMBOLS = ["insertSorted", "addSorted", "insertListboxSorted"];
+var EXPORTED_SYMBOLS = ["insertSorted", "addSorted", "insertListboxSorted", "getChildByClassName"];
+
+let XPathResult = Components.interfaces.nsIDOMXPathResult;
 
 function insertSorted(insertElement, nodeList, compareFunc) {
   let i, curElement;
@@ -21,7 +23,6 @@ function insertSorted(insertElement, nodeList, compareFunc) {
 }
 
 function addSorted(insertElement, parentElement, compareFunc) {
-  // Listbox elements are annoying because listhead and listcols are siblings to the list items.
   if (parentElement.hasChildNodes()) {
     insertSorted(insertElement, parentElement.childNodes, compareFunc);
   } else {
@@ -36,4 +37,19 @@ function insertListboxSorted(insertElement, listbox, compareFunc) {
   } else {
     insertSorted(insertElement, listbox.getElementsByTagName("listitem"), compareFunc);
   }
+}
+
+/**
+ * Return the first child node of an element with the specified class.
+ * 
+ * @param element
+ * @param className
+ * @return the first child node with the specified class
+ */
+function getChildByClassName(element, className) {
+  // Tricksy normalize-space technique via: http://dubinko.info/blog/2007/10/01/simple-parsing-of-space-seprated-attributes-in-xpathxslt/
+  
+  let res = element.ownerDocument.evaluate('descendant::*[contains(concat(" ",normalize-space(@class), " "), " '+className+' ")]',
+                                           element, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null);
+  return res.singleNodeValue;
 }

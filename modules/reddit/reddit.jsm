@@ -3,6 +3,7 @@ logger = Components.utils.import("resource://socialite/utils/log.jsm");
 Components.utils.import("resource://socialite/site.jsm");
 Components.utils.import("resource://socialite/utils/action/action.jsm");
 Components.utils.import("resource://socialite/utils/hitch.jsm");
+Components.utils.import("resource://socialite/utils/domUtils.jsm");
 Components.utils.import("resource://socialite/reddit/authentication.jsm");
 Components.utils.import("resource://socialite/reddit/redditAPI.jsm");
 //Components.utils.import("resource://socialite/reddit/bookmarkletAPI.jsm");
@@ -11,9 +12,13 @@ Components.utils.import("resource://socialite/reddit/redditUtils.jsm");
 
 var EXPORTED_SYMBOLS = ["RedditSite"];
 
-stringBundle = Components.classes["@mozilla.org/intl/stringbundle;1"]
-                                  .getService(Components.interfaces.nsIStringBundleService)
-                                  .createBundle("chrome://socialite/locale/reddit.properties")
+let XPathResult = Components.interfaces.nsIDOMXPathResult;
+let versionCompare = Components.classes["@mozilla.org/xpcom/version-comparator;1"]
+                                        .getService(Components.interfaces.nsIVersionComparator)
+                                        .compare;
+let stringBundle = Components.classes["@mozilla.org/intl/stringbundle;1"]
+                                      .getService(Components.interfaces.nsIStringBundleService)
+                                      .createBundle("chrome://socialite/locale/reddit.properties")
 
 function RedditSite(siteID, siteName, siteURL) {
   SocialiteSite.apply(this, arguments);
@@ -43,8 +48,13 @@ RedditSite.prototype.setDefaultPreferences = function(siteDefaultBranch) {
 RedditSite.prototype.onSitePageLoad = function(doc, win) {
   if (this.sitePreferences.getBoolPref("watchRedditSiteLinks")) {
     // Iterate over each article link and register event listener
-    const XPathResult = Components.interfaces.nsIDOMXPathResult;
-    var res = doc.evaluate('//div[@class="entry"]//a[contains(@class, "title")]', doc.documentElement, null, XPathResult.UNORDERED_NODE_SNAPSHOT_TYPE, null );
+    let linkXPath;
+    if (versionCompare(this.API.version.dom, "1") >= 0) {
+      linkXPath = '//div[contains(@class, "thing")]//a[contains(@class, "title")]';
+    } else {
+      linkXPath = '//div[@class="entry"]//a[contains(@class, "title")]';
+    }
+    let res = doc.evaluate(linkXPath, doc.documentElement, null, XPathResult.UNORDERED_NODE_SNAPSHOT_TYPE, null);
      
     for (var i=0; i < res.snapshotLength; i++) {
       var siteLink = res.snapshotItem(i);
@@ -71,91 +81,158 @@ RedditSite.prototype.onSitePageLoad = function(doc, win) {
   }
 };
 
+function scrapeLinkInfo(thingElement, linkInfo, dom_v0) {
+  doc = thingElement.ownerDocument;
+  
+  //
+  // Score and vote status
+  //
+  let linkLiked, linkDisliked, scoreSpan;
+  if (dom_v0) {
+    let linkLike = doc.getElementById("up_"+linkInfo.fullname);
+    linkLiked = /upmod/.test(linkLike.className);
+    
+    let linkDislike = doc.getElementById("down_"+linkInfo.fullname);
+    linkDisliked = /downmod/.test(linkDislike.className);
+    
+    scoreSpan = doc.getElementById("score_"+linkInfo.fullname);
+  } else {
+    scoreSpan = getChildByClassName(thingElement, "score");
+    
+    linkLiked = (scoreSpan.className.indexOf("likes") != -1);
+    linkDisliked = (scoreSpan.className.indexOf("dislikes") != -1);
+  }
+  
+  if (linkLiked) {
+    linkInfo.localState.isLiked = true;
+  } else if (linkDisliked) {
+    linkInfo.localState.isLiked = false;
+  } else {
+    linkInfo.localState.isLiked = null;
+  }
+  linkInfo.localState.score = parseInt(scoreSpan.textContent);
+  
+  //
+  // Subreddit
+  //
+  if (dom_v0) {
+    let linkSubreddit = doc.getElementById("subreddit_"+linkInfo.fullname);
+    if (linkSubreddit != null) {
+      // The subreddit can be missing from the listing if we're in a subreddit page
+      linkInfo.localState.subreddit = linkSubreddit.textContent;
+    }
+  } else {
+    // No class for the subreddit, at the moment :(
+  }
+
+  //
+  // Comment count
+  //
+  let linkComments;
+  if (dom_v0) {
+    linkComments = doc.getElementById("comment_"+linkInfo.fullname);
+  } else {
+    linkComments = getChildByClassName(thingElement, "comments");
+  }
+  
+  let commentNum = parseInt(linkComments.textContent);
+  if (commentNum) {
+    linkInfo.localState.commentCount = parseInt(commentNum);
+  } else {
+    linkInfo.localState.commentCount = 0;
+  }
+  
+  //
+  // Saved status
+  //
+  
+  if (dom_v0) {
+    // XXX The second cases only exist to support older installations of reddit
+    let linkSave = doc.getElementById("a_save_"+linkInfo.fullname) || doc.getElementById("save_"+linkInfo.fullname+"_a");
+    let linkUnsave = doc.getElementById("a_unsave_"+linkInfo.fullname) || doc.getElementById("unsave_"+linkInfo.fullname+"_a");
+    
+    if (linkSave != null) {
+      // If there's a save link
+      // Whether it's clicked
+      linkInfo.localState.isSaved = (linkSave.style.display == "none");
+    } else if (linkUnsave != null) {
+      // If there's an unsave link (assumption)
+      // Whether it's not clicked
+      linkInfo.localState.isSaved = (linkUnsave.style.display != "none");
+    } else {
+      // No save or unsave link present -- this shouldn't happen, as far as I know.
+      logger.log("RedditSite", this.siteName, "Unexpected save link absence.");
+    }
+  } else {
+    let linkSave = getChildByClassName(thingElement, "save-button");
+    let linkUnsave = getChildByClassName(thingElement, "unsave-button");
+    if (linkSave != null) {
+      linkInfo.localState.isSaved = (linkSave.textContent == "saved");
+    } else if (linkUnsave != null) {
+      linkInfo.localState.isSaved = (linkUnsave.textContent == "unsave");
+    } else {
+      logger.log("RedditSite", this.siteName, "Unexpected save link absence.");
+    }
+  }
+  
+  //
+  // Hidden status
+  //
+  let linkHide, linkUnhide
+  if (dom_v0) {
+    // You might assume that if link was hidden, the user couldn't have clicked on it
+    // -- but they could find it in their hidden links list.
+    linkHide = doc.getElementById("a_hide_"+linkInfo.fullname+"_a") || doc.getElementById("hide_"+linkInfo.fullname+"_a");
+    linkUnhide = doc.getElementById("a_unsave_"+linkInfo.fullname+"_a") || doc.getElementById("unsave_"+linkInfo.fullname+"_a");
+  } else {
+    linkHide = getChildByClassName(thingElement, "hide-button");
+    linkUnhide = getChildByClassName(thingElement, "unhide-button");
+  }
+  
+  // Unlike the save button, when the hide button is clicked, the post disappears.
+  // Thus, we needn't worry about the clicked state.
+  if (linkHide != null) {
+    linkInfo.localState.isHidden = false;
+  } else if (linkUnhide != null) {
+    linkInfo.localState.isHidden = true;
+  } else {
+    // No hide or unhide link present -- this shouldn't happen, as far as I know.
+    logger.log("RedditSite", this.siteName, "Unexpected hide link absence.");
+  }
+}
+
 RedditSite.prototype.linkClicked = function(event) {
-  var link = event.target;
-  var doc = link.ownerDocument;
-  var linkURL   = link.href;
+  let link = event.target;
+  let doc = link.ownerDocument;
+  let linkURL = link.href;
   
   if (Socialite.watchedURLs.isWatchedBy(linkURL, this)) {
     // Ensure that the URL isn't hidden
     Socialite.watchedURLs.get(linkURL).activate();
   } else {
-    try {
+    let dom_v0 = (versionCompare(this.API.version.dom, "0.*") < 0);
+
+    let thingElement, linkID;
+    if (!dom_v0) {
+      thingElement = getThingParent(link);
+      linkID = getThingID(thingElement);
+    } else {
       // Remove title_ from title_XX_XXXXX
-      var linkID    = link.id.slice(6);
-      var linkTitle = link.textContent;
-      
-      // Create the linkInfo object
-      var linkInfo = new RedditLinkInfo(this.API, linkURL, linkID);
-      linkInfo.localState.title = linkTitle;
-      
-      //
+      linkID = link.id.slice(6);
+      thingElement = doc.getElementById("thingrow_"+linkID);
+    }
+
+    // Create the linkInfo object
+    let linkInfo = new RedditLinkInfo(this.API, linkURL, linkID);
+
+    try {
       // Get some "preloaded" information from the page while we can.
-      //
-      var linkLike              = doc.getElementById("up_"+linkInfo.fullname);
-      var linkLikeActive        = /upmod/.test(linkLike.className);
+      logger.log("RedditSite", this.siteName, "Reading link info from DOM (id:"+linkID+")");
       
-      var linkDislike           = doc.getElementById("down_"+linkInfo.fullname);
-      var linkDislikeActive     = /downmod/.test(linkDislike.className);
-  
-      if (linkLikeActive) {
-        linkInfo.localState.isLiked  = true;
-      } else if (linkDislikeActive) {
-        linkInfo.localState.isLiked  = false;
-      } else {
-        linkInfo.localState.isLiked  = null;
-      }
-      
-      var scoreSpan             = doc.getElementById("score_"+linkInfo.fullname)
-      if (scoreSpan) {
-        linkInfo.localState.score    = parseInt(scoreSpan.textContent);
-      }
-      
-      var linkSubreddit          = doc.getElementById("subreddit_"+linkInfo.fullname)
-      if (linkSubreddit) {
-        linkInfo.localState.subreddit = linkSubreddit.textContent;
-      }
-  
-      var linkComments           = doc.getElementById("comment_"+linkInfo.fullname);
-      var commentNum             = /((\d+)\s)?comment[s]?/.exec(linkComments.textContent)[2];
-      if (commentNum) {
-        linkInfo.localState.commentCount = parseInt(commentNum);
-      } else {
-        linkInfo.localState.commentCount = 0;
-      }
-      
-      // XXX The second cases only exist to support older installations of reddit
-      var linkSave               = doc.getElementById("a_save_"+linkInfo.fullname) || doc.getElementById("save_"+linkInfo.fullname+"_a");
-      var linkUnsave             = doc.getElementById("a_unsave_"+linkInfo.fullname) || doc.getElementById("unsave_"+linkInfo.fullname+"_a");
-      
-      if (linkSave != null) {
-        // If there's a save link
-        // Whether it's clicked
-        linkInfo.localState.isSaved = (linkSave.style.display == "none");
-      } else if (linkUnsave != null) {
-        // If there's an unsave link (assumption)
-        // Whether it's not clicked
-        linkInfo.localState.isSaved = (linkUnsave.style.display != "none");
-      } else {
-        // No save or unsave link present -- this shouldn't happen, as far as I know.
-        logger.log("RedditSite", this.siteName, "Unexpected save link absence.");
-      }
-      
-      // You'd think the link was hidden, the user couldn't have clicked on it
-      // But they could find it in their hidden links list.
-      var linkHide             = doc.getElementById("a_hide_"+linkInfo.fullname+"_a") || doc.getElementById("hide_"+linkInfo.fullname+"_a");
-      var linkUnhide           = doc.getElementById("a_unsave_"+linkInfo.fullname+"_a") || doc.getElementById("unsave_"+linkInfo.fullname+"_a");
-      
-      if (linkHide != null) {
-        linkInfo.localState.isHidden = false;
-      } else if (linkUnhide != null) {
-        linkInfo.localState.isHidden = true;
-      } else {
-        // No hide or unhide link present -- this shouldn't happen, as far as I know.
-        logger.log("RedditSite", this.siteName, "Unexpected hide link absence.");
-      }
+      linkInfo.localState.title = link.textContent;
+      scrapeLinkInfo(thingElement, linkInfo, dom_v0);
     } catch (e) {
-      logger.log("RedditSite", this.siteName, "Caught exception while reading data from DOM: " + e.toString());
+      logger.log("RedditSite", this.siteName, "Caught exception while reading link info from DOM: " + e.toString());
     }
     
     // Add the information we collected to the watch list  

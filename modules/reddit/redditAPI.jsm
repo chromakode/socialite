@@ -42,6 +42,7 @@ function sameLinkID(func1, arg1, func2, arg2) {
 }
 
 function RedditAPI(auth) {
+  this.version = { dom: "1.0" };
   this.auth = auth;
   
   this.infoQuantizer = new Quantizer("reddit.info.quantizer", QUANTIZE_TIME, sameURL);
