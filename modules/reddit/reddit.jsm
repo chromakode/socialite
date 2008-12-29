@@ -178,12 +178,12 @@ function scrapeLinkInfo(thingElement, linkInfo, dom_v0) {
   //
   // Hidden status
   //
-  let linkHide, linkUnhide
+  let linkHide, linkUnhide;
   if (dom_v0) {
     // You might assume that if link was hidden, the user couldn't have clicked on it
     // -- but they could find it in their hidden links list.
-    linkHide = doc.getElementById("a_hide_"+linkInfo.fullname+"_a") || doc.getElementById("hide_"+linkInfo.fullname+"_a");
-    linkUnhide = doc.getElementById("a_unsave_"+linkInfo.fullname+"_a") || doc.getElementById("unsave_"+linkInfo.fullname+"_a");
+    linkHide = doc.getElementById("a_hide_"+linkInfo.fullname) || doc.getElementById("hide_"+linkInfo.fullname+"_a");
+    linkUnhide = doc.getElementById("a_unsave_"+linkInfo.fullname) || doc.getElementById("unsave_"+linkInfo.fullname+"_a");
   } else {
     linkHide = getChildByClassName(thingElement, "hide-button");
     linkUnhide = getChildByClassName(thingElement, "unhide-button");
