@@ -13,9 +13,6 @@ Components.utils.import("resource://socialite/reddit/redditUtils.jsm");
 var EXPORTED_SYMBOLS = ["RedditSite"];
 
 let XPathResult = Components.interfaces.nsIDOMXPathResult;
-let versionCompare = Components.classes["@mozilla.org/xpcom/version-comparator;1"]
-                                        .getService(Components.interfaces.nsIVersionComparator)
-                                        .compare;
 let stringBundle = Components.classes["@mozilla.org/intl/stringbundle;1"]
                                       .getService(Components.interfaces.nsIStringBundleService)
                                       .createBundle("chrome://socialite/locale/reddit.properties")
@@ -28,12 +25,19 @@ RedditSite.prototype.__proto__ = SocialiteSite.prototype;
 
 RedditSite.prototype.onLoad = function() {
   SocialiteSite.prototype.onLoad.apply(this, arguments);
-  this.API = new RedditAPI();
-  this.API.auth = new RedditAuth(this.siteURL);
-  this.API.auth.refreshAuthInfo().perform();
+  this.API = new RedditAPI(this.siteURL);
+  
+  // Load any version overrides from the preferences.
+  let version = {};
+  version.dom = this.sitePreferences.getCharPref("version.dom");
+  version.api = this.sitePreferences.getCharPref("version.api");
+  
+  this.API.init(version);
 };
 
 RedditSite.prototype.setDefaultPreferences = function(siteDefaultBranch) {
+  siteDefaultBranch.setCharPref("version.dom", "");
+  siteDefaultBranch.setCharPref("version.api", "");
   siteDefaultBranch.setBoolPref("compactDisplay", true);
   siteDefaultBranch.setBoolPref("showScore", true);
   siteDefaultBranch.setBoolPref("showSubreddit", true);
@@ -49,7 +53,7 @@ RedditSite.prototype.onSitePageLoad = function(doc, win) {
   if (this.sitePreferences.getBoolPref("watchRedditSiteLinks")) {
     // Iterate over each article link and register event listener
     let linkXPath;
-    if (versionCompare(this.API.version.dom, "1") >= 0) {
+    if (this.API.version.compare("dom", "1") >= 0) {
       linkXPath = '//div[contains(@class, "thing")]//a[contains(@class, "title")]';
     } else {
       linkXPath = '//div[@class="entry"]//a[contains(@class, "title")]';
@@ -78,6 +82,45 @@ RedditSite.prototype.onSitePageLoad = function(doc, win) {
     // This should be safe, since Firefox 3 uses a XPCSafeJSObjectWrapper
     // See http://developer.mozilla.org/en/docs/XPConnect_wrappers#XPCSafeJSObjectWrapper
     this.API.auth.snarfAuthInfo(doc, win);
+  }
+};
+
+RedditSite.prototype.linkClicked = function(event) {
+  let link = event.target;
+  let doc = link.ownerDocument;
+  let linkURL = link.href;
+  
+  if (Socialite.watchedURLs.isWatchedBy(linkURL, this)) {
+    // Ensure that the URL isn't hidden
+    Socialite.watchedURLs.get(linkURL).activate();
+  } else {
+    let dom_v0 = (this.API.version.compare("dom", "0.*") < 0);
+
+    let thingElement, linkID;
+    if (!dom_v0) {
+      thingElement = getThingParent(link);
+      linkID = getThingID(thingElement);
+    } else {
+      // Remove title_ from title_XX_XXXXX
+      linkID = link.id.slice(6);
+      thingElement = doc.getElementById("thingrow_"+linkID);
+    }
+
+    // Create the linkInfo object
+    let linkInfo = new RedditLinkInfo(this.API, linkURL, linkID);
+
+    try {
+      // Get some "preloaded" information from the page while we can.
+      logger.log("RedditSite", this.siteName, "Reading link info from DOM (id:"+linkID+")");
+      
+      linkInfo.localState.title = link.textContent;
+      scrapeLinkInfo(thingElement, linkInfo, dom_v0);
+    } catch (e) {
+      logger.log("RedditSite", this.siteName, "Caught exception while reading link info from DOM: " + e.toString());
+    }
+    
+    // Add the information we collected to the watch list
+    Socialite.watchedURLs.watch(linkInfo.url, this, linkInfo);
   }
 };
 
@@ -200,45 +243,6 @@ function scrapeLinkInfo(thingElement, linkInfo, dom_v0) {
     logger.log("RedditSite", this.siteName, "Unexpected hide link absence.");
   }
 }
-
-RedditSite.prototype.linkClicked = function(event) {
-  let link = event.target;
-  let doc = link.ownerDocument;
-  let linkURL = link.href;
-  
-  if (Socialite.watchedURLs.isWatchedBy(linkURL, this)) {
-    // Ensure that the URL isn't hidden
-    Socialite.watchedURLs.get(linkURL).activate();
-  } else {
-    let dom_v0 = (versionCompare(this.API.version.dom, "0.*") < 0);
-
-    let thingElement, linkID;
-    if (!dom_v0) {
-      thingElement = getThingParent(link);
-      linkID = getThingID(thingElement);
-    } else {
-      // Remove title_ from title_XX_XXXXX
-      linkID = link.id.slice(6);
-      thingElement = doc.getElementById("thingrow_"+linkID);
-    }
-
-    // Create the linkInfo object
-    let linkInfo = new RedditLinkInfo(this.API, linkURL, linkID);
-
-    try {
-      // Get some "preloaded" information from the page while we can.
-      logger.log("RedditSite", this.siteName, "Reading link info from DOM (id:"+linkID+")");
-      
-      linkInfo.localState.title = link.textContent;
-      scrapeLinkInfo(thingElement, linkInfo, dom_v0);
-    } catch (e) {
-      logger.log("RedditSite", this.siteName, "Caught exception while reading link info from DOM: " + e.toString());
-    }
-    
-    // Add the information we collected to the watch list  
-    Socialite.watchedURLs.watch(linkInfo.url, this, linkInfo);
-  }
-};
 
 RedditSite.prototype.getLinkInfo = function(URL, callback) {
   var infoCall = this.API.info(
