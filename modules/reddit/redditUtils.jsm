@@ -1,4 +1,6 @@
-var EXPORTED_SYMBOLS = ["subredditSort"];
+var EXPORTED_SYMBOLS = ["subredditSort", "getThingParent", "getThingID"];
+
+let XPathResult = Components.interfaces.nsIDOMXPathResult;
 
 /**
  * Sort subreddits in the "Asciibetical" ordering, with the "reddit.com"
@@ -6,7 +8,7 @@ var EXPORTED_SYMBOLS = ["subredditSort"];
  * 
  * @param a
  * @param b
- * @return
+ * @return the comparison between items a and b.
  */
 function subredditSort(a, b) {
   if (a.data.url == "/r/reddit.com/") {
@@ -22,4 +24,38 @@ function subredditSort(a, b) {
       return 0;
     }
   }
+}
+
+/**
+ * Locate the parent element (with the "thing" class) of an element in the DOM.
+ * 
+ * @param element
+ *          the element in a reddit page associated with a thing.
+ * @return the parent element having the "thing" class.
+ */
+function getThingParent(element) {
+  let res = element.ownerDocument.evaluate('ancestor-or-self::*[contains(concat(" ",normalize-space(@class), " "), " thing ")]',
+                                           element, null, XPathResult.ANY_UNORDERED_NODE_TYPE, null);
+  return res.singleNodeValue;
+}
+
+/**
+ * Get the reddit thing ID from a thing element in the DOM.
+ * 
+ * @param element
+ *          a thing element or descendant of a thing element in the DOM.
+ * @return the ID of the related thing.
+ */
+function getThingID(thingElement) {
+  const thingID = /\s*id-(\S+)\s*/;
+  let match = thingElement.className.match(thingID);
+  if (match == null) {
+    thingElement = getThingParent(thingElement);
+    match = thingElement.className.match(thingID);
+  }
+  if (match == null) {
+    return null;
+  }
+  
+  return match[1];
 }

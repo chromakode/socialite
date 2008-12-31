@@ -5,13 +5,24 @@ Components.utils.import("resource://socialite/utils/action/action.jsm");
 http = Components.utils.import("resource://socialite/utils/action/httpRequest.jsm");
 Components.utils.import("resource://socialite/utils/hitch.jsm");
 Components.utils.import("resource://socialite/utils/quantizer.jsm");
+Components.utils.import("resource://socialite/reddit/authentication.jsm");
 
 var nativeJSON = Components.classes["@mozilla.org/dom/json;1"]
                  .createInstance(Components.interfaces.nsIJSON);
 
-var EXPORTED_SYMBOLS = ["RedditAPI"];
+var EXPORTED_SYMBOLS = ["RedditAPI", "RedditVersion"];
 
 QUANTIZE_TIME = 1000;
+
+REDDIT_LATEST_VERSION = { dom:"1.0", api:"0.1" };
+function RedditVersion(){};
+RedditVersion.prototype = REDDIT_LATEST_VERSION;
+RedditVersion.prototype.compare = function(field, value) {
+  const versionCompare = Components.classes["@mozilla.org/xpcom/version-comparator;1"]
+                                            .getService(Components.interfaces.nsIVersionComparator)
+                                            .compare;
+  return versionCompare(this[field], value);
+}
 
 var REDDIT_API_PATH = "api/";
 function APIURL(siteURL, op, subreddit) {
@@ -41,11 +52,14 @@ function sameLinkID(func1, arg1, func2, arg2) {
   return (linkID1 == linkID2);
 }
 
-function RedditAPI(auth) {
-  this.auth = auth;
+function RedditAPI(siteURL) {
+  this.siteURL = siteURL;
   
-  this.infoQuantizer = new Quantizer("reddit.info.quantizer", QUANTIZE_TIME, sameURL);
-  this.info = Action("reddit.info", this.infoQuantizer.quantize(this._info));
+  this.urlinfoQuantizer = new Quantizer("reddit.urlInfo.quantizer", QUANTIZE_TIME, sameURL);
+  this.urlinfo = Action("reddit.urlinfo", this.urlinfoQuantizer.quantize(this._urlinfo));
+  
+  this.thinginfoQuantizer = new Quantizer("reddit.thinginfo.quantizer", QUANTIZE_TIME, sameLinkID);
+  this.thinginfo = Action("reddit.thinginfo", this.thinginfoQuantizer.quantize(this._thinginfo));
   
   this.voteQuantizer = new Quantizer("reddit.vote.quantizer", QUANTIZE_TIME, sameLinkID);
   this.vote = Action("reddit.vote", this.voteQuantizer.quantize(this._vote));
@@ -59,8 +73,27 @@ function RedditAPI(auth) {
   this.unhide = Action("reddit.unhide", this.hideQuantizer.quantize(this._unhide));
 }
 
-RedditAPI.prototype._info = function(url, subreddit, action) {
-  logger.log("reddit", "Making ajax info call");
+RedditAPI.prototype.init = function(version, auth) {
+  this.version = new RedditVersion();
+  // Copy specified versions into our version object.
+  if (version) {
+    for (let field in version) {
+      if (version[field]) {
+        this.version[field] = version[field];
+      }
+    }
+  }
+  
+  if (auth) {
+    this.auth = auth;
+  } else {
+    this.auth = new RedditAuth(this.siteURL);
+    this.auth.refreshAuthInfo().perform();
+  }
+}
+
+RedditAPI.prototype._urlinfo = function(url, subreddit, action) {
+  logger.log("reddit", "Making info API request");
   
   var params = {
     url:    url,
@@ -79,8 +112,23 @@ RedditAPI.prototype._info = function(url, subreddit, action) {
   ).perform();
 };
 
+RedditAPI.prototype._thinginfo = function(thingID, action) {
+  logger.log("reddit", "Making by_id API request");
+   
+  http.GetAction(
+    this.auth.siteURL + "by_id/" + thingID + ".json",
+    null,
+    
+    function success(r) {
+      var json = nativeJSON.decode(r.responseText);
+      action.success(r, json);
+    },
+    function failure(r) { action.failure(r); }
+  ).perform();
+};
+
 RedditAPI.prototype.randomrising = Action("reddit.randomrising", function(action) {
-  logger.log("reddit", "Making ajax randomrising call");
+  logger.log("reddit", "Making randomrising API request");
   
   var params = {
     limit: 1
@@ -99,7 +147,7 @@ RedditAPI.prototype.randomrising = Action("reddit.randomrising", function(action
 });
 
 RedditAPI.prototype.mysubreddits = Action("reddit.mysubreddits", function(action) {
-  logger.log("reddit", "Making ajax mysubreddits call");
+  logger.log("reddit", "Making mysubreddits API request");
     
   var act = http.GetAction(
     this.auth.siteURL + "reddits/mine.json",
@@ -114,7 +162,7 @@ RedditAPI.prototype.mysubreddits = Action("reddit.mysubreddits", function(action
 });
 
 RedditAPI.prototype._vote = function(linkID, isLiked, action) {
-  logger.log("reddit", "Making ajax vote call");
+  logger.log("reddit", "Making vote API call");
   
   var dir;
   if (isLiked == true) {
@@ -138,7 +186,7 @@ RedditAPI.prototype._vote = function(linkID, isLiked, action) {
 
 
 RedditAPI.prototype._save = function(linkID, action) {
-  logger.log("reddit", "Making ajax save call");
+  logger.log("reddit", "Making save API call");
   
   var params = {
     id:    linkID
@@ -151,7 +199,7 @@ RedditAPI.prototype._save = function(linkID, action) {
 };
 
 RedditAPI.prototype._unsave = function(linkID, action) {
-  logger.log("reddit", "Making ajax unsave call");
+  logger.log("reddit", "Making unsave API call");
   
   var params = {
     id:    linkID
@@ -165,7 +213,7 @@ RedditAPI.prototype._unsave = function(linkID, action) {
 
 
 RedditAPI.prototype._hide = function(linkID, action) {
-  logger.log("reddit", "Making ajax hide call");
+  logger.log("reddit", "Making hide API call");
   
   var params = {
     id:    linkID
@@ -179,7 +227,7 @@ RedditAPI.prototype._hide = function(linkID, action) {
 
 
 RedditAPI.prototype._unhide = function(linkID, action) {
-  logger.log("reddit", "Making ajax unhide call");
+  logger.log("reddit", "Making unhide API call");
   
   var params = {
     id:    linkID

@@ -27,9 +27,8 @@ RedditAuth.prototype = {
     let wasLoggedIn = this.isLoggedIn();
     
     if (modHash != this.modHash) {
-      logger.log("reddit_auth", this.siteURL, "Mod hash changed.");
+      logger.log("reddit_auth", this.siteURL, "Modhash changed.");
       this.modHash = modHash;
-      //logger.log("reddit_auth", this.siteURL, "Mod hash changed.");
       this.onModHashChange.send(modHash);
     }
     
@@ -61,7 +60,7 @@ RedditAuth.prototype = {
     logger.log("reddit_auth", this.siteURL, "Getting new authentication info");
     
     let act = http.GetAction(
-      this.siteURL + "login/",
+      this.siteURL + "bookmarklets/",
       null,
       
       hitchThis(this, function success(r) {
@@ -81,7 +80,7 @@ RedditAuth.prototype = {
 function extractModHash(document) {
   try {
     let globalsCode = document.getElementsByTagName("script")[0].textContent;
-    const getModHash = /modhash\s*=\s*'(\w*)'/;
+    const getModHash = /modhash\s*(?:\:|=)\s*'(\w*)'/;
     
     return globalsCode.match(getModHash)[1];
   } catch (e)  {
@@ -94,7 +93,7 @@ function extractUsername(document) {
   // Get the username
   try {
     let globalsCode = document.getElementsByTagName("script")[0].textContent;
-    const getUsername = /logged\s*=\s*('(\w+)'|false)/;
+    const getUsername = /logged\s*(?:\:|=)\s*('(\w+)'|false)/;
     
     let username;
     let [match, outer, inner] = globalsCode.match(getUsername);

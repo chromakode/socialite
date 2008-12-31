@@ -15,7 +15,7 @@ let SOCIALITE_NOSITES_NOTIFICATION_VALUE = "socialite-nosites-notification";
 
 // ---
 
-var SocialiteProgressListener =
+let SocialiteProgressListener =
 {
   QueryInterface: function(aIID) {
     if (aIID.equals(Components.interfaces.nsIWebProgressListener) ||
@@ -24,20 +24,27 @@ var SocialiteProgressListener =
       return this;
     throw Components.results.NS_NOINTERFACE;
   },
-
-  onStateChange: function(aWebProgress, aRequest, aFlag, aStatus) {return 0;},
-
-  onLocationChange: function(aProgress, aRequest, aURI) {
+  
+  onLocationChangeTabs: function(aBrowser, aProgress, aRequest, aURI) {
+    // addTabsProgressListener listeners have an extra first "aBrowser" argument.
     let window = aProgress.DOMWindow;
     if ((window == window.top) && aURI) {
       SocialiteWindow.linkStartLoad(aURI.spec, window, aProgress.isLoadingDocument);
     }
   },
   
+  onLocationChangeSingle: function(aProgress, aRequest, aURI) {
+    let window = aProgress.DOMWindow;
+    if ((window == window.top) && aURI) {
+      SocialiteWindow.linkStartLoad(aURI.spec, window, aProgress.isLoadingDocument);
+    }
+  },
+
+  onStateChange: function() {return 0;},
   onProgressChange: function() {return 0;},
   onStatusChange: function() {return 0;},
   onSecurityChange: function() {return 0;}
-}
+};
 
 // ---
 
@@ -141,12 +148,22 @@ var SocialiteWindow =
   
   setupProgressListener: function(browser) {
     logger.log("main", "Progress listener added.");
-    browser.addProgressListener(SocialiteProgressListener, Components.interfaces.nsIWebProgress.NOTIFY_ALL);
+    if (browser.addTabsProgressListener) {
+      SocialiteProgressListener.onLocationChange = SocialiteProgressListener.onLocationChangeTabs;
+      browser.addTabsProgressListener(SocialiteProgressListener);
+    } else {
+      SocialiteProgressListener.onLocationChange = SocialiteProgressListener.onLocationChangeSingle;
+      browser.addProgressListener(SocialiteProgressListener);
+    }
   },
   
   unsetProgressListener: function(browser) {
     logger.log("main", "Progress listener removed.");
-    browser.removeProgressListener(SocialiteProgressListener);
+    if (browser.addTabsProgressListener) {
+      browser.removeTabsProgressListener(SocialiteProgressListener);
+    } else {
+      browser.removeProgressListener(SocialiteProgressListener);
+    }
   },
 
   linkStartLoad: function(URL, win, isLoading) {

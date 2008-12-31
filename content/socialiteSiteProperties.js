@@ -20,7 +20,7 @@ var SocialiteSiteProperties = {
       this.siteID = Socialite.sites.requestID();
     } else {
       this.site = window.arguments[0].site;
-      this.siteID = this.site.siteID
+      this.siteID = this.site.siteID;
     }
     this.newSiteInfo = window.arguments[0].newSiteInfo;
     
