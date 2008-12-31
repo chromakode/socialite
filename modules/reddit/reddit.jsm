@@ -90,28 +90,32 @@ RedditSite.prototype.linkClicked = function(event) {
   let doc = link.ownerDocument;
   let linkURL = link.href;
   
-  if (Socialite.watchedURLs.isWatchedBy(linkURL, this)) {
+  let dom_v0 = (this.API.version.compare("dom", "0.*") < 0);
+  // Scrape the thing ID of the reddit link.
+  let thingElement, linkFullname;
+  if (!dom_v0) {
+    thingElement = getThingParent(link);
+    linkFullname = getThingID(thingElement);
+  } else {
+    // Remove title_ from title_XX_XXXXX
+    linkFullname = link.id.slice(6);
+    thingElement = doc.getElementById("thingrow_"+linkFullname);
+  }
+  
+  // If the link is currently watched, use the existing data.
+  // Otherwise, scrape some initial data and create a new watch.
+  if (Socialite.watchedURLs.isWatchedBy(linkURL, this) &&
+      Socialite.watchedURLs.getBy(linkURL, this).fullname == linkFullname) {
+    
     // Ensure that the URL isn't hidden
     Socialite.watchedURLs.get(linkURL).activate();
   } else {
-    let dom_v0 = (this.API.version.compare("dom", "0.*") < 0);
-
-    let thingElement, linkID;
-    if (!dom_v0) {
-      thingElement = getThingParent(link);
-      linkID = getThingID(thingElement);
-    } else {
-      // Remove title_ from title_XX_XXXXX
-      linkID = link.id.slice(6);
-      thingElement = doc.getElementById("thingrow_"+linkID);
-    }
-
-    // Create the linkInfo object
-    let linkInfo = new RedditLinkInfo(this.API, linkURL, linkID);
+    // Create the linkInfo object.
+    let linkInfo = new RedditLinkInfo(this.API, linkURL, linkFullname);
 
     try {
       // Get some "preloaded" information from the page while we can.
-      logger.log("RedditSite", this.siteName, "Reading link info from DOM (id:"+linkID+")");
+      logger.log("RedditSite", this.siteName, "Reading link info from DOM (id:"+linkFullname+")");
       
       linkInfo.localState.title = link.textContent;
       scrapeLinkInfo(thingElement, linkInfo, dom_v0);
@@ -119,8 +123,8 @@ RedditSite.prototype.linkClicked = function(event) {
       logger.log("RedditSite", this.siteName, "Caught exception while reading link info from DOM: " + e.toString());
     }
     
-    // Add the information we collected to the watch list
-    Socialite.watchedURLs.watch(linkInfo.url, this, linkInfo);
+    // Add the information we collected to the watch list.
+    Socialite.watchedURLs.watch(linkInfo.url, this, linkInfo, true);
   }
 };
 
@@ -245,7 +249,7 @@ function scrapeLinkInfo(thingElement, linkInfo, dom_v0) {
 }
 
 RedditSite.prototype.getLinkInfo = function(URL, callback) {
-  var infoCall = this.API.info(
+  var infoCall = this.API.urlinfo(
     hitchThis(this, function success(r, json) {
       if (json.data.children.length > 0) {
         var linkInfo = RedditLinkInfoFromJSON(this.API, json);
@@ -274,7 +278,7 @@ RedditSite.prototype.createBarContentUI = function(document, linkInfo) {
   // We define behaviors here since I intend the RedditBarContent XBL to only be responsible for the display of a RedditLinkInfo instance.
   // In other words, we'll treat it more like a support widget and define handlers for its commands here. This is helpful because the scripting scope in XBL is limited.
   // FIXME: We'll use this 'afterBound' hack because I'm tired of trying to figure out how to make XBL apply synchronously.
-  var site = this;
+  let site = this;
   barContent.afterBound = function() {
     // Action failure handlers for info updates are disabled because the messages are too frequent and unhelpful.
     let voteUpdateHandler = function() {

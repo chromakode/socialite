@@ -48,8 +48,17 @@ function RedditLinkInfo(api, url, fullname) {
   this.localState = new RedditLinkInfoState();
 }
 
-RedditLinkInfo.prototype.update = Action("RedditLinkInfo.update", function(omittedFields, action) {  
-  var infoCall = this.API.info(
+RedditLinkInfo.prototype.update = Action("RedditLinkInfo.update", function(omittedFields, action) {
+  let apiCall, apiArgs;
+  if (this.API.version.compare("api", "0.1") >= 0) {
+    apiCall = this.API.thinginfo;
+    apiArgs = [this.fullname];
+  } else {
+    apiCall = this.API.urlinfo;
+    apiArgs = [this.url, this.localState.subreddit];
+  }
+  
+  var infoCall = apiCall.call(this.API,
     hitchThis(this, function success(r, json) {
       // Ensure the received data is not older than the last update (for instance, due to lag)
       if (action.startTime >= this.state.lastUpdated) {
@@ -63,7 +72,7 @@ RedditLinkInfo.prototype.update = Action("RedditLinkInfo.update", function(omitt
     function failure(r) { action.failure(r); }
   );
   
-  infoCall.perform(this.url, this.localState.subreddit);
+  infoCall.perform.apply(infoCall, apiArgs);
 });
 
 RedditLinkInfo.prototype.vote = Action("RedditLinkInfo.vote", function(isLiked, action) {
