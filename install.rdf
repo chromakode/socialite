@@ -5,15 +5,13 @@
   <RDF:Description RDF:about="rdf:#$tddXp3"
                    em:id="{ec8030f7-c20a-464f-9b0e-13a3a9e97384}"
                    em:minVersion="3.0"
-                   em:maxVersion="3.0.*" />
+                   em:maxVersion="3.1b2" />
   <RDF:Description RDF:about="urn:mozilla:install-manifest"
                    em:id="socialite@chromakode"
-                   em:version="1.2.4pre2"
+                   em:version="1.2.4pre3"
                    em:type="2"
                    em:iconURL="chrome://socialite/content/socialite.png"
-                   em:optionsURL="chrome://socialite/content/socialitePreferences.xul"
-                   em:updateURL="http://addons.reddit.com/socialite/update.rdf"
-                   em:updateKey="MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQDAXFxIzR9ca2JR4FSa32Mq31Edl9zoTRafwSVNVMxkpk6ua07vyp1yva5bCOiBWzTQzGm21nNUbJGxT2vko4sKaeHaGeFr3BBCjMk9ZunoMWRgOEBmBuysL0E8M3I56rtEzTAv4RylgfuH/uJk86Q2GOoPs/ROE0+pug8vQnTxRQIDAQAB">
+                   em:optionsURL="chrome://socialite/content/socialitePreferences.xul">
     <em:localized RDF:resource="rdf:#$lddXp3"/>
     <em:targetApplication RDF:resource="rdf:#$tddXp3"/>
   </RDF:Description>
