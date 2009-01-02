@@ -303,6 +303,10 @@ RedditSite.prototype.createBarContentUI = function(document, linkInfo) {
     
     this.refreshCallback = updateHandler;
     
+    this.labelScore.addEventListener("click", function(e) {
+      updateHandler();
+    }, false);
+    
     this.labelSubreddit.addEventListener("click", function(e) {
       Socialite.utils.openUILink(subredditURL(), e);
     }, false);
