@@ -31,8 +31,8 @@
     <resources>
       <stylesheet src="chrome://global/skin/notification.css"/>
     </resources>
-    
-    <implementation>      
+
+    <implementation>
       <method name="closeClicked">
         <body>
           <![CDATA[
@@ -221,11 +221,18 @@
       </method>
       
       <method name="refresh">
+        <parameter name="skipEvent"/>
         <body>
           <![CDATA[
             // Refresh the top (currently displayed) content.
-            var deckContent = document.getAnonymousElementByAttribute(this, "anonid", "deckContent");
-            this.childNodes[deckContent.selectedIndex].refresh();
+            let deckContent = document.getAnonymousElementByAttribute(this, "anonid", "deckContent");
+            let contentBar = this.childNodes[deckContent.selectedIndex];
+            
+            if (skipEvent) {
+              contentBar._refresh();
+            } else {
+              contentBar.refresh();
+            }
           ]]>
         </body>
       </method>
@@ -331,9 +338,28 @@
       <method name="refresh">
         <body>
           <![CDATA[
+            this._refresh.apply(this, arguments);
+            this.fireRefreshEvent();
+          ]]>
+        </body>
+      </method>
+      
+      <method name="_refresh">
+        <body>
+          <![CDATA[
             if (this.refreshCallback) {
-              this.refreshCallback();
+              this.refreshCallback.apply(null, arguments);
             }
+          ]]>
+        </body>
+      </method>
+      
+      <method name="fireRefreshEvent">
+        <body>
+          <![CDATA[
+            var event = document.createEvent("Events");
+            event.initEvent("SocialiteContentBarRefresh", true, true);
+            this.dispatchEvent(event);
           ]]>
         </body>
       </method>

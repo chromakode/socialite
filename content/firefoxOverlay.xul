@@ -6,4 +6,5 @@
   <script src="socialite.js" type="application/javascript;version=1.8"/>
   <script src="siteUrlBarIcon.js" type="application/javascript;version=1.8"/>
   <script src="siteMenuItem.js" type="application/javascript;version=1.8"/>
+  <script src="activeRefresh.js" type="application/javascript;version=1.8"/>
 </overlay>

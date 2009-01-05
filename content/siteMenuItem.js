@@ -14,6 +14,19 @@ SocialiteWindow.SiteMenuItem = {
   GENERAL_ICON: "chrome://socialite/content/socialite-small.png",
   GENERAL_MENUITEM_ID: "socialite-menuitem",
   
+  onLoad: function() {
+    this.generalItem = this.createGeneral();
+    for (let [siteID, site] in Socialite.sites) {
+      this.create(site);
+    }
+  },
+  
+  onUnload: function() {
+    Array.forEach(this.getAll(), function(siteMenuItem) {
+      if (siteMenuItem._removeFaviconWatch) { siteMenuItem._removeFaviconWatch(); }
+    });
+  },
+  
   create: function(site) {
     let fileMenuPopup = document.getElementById("menu_FilePopup");
     let sendMenuItem = document.getElementById("menu_sendLink");
@@ -107,19 +120,6 @@ SocialiteWindow.SiteMenuItem = {
     this.generalItem.updateVisibility(visible, consolidated);
     Array.forEach(this.getAll(), function(siteMenuItem) {
       siteMenuItem.updateVisibility(visible, consolidated);
-    });
-  },
-  
-  onLoad: function() {
-    this.generalItem = this.createGeneral();
-    for (let [siteID, site] in Socialite.sites) {
-      this.create(site);
-    }
-  },
-  
-  onUnload: function() {
-    Array.forEach(this.getAll(), function(siteMenuItem) {
-      if (siteMenuItem._removeFaviconWatch) { siteMenuItem._removeFaviconWatch(); }
     });
   }
 }

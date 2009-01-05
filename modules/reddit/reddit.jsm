@@ -281,36 +281,41 @@ RedditSite.prototype.createBarContentUI = function(document, linkInfo) {
   let site = this;
   barContent.afterBound = function() {
     // Action failure handlers for info updates are disabled because the messages are too frequent and unhelpful.
-    let voteUpdateHandler = function() {
+    this.refreshCallback = function(omit) {
+      if (!omit) {
+        omit = [];
+      }
+        
       barContent.linkInfo.update(
         hitchThis(barContent, barContent.update)/*,
         hitchThis(site, site.actionFailureHandler)*/
-      ).perform(["score"]);
-    }
+      ).perform(omit);
+    };
+    
     let updateHandler = function() {
-      barContent.linkInfo.update(
-        hitchThis(barContent, barContent.update)/*,
-        (hitchThis(site, site.actionFailureHandler)*/
-      ).perform([]);
-    }
+      barContent.refresh();
+    };
+    let voteUpdateHandler = function() {
+      barContent.refresh(["score"]);
+    };
+    
     let failureHandler = function(r, action) {
       barContent.update();
       site.actionFailureHandler(r, action);
-    }
+    };
+    
     let subredditURL = function() {
       return site.siteURL+"r/"+barContent.linkInfo.localState.subreddit+"/";
-    }
-    
-    this.refreshCallback = updateHandler;
-    
+    };
+        
     this.labelScore.addEventListener("click", function(e) {
-      updateHandler();
+      barContent.refresh();
     }, false);
     
     this.labelSubreddit.addEventListener("click", function(e) {
       Socialite.utils.openUILink(subredditURL(), e);
     }, false);
-        
+    
     this.buttonLike.addEventListener("click", function(e) {
       let vote = barContent.linkInfo.vote(
         voteUpdateHandler,
