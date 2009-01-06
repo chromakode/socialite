@@ -162,14 +162,15 @@ function scrapeLinkInfo(thingElement, linkInfo, dom_v0) {
   //
   // Subreddit
   //
+  let linkSubreddit;
   if (dom_v0) {
-    let linkSubreddit = doc.getElementById("subreddit_"+linkInfo.fullname);
-    if (linkSubreddit != null) {
-      // The subreddit can be missing from the listing if we're in a subreddit page
-      linkInfo.localState.subreddit = linkSubreddit.textContent;
-    }
+    linkSubreddit = doc.getElementById("subreddit_"+linkInfo.fullname);
   } else {
-    // No class for the subreddit, at the moment :(
+    linkSubreddit = getChildByClassName(thingElement, "subreddit");
+  }
+  if (linkSubreddit != null) {
+    // The subreddit can be missing from the listing if we're in a subreddit page
+    linkInfo.localState.subreddit = linkSubreddit.textContent;
   }
 
   //
@@ -211,15 +212,7 @@ function scrapeLinkInfo(thingElement, linkInfo, dom_v0) {
       logger.log("RedditSite", this.siteName, "Unexpected save link absence.");
     }
   } else {
-    let linkSave = getChildByClassName(thingElement, "save-button");
-    let linkUnsave = getChildByClassName(thingElement, "unsave-button");
-    if (linkSave != null) {
-      linkInfo.localState.isSaved = (linkSave.textContent == "saved");
-    } else if (linkUnsave != null) {
-      linkInfo.localState.isSaved = (linkUnsave.textContent == "unsave");
-    } else {
-      logger.log("RedditSite", this.siteName, "Unexpected save link absence.");
-    }
+    linkInfo.localState.isSaved = (thingElement.className.indexOf("saved") != -1);
   }
   
   //
@@ -231,20 +224,19 @@ function scrapeLinkInfo(thingElement, linkInfo, dom_v0) {
     // -- but they could find it in their hidden links list.
     linkHide = doc.getElementById("a_hide_"+linkInfo.fullname) || doc.getElementById("hide_"+linkInfo.fullname+"_a");
     linkUnhide = doc.getElementById("a_unsave_"+linkInfo.fullname) || doc.getElementById("unsave_"+linkInfo.fullname+"_a");
+    
+    // Unlike the save button, when the hide button is clicked, the post disappears.
+    // Thus, we needn't worry about the clicked state.
+    if (linkHide != null) {
+      linkInfo.localState.isHidden = false;
+    } else if (linkUnhide != null) {
+      linkInfo.localState.isHidden = true;
+    } else {
+      // No hide or unhide link present -- this shouldn't happen, as far as I know.
+      logger.log("RedditSite", this.siteName, "Unexpected hide link absence.");
+    }
   } else {
-    linkHide = getChildByClassName(thingElement, "hide-button");
-    linkUnhide = getChildByClassName(thingElement, "unhide-button");
-  }
-  
-  // Unlike the save button, when the hide button is clicked, the post disappears.
-  // Thus, we needn't worry about the clicked state.
-  if (linkHide != null) {
-    linkInfo.localState.isHidden = false;
-  } else if (linkUnhide != null) {
-    linkInfo.localState.isHidden = true;
-  } else {
-    // No hide or unhide link present -- this shouldn't happen, as far as I know.
-    logger.log("RedditSite", this.siteName, "Unexpected hide link absence.");
+    linkInfo.localState.isHidden = (thingElement.className.indexOf("hidden") != -1);
   }
 }
 
@@ -307,7 +299,7 @@ RedditSite.prototype.createBarContentUI = function(document, linkInfo) {
     let subredditURL = function() {
       return site.siteURL+"r/"+barContent.linkInfo.localState.subreddit+"/";
     };
-        
+    
     this.labelScore.addEventListener("click", function(e) {
       barContent.refresh();
     }, false);
