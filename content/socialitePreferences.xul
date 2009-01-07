@@ -11,7 +11,7 @@
       <preference id="prefShowSiteUrlBarIcons" name="extensions.socialite.showSiteUrlBarIcons" type="bool"/>
       <preference id="prefShowSiteMenuItems" name="extensions.socialite.showSiteMenuItems" type="bool"/>
       <preference id="prefConsolidateSites" name="extensions.socialite.consolidateSites" type="bool"/>
-      <preference id="prefPersistMode" name="extensions.socialite.persistmode" type="int"/>
+      <preference id="prefPersistMode" name="extensions.socialite.persistMode" type="int"/>
     </preferences>
     
     <groupbox flex="1">

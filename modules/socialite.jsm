@@ -73,6 +73,10 @@ logger.init("Socialite", {
   useConsole: Socialite.preferences.getBoolPref("debugInErrorConsole")
 });
 
+// *** Check for and perform any necessary migration ***
+let migration = Components.utils.import("resource://socialite/migration.jsm").SocialiteMigration;
+migration.perform();
+
 // *** Load some useful XPCOM imports ***
 let alertsService = null;
 try {

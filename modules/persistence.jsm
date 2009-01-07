@@ -38,7 +38,7 @@ function dropPathLevels(path, levels) {
 }
 
 function onLocationChange(oldURL, newURL) {
-  var persistMode = Socialite.preferences.getIntPref("persistmode");
+  var persistMode = Socialite.preferences.getIntPref("persistMode");
   
   if (persistMode == PERSIST_NONE) {
     return false;

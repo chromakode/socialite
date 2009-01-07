@@ -1,4 +1,5 @@
 == Version 1.2.4 ==
 * Support for jQuery-enabled reddit.com DOM.
 * Click the score in a reddit post bar to refresh it.
-* Fixes several bugs by using more robust info requests.
+* Fixed several bugs by using more robust info requests.
+* Fixed the internal capitalization of the "persistmode" preference for consistency.
