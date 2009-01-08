@@ -18,6 +18,7 @@
   <RDF:Description RDF:about="rdf:#$lddXp3"
                    em:locale="en-US"
                    em:name="Socialite"
+                   em:homepageURL="http://www.reddit.com/socialite/"
                    em:description="Vote on and submit stories to reddit social news sites."
                    em:creator="Chromakode" />
 </RDF:RDF>
