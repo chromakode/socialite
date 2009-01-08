@@ -8,9 +8,10 @@ let ActiveInterval = importModule("resource://socialite/utils/activeInterval.jsm
 SocialiteWindow.ActiveRefresh = {
     onLoad: function() {
       this.interval = new ActiveInterval(function() {
+        logger.log("activerefresh", "Refreshing content bar");
         // Refresh with the skipEvent parameter true, so we don't reset the interval needlessly.
         SocialiteWindow.refreshCurrentContentBar(true);
-      }, 2*60, 4*60);
+      }, this.getInterval(), Socialite.globals.IDLE_THRESHOLD);
       
       let self = this;
       
@@ -22,11 +23,7 @@ SocialiteWindow.ActiveRefresh = {
       
       // Start/stop the refresh interval based on the presence of a content bar.
       gBrowser.addEventListener("SocialiteContentBarChanged", function(event) {
-        if (SocialiteWindow.currentContentBar) {
-          self.start();
-        } else {
-          self.stop();
-        }
+        self.checkBarStatus();
       }, false);
     },
     
@@ -35,8 +32,12 @@ SocialiteWindow.ActiveRefresh = {
       this.stop();
     },
     
+    isEnabled: function() {
+      return Socialite.preferences.getBoolPref("refreshIntervalEnabled");
+    },
+    
     start: function() {
-      if (!this.interval.isRunning) {
+      if (!this.interval.isRunning && this.isEnabled()) {
         logger.log("activerefresh", "Starting refresh interval.");
         this.interval.start();
       }
@@ -47,5 +48,37 @@ SocialiteWindow.ActiveRefresh = {
         logger.log("activerefresh", "Stopping refresh interval.");
         this.interval.stop();
       }
+    },
+    
+    checkBarStatus: function() {
+      if (SocialiteWindow.currentContentBar) {
+        this.start();
+      } else {
+        this.stop();
+      }
+    },
+    
+    getInterval: function() {
+      let interval = Socialite.preferences.getIntPref("refreshInterval");
+      
+      // Ensure that it's not possible to refresh faster than the coded minimum limit (for courtesy to sites) 
+      if (interval < Socialite.globals.MINIMUM_REFRESH_INTERVAL) {
+        interval = Socialite.globals.MINIMUM_REFRESH_INTERVAL;
+        Socialite.preferences.setIntPref("refreshInterval", interval);
+      }
+      
+      return interval;
+    },
+    
+    updateEnabled: function() {
+      if (this.isEnabled()) {
+        this.checkBarStatus();
+      } else {
+        this.stop();
+      }
+    },
+    
+    updateInterval: function() {
+      this.interval.setInterval(this.getInterval());
     }
 }

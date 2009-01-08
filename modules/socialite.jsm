@@ -1,7 +1,12 @@
 var EXPORTED_SYMBOLS = ["Socialite"];
 
 var Socialite =
-{  
+{
+  globals: {
+    MINIMUM_REFRESH_INTERVAL: 2*60,
+    IDLE_THRESHOLD: 4*60
+  },
+  
   init: function() {
     Socialite.loaded = false;
     

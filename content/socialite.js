@@ -535,6 +535,14 @@ var SocialiteWindow =
           SocialiteWindow.SiteUrlBarIcon.updateVisibility();
           SocialiteWindow.SiteMenuItem.updateVisibility();
           break;
+        
+        case "refreshIntervalEnabled":
+          SocialiteWindow.ActiveRefresh.updateEnabled();
+          break;
+          
+        case "refreshInterval":
+          SocialiteWindow.ActiveRefresh.updateInterval();
+          break;
           
       }
     }

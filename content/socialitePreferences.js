@@ -17,12 +17,12 @@ var SocialiteSitePreferences = {
     this.strings = document.getElementById("socialitePreferencesStrings");
     this.siteListbox = document.getElementById("socialiteSiteListbox"); 
     this.siteListbox.addSite = function(site) {
-      var newItem = document.createElement("listitem");
+      let newItem = document.createElement("listitem");
       newItem.value = site.siteID;
       
-      var siteCell = document.createElement("listcell");
+      let siteCell = document.createElement("listcell");
       newItem.appendChild(siteCell);
-      var urlCell = document.createElement("listcell");
+      let urlCell = document.createElement("listcell");
       newItem.appendChild(urlCell);
       
       newItem.update = function() {
@@ -46,14 +46,14 @@ var SocialiteSitePreferences = {
       newItem.update();
     }
     this.siteListbox.getItemBySiteID = function(siteID) {
-      for (var i=0; i<this.childNodes.length; i++) {
+      for (let i=0; i<this.childNodes.length; i++) {
         if (this.childNodes[i].value == siteID)
           return this.childNodes[i];
       }
       return null;
     }
     this.siteListbox.removeSite = function(siteID) {
-      var item = this.getItemBySiteID(siteID);
+      let item = this.getItemBySiteID(siteID);
       if (item) {
         if (item.removeFaviconWatch) { item.removeFaviconWatch(); }
         this.removeChild(item);
@@ -64,6 +64,10 @@ var SocialiteSitePreferences = {
     for (let [siteID, site] in Socialite.sites) {
       this.siteListbox.addSite(site);
     }
+    
+    // Set the minimum of the refresh interval textbox
+    let refreshIntervalTextbox = document.getElementById("refreshIntervalTextbox");
+    refreshIntervalTextbox.min = Math.ceil(Socialite.globals.MINIMUM_REFRESH_INTERVAL / 60);
     
     observerService.addObserver(this.siteObserver, "socialite-load-site", false);
     observerService.addObserver(this.siteObserver, "socialite-unload-site", false);
@@ -89,7 +93,7 @@ var SocialiteSitePreferences = {
   },
 
   siteAdd: function SSPrefs_siteAdd(event) {
-    var newSiteInfo = {};
+    let newSiteInfo = {};
     let dialog = document.documentElement.openSubDialog("chrome://socialite/content/socialiteSiteProperties.xul", "", {
       isNewSite: true,
       newSiteInfo: newSiteInfo
@@ -99,10 +103,10 @@ var SocialiteSitePreferences = {
   },
   
   siteProperties: function SSPrefs_siteProperties(event) {
-    var item = this.siteListbox.selectedItem;
+    let item = this.siteListbox.selectedItem;
     if (item) {
-      var site = Socialite.sites.byID[item.value];
-      var dialog = document.documentElement.openSubDialog("chrome://socialite/content/socialiteSiteProperties.xul", "", {
+      let site = Socialite.sites.byID[item.value];
+      let dialog = document.documentElement.openSubDialog("chrome://socialite/content/socialiteSiteProperties.xul", "", {
         isNewSite: false, 
         site: site
       });
@@ -111,11 +115,11 @@ var SocialiteSitePreferences = {
   },
   
   siteRemove: function SSPrefs_siteRemove(event) {
-    var item = this.siteListbox.selectedItem;
+    let item = this.siteListbox.selectedItem;
     if (item) {
-      var site = Socialite.sites.byID[item.value];
+      let site = Socialite.sites.byID[item.value];
       
-      var confirmed = promptService.confirm(window, 
+      let confirmed = promptService.confirm(window,
           this.strings.getString("removeSiteConfirm.title"),
           this.strings.getFormattedString("removeSiteConfirm.message", [ site.siteName ])
       );
@@ -125,6 +129,25 @@ var SocialiteSitePreferences = {
         Socialite.sites.saveConfiguredSites();
       }
     }
+  },
+  
+  refreshIntervalEnabledFromPreference: function SSPrefs_refreshIntervalEnabledFromPreference() {
+    let pref = document.getElementById("prefRefreshIntervalEnabled");
+    let textbox = document.getElementById("refreshIntervalTextbox");
+    textbox.disabled = !pref.value;
+    return pref.value;
+  },
+  
+  refreshIntervalFromPreference: function SSPrefs_refreshIntervalFromPreference() {
+    let pref = document.getElementById("prefRefreshInterval");
+    let seconds = pref.value;
+    return Math.ceil(seconds / 60);
+  },
+  
+  refreshIntervalToPreference: function SSPrefs_refreshIntervalToPreference() {
+    let textbox = document.getElementById("refreshIntervalTextbox");
+    let minutes = textbox.valueNumber;
+    return minutes*60;
   }
 
 };
