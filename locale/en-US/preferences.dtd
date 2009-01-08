@@ -20,6 +20,11 @@
 <!ENTITY alwaysPersist.label "Retain info bar indefinitely">
 <!ENTITY alwaysPersist.accesskey "i">
 
+<!ENTITY networkGroup.caption "Network">
+<!ENTITY refreshInterval.label "Refresh visible info bars every">
+<!ENTITY refreshIntervalMinutes.label "minutes">
+
+
 <!ENTITY sites.title "Sites">
 
 <!ENTITY sitesGroup.caption "Content Sites">

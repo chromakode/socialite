@@ -28,15 +28,16 @@ let SocialiteProgressListener =
   onLocationChangeTabs: function(aBrowser, aProgress, aRequest, aURI) {
     // addTabsProgressListener listeners have an extra first "aBrowser" argument.
     let window = aProgress.DOMWindow;
-    if ((window == window.top) && aURI) {
-      SocialiteWindow.linkStartLoad(aURI.spec, window, aProgress.isLoadingDocument);
+    if (window == window.top) {
+      SocialiteWindow.linkStartLoad((aURI && aURI.spec), aBrowser, aProgress.isLoadingDocument);
     }
   },
   
   onLocationChangeSingle: function(aProgress, aRequest, aURI) {
     let window = aProgress.DOMWindow;
-    if ((window == window.top) && aURI) {
-      SocialiteWindow.linkStartLoad(aURI.spec, window, aProgress.isLoadingDocument);
+    if (window == window.top) {
+      let browser = gBrowser.getBrowserForDocument(window.document);
+      SocialiteWindow.linkStartLoad((aURI && aURI.spec), browser, aProgress.isLoadingDocument);
     }
   },
 
@@ -50,7 +51,6 @@ let SocialiteProgressListener =
 
 var SocialiteWindow = 
 {
-  
   init: function() {
     window.addEventListener("load", SocialiteWindow.onLoad, false);
     window.addEventListener("unload", SocialiteWindow.onUnload, false);
@@ -66,9 +66,10 @@ var SocialiteWindow =
     
     SocialiteWindow.SiteUrlBarIcon.onLoad();
     SocialiteWindow.SiteMenuItem.onLoad();
-    
+    SocialiteWindow.ActiveRefresh.onLoad();
+
+    // XXX: Call close methods for notifications if they exist, since they won't be called otherwise.
     gBrowser.addEventListener("TabClose", function(event) {
-      // XXX: Call close methods for notifications if they exist, since they won't be called otherwise
       var selectedBrowser = event.originalTarget.linkedBrowser;
       var notificationBox = gBrowser.getNotificationBox(selectedBrowser);
       
@@ -132,11 +133,12 @@ var SocialiteWindow =
     
     // Add progress listener to tabbrowser. This fires progress events for the current tab.
     SocialiteWindow.setupProgressListener(gBrowser);
-  },
+    },
   
   onUnload: function() {
     SocialiteWindow.SiteUrlBarIcon.onUnload();
     SocialiteWindow.SiteMenuItem.onUnload();
+    SocialiteWindow.ActiveRefresh.onUnload();
     
     Socialite.preferences.removeObserver("", SocialiteWindow.preferenceObserver);
     
@@ -166,58 +168,66 @@ var SocialiteWindow =
     }
   },
 
-  linkStartLoad: function(URL, win, isLoading) {
-    let browser = gBrowser.getBrowserForDocument(win.document);
+  linkStartLoad: function(URL, browser, isLoading) {
     let notificationBox = gBrowser.getNotificationBox(browser);
-
-    // Check for and store a HTTP redirect
-    let channel = browser.docShell.currentDocumentChannel;
-    if (channel) {
-      let originalURL = channel.originalURI.spec;
-
-      if ((channel.loadFlags & Components.interfaces.nsIChannel.LOAD_REPLACE)
-          && (Socialite.watchedURLs.isWatched(originalURL) || Socialite.watchedURLs.isWatched(URL))) {
-        logger.log("linkStartLoad", "Detected redirect: "+ originalURL +" -> "+ URL);
-        Socialite.watchedURLs.addRedirect(originalURL, URL);
-      }
-    }
-    
-    // Handle an existing bar
     let socialiteBar = notificationBox.getNotificationWithValue(SOCIALITE_CONTENT_NOTIFICATION_VALUE);
-    if (socialiteBar) {
-      let isFromRedirect = Socialite.watchedURLs.isRedirect(socialiteBar.originalURL, URL);
-      let isPersistenceChange = persistence.onLocationChange(socialiteBar.URL, URL);
-      // Handle persistence changes, if any.
-      if (!isFromRedirect && !isPersistenceChange) {
-        notificationBox.removeNotification(socialiteBar);
-        socialiteBar = null;
-      } else {
-        // If we got redirected, update the bar URL so persistence rules are followed correctly.
-        if (isFromRedirect) {
-          socialiteBar.URL = URL;
+    
+    if (URL) {
+      let isWatched = Socialite.watchedURLs.isWatched(URL);
+      
+      // Check for and store a HTTP redirect
+      let channel = browser.docShell.currentDocumentChannel;
+      if (channel) {
+        let originalURL = channel.originalURI.spec;
+  
+        if ((channel.loadFlags & Components.interfaces.nsIChannel.LOAD_REPLACE)
+            && (Socialite.watchedURLs.isWatched(originalURL) || isWatched)) {
+          logger.log("linkStartLoad", "Detected redirect: "+ originalURL +" -> "+ URL);
+          Socialite.watchedURLs.addRedirect(originalURL, URL);
         }
-        // If we're not closing the bar, refresh it.
-        socialiteBar.refresh();
+      }
+      
+      // Handle an existing bar
+      if (socialiteBar) {
+        let isFromRedirect = Socialite.watchedURLs.isRedirect(socialiteBar.originalURL, URL);
+        let isPersistenceChange = persistence.onLocationChange(socialiteBar.URL, URL);
+        // Handle persistence changes, if any.
+        if (!isFromRedirect && !isPersistenceChange) {
+          socialiteBar.close();
+          socialiteBar = null;
+        } else {
+          // If we got redirected, update the bar URL so persistence rules are followed correctly.
+          if (isFromRedirect) {
+            socialiteBar.URL = URL;
+          }
+          // If we're not closing the bar, refresh it.
+          socialiteBar.refresh();
+        }
+      }
+      
+      // Open a new bar if one is not already open, and the link is watched
+      if (!socialiteBar && isWatched) {
+        let watchInfo = Socialite.watchedURLs.get(URL);
+        if (!watchInfo.hidden) {
+          // This is a watched link. Create a notification box and initialize.
+          socialiteBar = SocialiteWindow.createContentBar(browser, URL);
+          
+          // Populate the bar
+          for each (let [siteID, linkInfo] in watchInfo) {
+            let site = Socialite.sites.byID[siteID];
+            socialiteBar.addSiteUI(site, site.createBarContentUI(document, linkInfo));
+          }
+        }
       }
     }
     
-    // Open a new bar if one is not already open, and the link is watched
-    if (!socialiteBar && Socialite.watchedURLs.isWatched(URL)) {
-      let watchInfo = Socialite.watchedURLs.get(URL);
-      if (!watchInfo.hidden) {
-        // This is a watched link. Create a notification box and initialize.
-        var newBar = SocialiteWindow.createContentBar(notificationBox, URL);
-        
-        // Populate the bar
-        for each (let [siteID, linkInfo] in watchInfo) {
-          let site = Socialite.sites.byID[siteID];
-          newBar.addSiteUI(site, site.createBarContentUI(document, linkInfo));
-        }
-      }
+    if (browser == gBrowser.selectedBrowser) {
+      SocialiteWindow._updateContentBarState(socialiteBar);
     }
   },
   
-  createContentBar: function(notificationBox, URL) {
+  createContentBar: function(browser, URL) {
+    let notificationBox = gBrowser.getNotificationBox(browser);
     let notification = notificationBox.appendNotification(
       "",
       SOCIALITE_CONTENT_NOTIFICATION_VALUE,
@@ -240,13 +250,38 @@ var SocialiteWindow =
       if (Socialite.watchedURLs.isWatched(notification.originalURL)) {
         Socialite.watchedURLs.get(notification.originalURL).hidden = true;
       }
+      
+      SocialiteWindow._updateContentBarState(null);
     }, false);
-    
     logger.log("SocialiteWindow", "Content notification created");
+    
+    if (browser == gBrowser.selectedBrowser) {
+      SocialiteWindow._updateContentBarState(notification);
+    }
+    
     return notification;
   },
   
-  createSubmitBar: function(notificationBox, URL) {
+  currentContentBar: null,
+  _updateContentBarState: function(contentBar) {
+    if (contentBar !== SocialiteWindow.currentContentBar) {
+      SocialiteWindow.currentContentBar = contentBar;
+      
+      var event = document.createEvent("Events");
+      event.initEvent("SocialiteContentBarChanged", true, true);
+      gBrowser.dispatchEvent(event);
+    }
+  },
+  
+  refreshCurrentContentBar: function(skipEvent) {
+    if (SocialiteWindow.currentContentBar) {
+      logger.log("main", "Refreshing current content bar");
+      SocialiteWindow.currentContentBar.refresh(skipEvent);
+    }
+  },
+  
+  createSubmitBar: function(browser, URL) {
+    let notificationBox = gBrowser.getNotificationBox(browser);
     let notification = notificationBox.appendNotification(
       "",
       SOCIALITE_SUBMIT_NOTIFICATION_VALUE,
@@ -267,7 +302,8 @@ var SocialiteWindow =
     return notification;
   },
   
-  createNoSitesNotification: function(notificationBox, URL) {
+  createNoSitesNotification: function(browser, URL) {
+    let notificationBox = gBrowser.getNotificationBox(browser);
     let notification = notificationBox.getNotificationWithValue(SOCIALITE_NOSITES_NOTIFICATION_VALUE);
     if (!notification) {
       notification = notificationBox.appendNotification(
@@ -300,14 +336,14 @@ var SocialiteWindow =
     
     // Helper function to open the bar with some content.
     function openContentBarTo(site, siteUI) {
-      let socialiteBar = notificationBox.getNotificationWithValue(SOCIALITE_CONTENT_NOTIFICATION_VALUE);
+      let socialiteBar = SocialiteWindow.currentContentBar;
       if (socialiteBar && socialiteBar.URL != currentURL) {
         // The bar was opened for another URL. We will replace it.
         socialiteBar.close();
         socialiteBar = null;
       }
       if (!socialiteBar) {
-        socialiteBar = SocialiteWindow.createContentBar(notificationBox, currentURL);
+        socialiteBar = SocialiteWindow.createContentBar(selectedBrowser, currentURL);
       }
       socialiteBar.addSiteUI(site, siteUI);
     }
@@ -316,7 +352,7 @@ var SocialiteWindow =
     function openSubmitBarTo(site) {
       let submitBar = notificationBox.getNotificationWithValue(SOCIALITE_SUBMIT_NOTIFICATION_VALUE);
       if (!submitBar) {
-        submitBar = SocialiteWindow.createSubmitBar(notificationBox, currentURL);
+        submitBar = SocialiteWindow.createSubmitBar(selectedBrowser, currentURL);
       }
       if (site) {
         submitBar.selectSite(site);
@@ -374,14 +410,14 @@ var SocialiteWindow =
     // *** Step 0: Check that we have sites loaded
     
     if (Socialite.sites.count == 0) {
-      SocialiteWindow.createNoSitesNotification(notificationBox);
+      SocialiteWindow.createNoSitesNotification(selectedBrowser);
       if (finishedCallback) { finishedCallback(); }
       return;
     }
    
     // *** Step 1: Identify UI cases where the intended action is clearly to submit
     
-    let currentSocialiteBar = notificationBox.getNotificationWithValue(SOCIALITE_CONTENT_NOTIFICATION_VALUE);
+    let currentSocialiteBar = SocialiteWindow.currentContentBar;
     let currentSubmitBar = notificationBox.getNotificationWithValue(SOCIALITE_SUBMIT_NOTIFICATION_VALUE);
     
     let shouldSubmit = false;
@@ -498,6 +534,14 @@ var SocialiteWindow =
         case "consolidateSites":
           SocialiteWindow.SiteUrlBarIcon.updateVisibility();
           SocialiteWindow.SiteMenuItem.updateVisibility();
+          break;
+        
+        case "refreshIntervalEnabled":
+          SocialiteWindow.ActiveRefresh.updateEnabled();
+          break;
+          
+        case "refreshInterval":
+          SocialiteWindow.ActiveRefresh.updateInterval();
           break;
           
       }

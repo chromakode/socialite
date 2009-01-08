@@ -1,7 +1,12 @@
 var EXPORTED_SYMBOLS = ["Socialite"];
 
 var Socialite =
-{  
+{
+  globals: {
+    MINIMUM_REFRESH_INTERVAL: 2*60,
+    IDLE_THRESHOLD: 4*60
+  },
+  
   init: function() {
     Socialite.loaded = false;
     
@@ -72,6 +77,10 @@ logger.init("Socialite", {
   enabled:    Socialite.preferences.getBoolPref("debug"),
   useConsole: Socialite.preferences.getBoolPref("debugInErrorConsole")
 });
+
+// *** Check for and perform any necessary migration ***
+let migration = Components.utils.import("resource://socialite/migration.jsm").SocialiteMigration;
+migration.perform();
 
 // *** Load some useful XPCOM imports ***
 let alertsService = null;

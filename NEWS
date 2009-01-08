@@ -1,3 +1,6 @@
 == Version 1.2.4 ==
-* Support for jQuery-enabled reddit.com DOM
-* Fixes several bugs by using more robust info requests.
+* Support for jQuery-enabled reddit.com DOM.
+* Optional automatic refresh interval for the info bar.
+* Clicking the score in a reddit info bar manually refreshes it.
+* Fixed several bugs by using more robust info requests.
+* Fixed the internal capitalization of the "persistmode" preference for consistency.

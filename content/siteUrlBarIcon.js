@@ -16,6 +16,19 @@ SocialiteWindow.SiteUrlBarIcon = {
   
   WORKING_ICON: "chrome://socialite/content/reddit/working.gif",
   
+  onLoad: function() {
+    this.generalIcon = this.createGeneral();
+    for (let [siteID, site] in Socialite.sites) {
+      this.create(site);
+    }
+  },
+  
+  onUnload: function() {
+    Array.forEach(this.getAll(), function(urlBarIcon) {
+      if (urlBarIcon._removeFaviconWatch) { urlBarIcon._removeFaviconWatch(); }
+    });
+  },
+  
   create: function(site) {
     let urlBarIconParent = document.getElementById("urlbar-icons");
     let feedButton = document.getElementById("feed-button");
@@ -150,19 +163,6 @@ SocialiteWindow.SiteUrlBarIcon = {
     this.generalIcon.updateVisibility(visible, consolidated);
     Array.forEach(this.getAll(), function(urlBarIcon) {
       urlBarIcon.updateVisibility(visible, consolidated);
-    });
-  },
-  
-  onLoad: function() {
-    this.generalIcon = this.createGeneral();
-    for (let [siteID, site] in Socialite.sites) {
-      this.create(site);
-    }
-  },
-  
-  onUnload: function() {
-    Array.forEach(this.getAll(), function(urlBarIcon) {
-      if (urlBarIcon._removeFaviconWatch) { urlBarIcon._removeFaviconWatch(); }
     });
   }
 }
