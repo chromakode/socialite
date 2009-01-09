@@ -9,8 +9,9 @@ var EXPORTED_SYMBOLS = ["getAuthInfo", "RedditAuth"];
 
 // ---
 
-function RedditAuth(siteURL) {
+function RedditAuth(siteURL, version) {
   this.siteURL = siteURL;
+  this.version = version;
   this.username = false;
   this.modHash = "";
   
@@ -59,8 +60,15 @@ RedditAuth.prototype = {
   refreshAuthInfo: Action("reddit_auth.refreshAuthInfo", function(action) {
     logger.log("reddit_auth", this.siteURL, "Getting new authentication info");
     
+    let snarfTarget;
+    if (this.version.compare("dom", "1.0") >= 0) {
+      snarfTarget = this.siteURL + "api/info/";
+    } else {
+      snarfTarget = this.siteURL + "bookmarklets/";
+    }
+    
     let act = http.GetAction(
-      this.siteURL + "bookmarklets/",
+      snarfTarget,
       null,
       
       hitchThis(this, function success(r) {
