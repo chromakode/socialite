@@ -87,7 +87,7 @@ RedditAPI.prototype.init = function(version, auth) {
   if (auth) {
     this.auth = auth;
   } else {
-    this.auth = new RedditAuth(this.siteURL);
+    this.auth = new RedditAuth(this.siteURL, this.version);
     this.auth.refreshAuthInfo().perform();
   }
 }
