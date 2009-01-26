@@ -66,15 +66,19 @@ ActiveInterval.prototype = {
   setInterval: function(interval) {
     this.interval = interval;
     if (this.isTicking) {
-      this.timer.delay = interval;
+      this.timer.delay = this._get_timer_interval();
     }
+  },
+  
+  _get_timer_interval: function() {
+    return this.interval*1000;
   },
   
   _start_ticking: function() {
     let self = this;
     this.timer.initWithCallback(
       function() {self.tick();},
-      this.interval*1000,
+      this._get_timer_interval(),
       this.timer.TYPE_REPEATING_SLACK
     );
     this.isTicking = true;
