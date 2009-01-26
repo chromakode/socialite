@@ -8,7 +8,7 @@ let ActiveInterval = importModule("resource://socialite/utils/activeInterval.jsm
 SocialiteWindow.ActiveRefresh = {
     onLoad: function() {
       this.interval = new ActiveInterval(function() {
-        logger.log("activerefresh", "Refreshing content bar");
+        logger.log("activerefresh", "Refreshing current content bar");
         // Refresh with the skipEvent parameter true, so we don't reset the interval needlessly.
         SocialiteWindow.refreshCurrentContentBar(true);
       }, this.getInterval(), Socialite.globals.IDLE_THRESHOLD);
