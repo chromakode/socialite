@@ -1,6 +1,8 @@
-== Version 1.2.4 ==
+== Version 1.3.0 ==
+* Support for Firefox 3.1 beta 2.
 * Support for jQuery-enabled reddit.com DOM.
 * Optional automatic refresh interval for the info bar.
 * Clicking the score in a reddit info bar manually refreshes it.
+* New internal API version compatibility system.
 * Fixed several bugs by using more robust info requests.
 * Fixed the internal capitalization of the "persistmode" preference for consistency.
