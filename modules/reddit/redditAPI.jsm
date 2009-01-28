@@ -52,6 +52,15 @@ function sameLinkID(func1, arg1, func2, arg2) {
   return (linkID1 == linkID2);
 }
 
+function tryJSON(action, r) {
+  try {
+    let json = nativeJSON.decode(r.responseText);
+    action.success(r, json);
+  } catch (e) {
+    action.failure(r);
+  }
+}
+
 function RedditAPI(siteURL) {
   this.siteURL = siteURL;
   
@@ -105,8 +114,7 @@ RedditAPI.prototype._urlinfo = function(url, subreddit, action) {
     params,
     
     function success(r) {
-      var json = nativeJSON.decode(r.responseText);
-      action.success(r, json);
+      tryJSON(action, r);
     },
     function failure(r) { action.failure(r); }
   ).perform();
@@ -120,8 +128,7 @@ RedditAPI.prototype._thinginfo = function(thingID, action) {
     null,
     
     function success(r) {
-      var json = nativeJSON.decode(r.responseText);
-      action.success(r, json);
+      tryJSON(action, r);
     },
     function failure(r) { action.failure(r); }
   ).perform();
@@ -139,8 +146,7 @@ RedditAPI.prototype.randomrising = Action("reddit.randomrising", function(action
     params,
     
     function success(r) {
-      var json = nativeJSON.decode(r.responseText);
-      action.success(r, json);
+      tryJSON(action, r);
     },
     function failure(r) { action.failure(r); }
   ).perform();
@@ -154,8 +160,7 @@ RedditAPI.prototype.mysubreddits = Action("reddit.mysubreddits", function(action
     null, // No parameters
     
     function success(r) {
-      var json = nativeJSON.decode(r.responseText);
-      action.success(r, json);
+      tryJSON(action, r);
     },
     function failure(r) { action.failure(r); }
   ).perform();
