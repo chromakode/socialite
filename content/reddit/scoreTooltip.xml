@@ -17,11 +17,11 @@
         <xul:rows>
           <xul:row align="center">
             <xul:image src="chrome://socialite/content/reddit/upmod.png"/>
-            <xul:label anonid="likeCount" value="&unknown;" xbl:inherits="value=likeCount"/>
+            <xul:label anonid="value=labelLikeCount" value="&unknown;" xbl:inherits="value=likeCountLabel"/>
           </xul:row>
           <xul:row align="center">
             <xul:image src="chrome://socialite/content/reddit/downmod.png"/>
-            <xul:label anonid="dislikeCount" value="&unknown;" xbl:inherits="value=dislikeCount"/>
+            <xul:label anonid="labelDislikeCount" value="&unknown;" xbl:inherits="value=dislikeCountLabel"/>
           </xul:row>
         </xul:rows>
       </xul:grid>
@@ -29,17 +29,41 @@
 
     <implementation>
       <field name="linkInfo"/>
+      
+      <property name="likeCount"
+                onget="return this._likeCount;">
+        <setter>
+          this._dislikeCount = val;
+          this.setAttribute('likeCountLabel', (val != null) ? val.toString() : "&unknown;");
+          return val;
+        </setter>
+      </property>
+      
+      <property name="dislikeCount"
+                onget="return this._dislikeCount;">
+        <setter>
+          this._dislikeCount = val;
+          this.setAttribute('dislikeCountLabel', (val != null) ? val.toString() : "&unknown;");
+          return val;
+        </setter>
+      </property>
+      
+      <constructor>
+        this._likeCount = null;
+        this._dislikeCount = null;
+      </constructor>
     </implementation>
     
     <handlers>
       <handler event="popupshowing">
         if (this.linkInfo) {
-          var linkInfo = this.linkInfo; 
+          let linkInfo = this.linkInfo;
         } else {
-          var linkInfo = document.getBindingParent(this).linkInfo;
+          let linkInfo = document.getBindingParent(this).linkInfo;
         }
-        this.setAttribute("likeCount", linkInfo.localState.likeCount || "&unknown;");
-        this.setAttribute("dislikeCount", linkInfo.localState.dislikeCount || "&unknown;");
+        
+        this.likeCount = linkInfo.localState.likeCount;
+        this.dislikeCount = linkInfo.localState.dislikeCount;
       </handler>
     </handlers>
 
