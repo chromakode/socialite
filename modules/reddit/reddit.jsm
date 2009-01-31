@@ -52,11 +52,12 @@ RedditSite.prototype.setDefaultPreferences = function(siteDefaultBranch) {
 RedditSite.prototype.onSitePageLoad = function(doc, win) {
   if (this.sitePreferences.getBoolPref("watchRedditSiteLinks")) {
     // Iterate over each article link and register event listener
+    let startTime = Date.now();
     let linkXPath;
     if (this.API.version.compare("dom", "1") >= 0) {
-      linkXPath = '//div[contains(@class, "thing")]//a[contains(@class, "title")]';
+      linkXPath = '//div[contains(@class, "thing") and (contains(@class, "link") or contains(@class, "linkcompressed"))]//a[contains(@class, "title")]';
     } else {
-      linkXPath = '//div[@class="entry"]//a[contains(@class, "title")]';
+      linkXPath = '//div[starts-with(@id, "thingrow") and (contains(@class, "link") or contains(@class, "linkcompressed"))]//a[contains(@class, "title")]';
     }
     let res = doc.evaluate(linkXPath, doc.documentElement, null, XPathResult.UNORDERED_NODE_SNAPSHOT_TYPE, null);
      
@@ -76,7 +77,8 @@ RedditSite.prototype.onSitePageLoad = function(doc, win) {
       //siteLink.style.color = "red";
     }
     
-    logger.log("RedditSite", this.siteName, "Added click handlers to " + res.snapshotLength + " links on " + win.location.href);
+    let endTime = Date.now();
+    logger.log("RedditSite", this.siteName, "Added click handlers to " + res.snapshotLength + " links on " + win.location.href + " in " + (endTime-startTime) + "ms");
     
     // Snarf the authentication hash using wrappedJSObject
     // This should be safe, since Firefox 3 uses a XPCSafeJSObjectWrapper
