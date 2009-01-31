@@ -390,7 +390,7 @@
     
       <constructor>
         <![CDATA[
-          var Socialite = Components.utils.import("resource://socialite/socialite.jsm", null);
+          var Socialite = Components.utils.import("resource://socialite/socialite.jsm", null).Socialite;
         
           this.preferences = Components.classes["@mozilla.org/preferences-service;1"]
               .getService(Components.interfaces.nsIPrefService)
@@ -568,7 +568,7 @@
   <binding id="socialite-loaded-site-selector" extends="chrome://socialite/content/socialiteBar.xml#socialite-site-selector">
     <implementation>    
       <constructor>
-        var Socialite = Components.utils.import("resource://socialite/socialite.jsm", null);
+        var Socialite = Components.utils.import("resource://socialite/socialite.jsm", null).Socialite;
         
         // Add currently loaded sites
         for (let [siteID, site] in Socialite.sites) {
