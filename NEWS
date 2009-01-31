@@ -1,6 +1,6 @@
 == Version 1.3.2 ==
 * Fix namespace pollution.
-* Fix minor bug when cancelling adding a site.
+* Fix minor bug when canceling adding a site.
 * Fix minor internal cleanup bug in the site dropdown.
 
 == Version 1.3.1 ==
