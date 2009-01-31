@@ -100,7 +100,10 @@ var SocialiteSitePreferences = (function() {
         newSiteInfo: newSiteInfo
       });
       
-      this.site = Socialite.sites.createSite(newSiteInfo["siteClassID"], newSiteInfo["siteID"], newSiteInfo["siteName"], newSiteInfo["siteURL"])
+      // If the dialog is canceled, newSiteInfo is empty
+      if (newSiteInfo["siteID"] != undefined) {
+        this.site = Socialite.sites.createSite(newSiteInfo["siteClassID"], newSiteInfo["siteID"], newSiteInfo["siteName"], newSiteInfo["siteURL"]);
+      }
     },
     
     siteProperties: function SSPrefs_siteProperties(event) {
