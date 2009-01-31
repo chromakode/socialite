@@ -403,7 +403,7 @@
           let self = this;
           
           // Site name change observer
-          this.observer = {
+          this.siteNameObserver = {
             observe: function(subject, topic, data) {
               // data is of the form siteID.preference
               splitData = data.split(".");
@@ -426,7 +426,7 @@
               }
             }
           }
-          this.preferences.addObserver("", this.observer, false);
+          this.preferences.addObserver("", this.siteNameObserver, false);
           
           // Site menu updater
           
@@ -451,7 +451,7 @@
       <method name="destroySiteSelector">
         <body>
           <![CDATA[
-            this.preferences.removeObserver("", this.observer);
+            this.preferences.removeObserver("", this.siteNameObserver);
             var siteImage = document.getAnonymousElementByAttribute(this, "anonid", "imageSite");
             if (siteImage.removeFaviconWatch) { siteImage.removeFaviconWatch(); }
           ]]>
@@ -580,7 +580,7 @@
 
         // Site name change observer
         let self = this;
-        this.observer = {
+        this.loadedSiteObserver = {
           observe: function(subject, topic, data) {
             if (topic == "socialite-load-site") {
               self.addSite(Socialite.sites.byID[data]);
@@ -589,8 +589,8 @@
             }
           }
         }
-        observerService.addObserver(this.observer, "socialite-load-site", false);
-        observerService.addObserver(this.observer, "socialite-unload-site", false);
+        observerService.addObserver(this.loadedSiteObserver, "socialite-load-site", false);
+        observerService.addObserver(this.loadedSiteObserver, "socialite-unload-site", false);
       </constructor>
       
       <destructor>
@@ -602,8 +602,8 @@
           <![CDATA[
             let observerService = Components.classes["@mozilla.org/observer-service;1"]
                                   .getService(Components.interfaces.nsIObserverService);
-            observerService.removeObserver(this.observer, "socialite-load-site");
-            observerService.removeObserver(this.observer, "socialite-unload-site");
+            observerService.removeObserver(this.loadedSiteObserver, "socialite-load-site");
+            observerService.removeObserver(this.loadedSiteObserver, "socialite-unload-site");
             
             this.destroySiteSelector();
           ]]>
