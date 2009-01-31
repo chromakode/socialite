@@ -390,7 +390,7 @@
     
       <constructor>
         <![CDATA[
-          Components.utils.import("resource://socialite/socialite.jsm");
+          var Socialite = Components.utils.import("resource://socialite/socialite.jsm", null);
         
           this.preferences = Components.classes["@mozilla.org/preferences-service;1"]
               .getService(Components.interfaces.nsIPrefService)
@@ -475,16 +475,16 @@
             let menuItem = document.createElement("menuitem");
             menuItem.class = "menuitem-iconic";
             menuItem.updateSiteName = function(newName) {
-              Components.utils.import("resource://socialite/utils/domUtils.jsm");
+              var domUtils = Components.utils.import("resource://socialite/utils/domUtils.jsm", null);
               menuItem.setAttribute("label", newName);
-              addSorted(menuItem, self.menuSites, function(item1, item2) {
+              domUtils.addSorted(menuItem, self.menuSites, function(item1, item2) {
                 let label1 = item1.getAttribute("label"); 
                 let label2 = item2.getAttribute("label"); 
                 return label1.localeCompare(label2);
               });
             }
             menuItem.updateSiteIcon = function() {
-              faviconWatch = Components.utils.import("resource://socialite/utils/faviconWatch.jsm");
+              var faviconWatch = Components.utils.import("resource://socialite/utils/faviconWatch.jsm", null);
               menuItem.setAttribute("image", faviconWatch.getFaviconURL(site.siteURL));
             }
             
@@ -533,7 +533,7 @@
               if (site != null) {
                 siteName.value = site.siteName;
                 
-                faviconWatch = Components.utils.import("resource://socialite/utils/faviconWatch.jsm");
+                var faviconWatch = Components.utils.import("resource://socialite/utils/faviconWatch.jsm", null);
                 if (siteImage.removeFaviconWatch) { siteImage.removeFaviconWatch(); }
                 siteImage.removeFaviconWatch = faviconWatch.useFaviconAsAttribute(siteImage, "src", site.siteURL);
               } else {
@@ -568,7 +568,7 @@
   <binding id="socialite-loaded-site-selector" extends="chrome://socialite/content/socialiteBar.xml#socialite-site-selector">
     <implementation>    
       <constructor>
-        Components.utils.import("resource://socialite/socialite.jsm");
+        var Socialite = Components.utils.import("resource://socialite/socialite.jsm", null);
         
         // Add currently loaded sites
         for (let [siteID, site] in Socialite.sites) {
