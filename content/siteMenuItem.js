@@ -7,7 +7,7 @@ SocialiteWindow.SiteMenuItem = (function() {
   let faviconWatch = importModule("resource://socialite/utils/faviconWatch.jsm");
   let domUtils = importModule("resource://socialite/utils/domUtils.jsm"); 
   
-  var siteMenuItem = {
+  var SiteMenuItem = {
     SITE_MENUITEM_ID: "socialite-site-menuitem-",
     SITE_MENUITEM_CLASS: "socialite-site-menuitem",
     MENUITEM_CLASS: "socialite-menuitem",
@@ -23,8 +23,8 @@ SocialiteWindow.SiteMenuItem = (function() {
     },
     
     onUnload: function() {
-      Array.forEach(this.getAll(), function(siteMenuItem) {
-        if (siteMenuItem._removeFaviconWatch) { siteMenuItem._removeFaviconWatch(); }
+      Array.forEach(this.getAll(), function(menuItem) {
+        if (menuItem._removeFaviconWatch) { menuItem._removeFaviconWatch(); }
       });
     },
     
@@ -52,7 +52,7 @@ SocialiteWindow.SiteMenuItem = (function() {
       menuItem.updateSiteName = function(newSiteName) {
         menuItem.setAttribute("label", Socialite.stringBundle.formatStringFromName("shareMenuItem.label", [ newSiteName ], 1));
         
-        let menuItems = siteMenuItem.getAll();
+        let menuItems = SiteMenuItem.getAll();
         if (menuItems.length == 0) {
           fileMenuPopup.insertBefore(menuItem, sendMenuItem.nextSibling);
         } else {
@@ -71,28 +71,28 @@ SocialiteWindow.SiteMenuItem = (function() {
     createGeneral: function() {
       let fileMenuPopup = document.getElementById("menu_FilePopup");
       let sendMenuItem = document.getElementById("menu_sendLink");
-      let siteMenuItem = document.createElement("menuitem");
+      let menuItem = document.createElement("menuitem");
       
-      siteMenuItem.id = this.GENERAL_MENUITEM_ID;
-      siteMenuItem.className = this.MENUITEM_CLASS;
-      siteMenuItem.setAttribute("src", SocialiteWindow.SiteUrlBarIcon.GENERAL_ICON);
-      siteMenuItem.setAttribute("label", Socialite.stringBundle.GetStringFromName("generalMenuItem.label"));
+      menuItem.id = this.GENERAL_MENUITEM_ID;
+      menuItem.className = this.MENUITEM_CLASS;
+      menuItem.setAttribute("src", SocialiteWindow.SiteUrlBarIcon.GENERAL_ICON);
+      menuItem.setAttribute("label", Socialite.stringBundle.GetStringFromName("generalMenuItem.label"));
       
-      siteMenuItem.updateVisibility = function(visible, consolidated) {
-        siteMenuItem.setAttribute("hidden", !visible || !consolidated);
+      menuItem.updateVisibility = function(visible, consolidated) {
+        menuItem.setAttribute("hidden", !visible || !consolidated);
       }
-      siteMenuItem.updateVisibility(
+      menuItem.updateVisibility(
         Socialite.preferences.getBoolPref("showSiteMenuItems"),
         Socialite.preferences.getBoolPref("consolidateSites")
       );
       
-      siteMenuItem.addEventListener("command", function(event) {
+      menuItem.addEventListener("command", function(event) {
         SocialiteWindow.linkContextAction(null, event, true);
       }, false);
       
-      fileMenuPopup.insertBefore(siteMenuItem, sendMenuItem.nextSibling);
+      fileMenuPopup.insertBefore(menuItem, sendMenuItem.nextSibling);
       
-      return siteMenuItem;
+      return menuItem;
     },
     
     get: function(site) {
@@ -105,25 +105,25 @@ SocialiteWindow.SiteMenuItem = (function() {
     
     remove: function(site) {
       let fileMenuPopup = document.getElementById("menu_FilePopup");
-      let siteMenuItem = this.get(site);
-      if (siteMenuItem._removeFaviconWatch) { siteMenuItem._removeFaviconWatch(); }
-      fileMenuPopup.removeChild(siteMenuItem);
+      let menuItem = this.get(site);
+      if (menuItem._removeFaviconWatch) { menuItem._removeFaviconWatch(); }
+      fileMenuPopup.removeChild(menuItem);
     },
     
     updateSiteName: function(site, siteName) {
-      let siteMenuItem = this.get(site);
-      siteMenuItem.updateSiteName(siteName);
+      let menuItem = this.get(site);
+      menuItem.updateSiteName(siteName);
     },
     
     updateVisibility: function() {
       let visible = Socialite.preferences.getBoolPref("showSiteMenuItems");
       let consolidated = Socialite.preferences.getBoolPref("consolidateSites");
       this.generalItem.updateVisibility(visible, consolidated);
-      Array.forEach(this.getAll(), function(siteMenuItem) {
-        siteMenuItem.updateVisibility(visible, consolidated);
+      Array.forEach(this.getAll(), function(menuItem) {
+        menuItem.updateVisibility(visible, consolidated);
       });
     }
   };
   
-  return siteMenuItem;
+  return SiteMenuItem;
 })();
