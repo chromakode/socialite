@@ -246,7 +246,11 @@
           <xul:label anonid="labelSiteSelector" value="&loadedSiteSelector.label;"/>
           <xul:hbox anonid="loadedSiteSelector"/>
           <xul:separator width="0px" height="18px" orient="vertical" class="socialite-separator"/>
-          <xul:hbox anonid="siteSubmitUIContainer" flex="1" align="center">
+          <!--
+              Firefox's tabbrowser has a handler that catches Ctrl-arrow keys and cancels the default event, interfering with word-by-word keyboard navigation in textboxes.
+              We'll prevent the keypress event from bubbling outside the container to this problematic handler, so individual site submit UIs don't have to worry about this.
+          -->
+          <xul:hbox anonid="siteSubmitUIContainer" flex="1" align="center" onkeypress="event.stopPropagation();">
             <children/>
           </xul:hbox>
         </xul:hbox>
@@ -390,7 +394,7 @@
     
       <constructor>
         <![CDATA[
-          Components.utils.import("resource://socialite/socialite.jsm");
+          var Socialite = Components.utils.import("resource://socialite/socialite.jsm", null).Socialite;
         
           this.preferences = Components.classes["@mozilla.org/preferences-service;1"]
               .getService(Components.interfaces.nsIPrefService)
@@ -403,7 +407,7 @@
           let self = this;
           
           // Site name change observer
-          this.observer = {
+          this.siteNameObserver = {
             observe: function(subject, topic, data) {
               // data is of the form siteID.preference
               splitData = data.split(".");
@@ -426,7 +430,7 @@
               }
             }
           }
-          this.preferences.addObserver("", this.observer, false);
+          this.preferences.addObserver("", this.siteNameObserver, false);
           
           // Site menu updater
           
@@ -451,7 +455,7 @@
       <method name="destroySiteSelector">
         <body>
           <![CDATA[
-            this.preferences.removeObserver("", this.observer);
+            this.preferences.removeObserver("", this.siteNameObserver);
             var siteImage = document.getAnonymousElementByAttribute(this, "anonid", "imageSite");
             if (siteImage.removeFaviconWatch) { siteImage.removeFaviconWatch(); }
           ]]>
@@ -475,16 +479,16 @@
             let menuItem = document.createElement("menuitem");
             menuItem.class = "menuitem-iconic";
             menuItem.updateSiteName = function(newName) {
-              Components.utils.import("resource://socialite/utils/domUtils.jsm");
+              var domUtils = Components.utils.import("resource://socialite/utils/domUtils.jsm", null);
               menuItem.setAttribute("label", newName);
-              addSorted(menuItem, self.menuSites, function(item1, item2) {
+              domUtils.addSorted(menuItem, self.menuSites, function(item1, item2) {
                 let label1 = item1.getAttribute("label"); 
                 let label2 = item2.getAttribute("label"); 
                 return label1.localeCompare(label2);
               });
             }
             menuItem.updateSiteIcon = function() {
-              faviconWatch = Components.utils.import("resource://socialite/utils/faviconWatch.jsm");
+              var faviconWatch = Components.utils.import("resource://socialite/utils/faviconWatch.jsm", null);
               menuItem.setAttribute("image", faviconWatch.getFaviconURL(site.siteURL));
             }
             
@@ -533,7 +537,7 @@
               if (site != null) {
                 siteName.value = site.siteName;
                 
-                faviconWatch = Components.utils.import("resource://socialite/utils/faviconWatch.jsm");
+                var faviconWatch = Components.utils.import("resource://socialite/utils/faviconWatch.jsm", null);
                 if (siteImage.removeFaviconWatch) { siteImage.removeFaviconWatch(); }
                 siteImage.removeFaviconWatch = faviconWatch.useFaviconAsAttribute(siteImage, "src", site.siteURL);
               } else {
@@ -568,7 +572,7 @@
   <binding id="socialite-loaded-site-selector" extends="chrome://socialite/content/socialiteBar.xml#socialite-site-selector">
     <implementation>    
       <constructor>
-        Components.utils.import("resource://socialite/socialite.jsm");
+        var Socialite = Components.utils.import("resource://socialite/socialite.jsm", null).Socialite;
         
         // Add currently loaded sites
         for (let [siteID, site] in Socialite.sites) {
@@ -580,7 +584,7 @@
 
         // Site name change observer
         let self = this;
-        this.observer = {
+        this.loadedSiteObserver = {
           observe: function(subject, topic, data) {
             if (topic == "socialite-load-site") {
               self.addSite(Socialite.sites.byID[data]);
@@ -589,8 +593,8 @@
             }
           }
         }
-        observerService.addObserver(this.observer, "socialite-load-site", false);
-        observerService.addObserver(this.observer, "socialite-unload-site", false);
+        observerService.addObserver(this.loadedSiteObserver, "socialite-load-site", false);
+        observerService.addObserver(this.loadedSiteObserver, "socialite-unload-site", false);
       </constructor>
       
       <destructor>
@@ -602,8 +606,8 @@
           <![CDATA[
             let observerService = Components.classes["@mozilla.org/observer-service;1"]
                                   .getService(Components.interfaces.nsIObserverService);
-            observerService.removeObserver(this.observer, "socialite-load-site");
-            observerService.removeObserver(this.observer, "socialite-unload-site");
+            observerService.removeObserver(this.loadedSiteObserver, "socialite-load-site");
+            observerService.removeObserver(this.loadedSiteObserver, "socialite-unload-site");
             
             this.destroySiteSelector();
           ]]>

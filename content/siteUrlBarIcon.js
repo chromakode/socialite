@@ -1,168 +1,172 @@
-let modules = {};
-let importModule = function(name) Components.utils.import(name, modules);
-
-let Socialite = importModule("resource://socialite/socialite.jsm").Socialite;
-let logger = importModule("resource://socialite/utils/log.jsm");
-let faviconWatch = importModule("resource://socialite/utils/faviconWatch.jsm");
-let domUtils = importModule("resource://socialite/utils/domUtils.jsm");
-
-SocialiteWindow.SiteUrlBarIcon = {
-  SITE_URLBARICON_ID: "socialite-site-urlbar-icon-",
-  SITE_URLBARICON_CLASS: "socialite-site-urlbar-icon",
-  URLBARICON_CLASS: "socialite-urlbar-icon",
+SocialiteWindow.SiteUrlBarIcon = (function() {
+  let modules = {};
+  let importModule = function(name) Components.utils.import(name, modules);
   
-  GENERAL_ICON: "chrome://socialite/content/socialite-small.png",
-  GENERAL_URLBARICON_ID: "socialite-urlbar-icon",
+  let Socialite = importModule("resource://socialite/socialite.jsm").Socialite;
+  let logger = importModule("resource://socialite/utils/log.jsm");
+  let faviconWatch = importModule("resource://socialite/utils/faviconWatch.jsm");
+  let domUtils = importModule("resource://socialite/utils/domUtils.jsm");
   
-  WORKING_ICON: "chrome://socialite/content/reddit/working.gif",
-  
-  onLoad: function() {
-    this.generalIcon = this.createGeneral();
-    for (let [siteID, site] in Socialite.sites) {
-      this.create(site);
-    }
-  },
-  
-  onUnload: function() {
-    Array.forEach(this.getAll(), function(urlBarIcon) {
-      if (urlBarIcon._removeFaviconWatch) { urlBarIcon._removeFaviconWatch(); }
-    });
-  },
-  
-  create: function(site) {
-    let urlBarIconParent = document.getElementById("urlbar-icons");
-    let feedButton = document.getElementById("feed-button");
-    let urlBarIcon = document.createElement("image");
+  var SiteUrlBarIcon = {
+    SITE_URLBARICON_ID: "socialite-site-urlbar-icon-",
+    SITE_URLBARICON_CLASS: "socialite-site-urlbar-icon",
+    URLBARICON_CLASS: "socialite-urlbar-icon",
     
-    urlBarIcon.id = this.SITE_URLBARICON_ID + site.siteID;
-    urlBarIcon.className = [this.SITE_URLBARICON_CLASS, this.URLBARICON_CLASS, "urlbar-icon"].join(" ");
+    GENERAL_ICON: "chrome://socialite/content/socialite-small.png",
+    GENERAL_URLBARICON_ID: "socialite-urlbar-icon",
     
-    urlBarIcon.updateIcon = function(iconURL) {
-      if (!urlBarIcon.isWorking) {
-        urlBarIcon.setAttribute("src", iconURL);
+    WORKING_ICON: "chrome://socialite/content/reddit/working.gif",
+    
+    onLoad: function() {
+      this.generalIcon = this.createGeneral();
+      for (let [siteID, site] in Socialite.sites) {
+        this.create(site);
       }
-    };
-    urlBarIcon._removeFaviconWatch = faviconWatch.addFaviconWatch(site.siteURL, urlBarIcon.updateIcon);
-    urlBarIcon.updateIcon(faviconWatch.getFaviconURL(site.siteURL));
-   
-    urlBarIcon.updateVisibility = function(visible, consolidated) {
-      urlBarIcon.setAttribute("hidden", !visible || consolidated);
-    }
-    urlBarIcon.updateVisibility(
-      Socialite.preferences.getBoolPref("showSiteUrlBarIcons"), 
-      Socialite.preferences.getBoolPref("consolidateSites")
-    );
+    },
     
-    urlBarIcon.isWorking = false;
-    urlBarIcon.setWorking = function(isWorking) {
-      if (isWorking != this.isWorking) {
-        if (isWorking) {
-          this.setAttribute("src", SocialiteWindow.SiteUrlBarIcon.WORKING_ICON);
-        } else {
-          this.setAttribute("src", faviconWatch.getFaviconURL(site.siteURL));
-        }
-      }
-      this.isWorking = isWorking;
-    };
+    onUnload: function() {
+      Array.forEach(this.getAll(), function(urlBarIcon) {
+        if (urlBarIcon._removeFaviconWatch) { urlBarIcon._removeFaviconWatch(); }
+      });
+    },
     
-    urlBarIcon.addEventListener("click", function(event) {
-      if (!urlBarIcon.isWorking) {
-        urlBarIcon.setWorking(true);
-        SocialiteWindow.linkContextAction(site, event, false, function finished() {
-          urlBarIcon.setWorking(false);
-        });
-      }
-    }, false);
-    
-    urlBarIcon.updateSiteName = function(newSiteName) {
-      urlBarIcon.setAttribute("tooltiptext", newSiteName);
-
-      let urlBarIcons = SocialiteWindow.SiteUrlBarIcon.getAll();
-      if (urlBarIcons.length == 0) {
-        urlBarIconParent.insertBefore(urlBarIcon, feedButton);
-      } else {
-        domUtils.insertSorted(urlBarIcon, urlBarIcons, function compare(urlBarIcon1, urlBarIcon2) {
-          let name1 = urlBarIcon1.getAttribute("tooltiptext"); 
-          let name2 = urlBarIcon2.getAttribute("tooltiptext"); 
-          return name1.localeCompare(name2);
-        });
-      }
-    }
-    urlBarIcon.updateSiteName(site.siteName);
-    
-    return urlBarIcon;
-  },
-  
-  createGeneral: function() {
-    let urlBarIconParent = document.getElementById("urlbar-icons");
-    let feedButton = document.getElementById("feed-button");
-    let urlBarIcon = document.createElement("image");
-    
-    urlBarIcon.id = this.GENERAL_URLBARICON_ID;
-    urlBarIcon.className = [this.URLBARICON_CLASS, "urlbar-icon"].join(" ");
-    urlBarIcon.setAttribute("src", SocialiteWindow.SiteUrlBarIcon.GENERAL_ICON);
-    urlBarIcon.setAttribute("tooltiptext", Socialite.stringBundle.GetStringFromName("generalUrlBarIcon.tooltip"));
-   
-    urlBarIcon.updateVisibility = function(visible, consolidated) {
-      urlBarIcon.setAttribute("hidden", !visible || !consolidated);
-    }
-    urlBarIcon.updateVisibility(
-      Socialite.preferences.getBoolPref("showSiteUrlBarIcons"), 
-      Socialite.preferences.getBoolPref("consolidateSites")
-    );
+    create: function(site) {
+      let urlBarIconParent = document.getElementById("urlbar-icons");
+      let feedButton = document.getElementById("feed-button");
+      let urlBarIcon = document.createElement("image");
       
-    urlBarIcon.isWorking = false;
-    urlBarIcon.setWorking = function(isWorking) {
-      if (isWorking != this.isWorking) {
-        if (isWorking) {
-          this.setAttribute("src", SocialiteWindow.SiteUrlBarIcon.WORKING_ICON);
+      urlBarIcon.id = this.SITE_URLBARICON_ID + site.siteID;
+      urlBarIcon.className = [this.SITE_URLBARICON_CLASS, this.URLBARICON_CLASS, "urlbar-icon"].join(" ");
+      
+      urlBarIcon.updateIcon = function(iconURL) {
+        if (!urlBarIcon.isWorking) {
+          urlBarIcon.setAttribute("src", iconURL);
+        }
+      };
+      urlBarIcon._removeFaviconWatch = faviconWatch.addFaviconWatch(site.siteURL, urlBarIcon.updateIcon);
+      urlBarIcon.updateIcon(faviconWatch.getFaviconURL(site.siteURL));
+     
+      urlBarIcon.updateVisibility = function(visible, consolidated) {
+        urlBarIcon.setAttribute("hidden", !visible || consolidated);
+      }
+      urlBarIcon.updateVisibility(
+        Socialite.preferences.getBoolPref("showSiteUrlBarIcons"), 
+        Socialite.preferences.getBoolPref("consolidateSites")
+      );
+      
+      urlBarIcon.isWorking = false;
+      urlBarIcon.setWorking = function(isWorking) {
+        if (isWorking != this.isWorking) {
+          if (isWorking) {
+            this.setAttribute("src", SiteUrlBarIcon.WORKING_ICON);
+          } else {
+            this.setAttribute("src", faviconWatch.getFaviconURL(site.siteURL));
+          }
+        }
+        this.isWorking = isWorking;
+      };
+      
+      urlBarIcon.addEventListener("click", function(event) {
+        if (!urlBarIcon.isWorking) {
+          urlBarIcon.setWorking(true);
+          SocialiteWindow.linkContextAction(site, event, false, function finished() {
+            urlBarIcon.setWorking(false);
+          });
+        }
+      }, false);
+      
+      urlBarIcon.updateSiteName = function(newSiteName) {
+        urlBarIcon.setAttribute("tooltiptext", newSiteName);
+  
+        let urlBarIcons = SiteUrlBarIcon.getAll();
+        if (urlBarIcons.length == 0) {
+          urlBarIconParent.insertBefore(urlBarIcon, feedButton);
         } else {
-          this.setAttribute("src", SocialiteWindow.SiteUrlBarIcon.GENERAL_ICON);
+          domUtils.insertSorted(urlBarIcon, urlBarIcons, function compare(urlBarIcon1, urlBarIcon2) {
+            let name1 = urlBarIcon1.getAttribute("tooltiptext"); 
+            let name2 = urlBarIcon2.getAttribute("tooltiptext"); 
+            return name1.localeCompare(name2);
+          });
         }
       }
-      this.isWorking = isWorking;
-    };
+      urlBarIcon.updateSiteName(site.siteName);
+      
+      return urlBarIcon;
+    },
     
-    urlBarIcon.addEventListener("click", function(event) {
-      if (!urlBarIcon.isWorking) {
-        urlBarIcon.setWorking(true);
-        SocialiteWindow.linkContextAction(null, event, false, function finished() {
-          urlBarIcon.setWorking(false);
-        });
+    createGeneral: function() {
+      let urlBarIconParent = document.getElementById("urlbar-icons");
+      let feedButton = document.getElementById("feed-button");
+      let urlBarIcon = document.createElement("image");
+      
+      urlBarIcon.id = this.GENERAL_URLBARICON_ID;
+      urlBarIcon.className = [this.URLBARICON_CLASS, "urlbar-icon"].join(" ");
+      urlBarIcon.setAttribute("src", SiteUrlBarIcon.GENERAL_ICON);
+      urlBarIcon.setAttribute("tooltiptext", Socialite.stringBundle.GetStringFromName("generalUrlBarIcon.tooltip"));
+     
+      urlBarIcon.updateVisibility = function(visible, consolidated) {
+        urlBarIcon.setAttribute("hidden", !visible || !consolidated);
       }
-    }, false);
+      urlBarIcon.updateVisibility(
+        Socialite.preferences.getBoolPref("showSiteUrlBarIcons"), 
+        Socialite.preferences.getBoolPref("consolidateSites")
+      );
+        
+      urlBarIcon.isWorking = false;
+      urlBarIcon.setWorking = function(isWorking) {
+        if (isWorking != this.isWorking) {
+          if (isWorking) {
+            this.setAttribute("src", SiteUrlBarIcon.WORKING_ICON);
+          } else {
+            this.setAttribute("src", SiteUrlBarIcon.GENERAL_ICON);
+          }
+        }
+        this.isWorking = isWorking;
+      };
+      
+      urlBarIcon.addEventListener("click", function(event) {
+        if (!urlBarIcon.isWorking) {
+          urlBarIcon.setWorking(true);
+          SocialiteWindow.linkContextAction(null, event, false, function finished() {
+            urlBarIcon.setWorking(false);
+          });
+        }
+      }, false);
+      
+      urlBarIconParent.insertBefore(urlBarIcon, feedButton);
+      
+      return urlBarIcon;
+    },
+  
+    get: function(site) {
+      return document.getElementById(this.SITE_URLBARICON_ID + site.siteID);
+    },
     
-    urlBarIconParent.insertBefore(urlBarIcon, feedButton);
+    getAll: function() {
+      return document.getElementsByClassName(this.SITE_URLBARICON_CLASS);
+    },
     
-    return urlBarIcon;
-  },
-
-  get: function(site) {
-    return document.getElementById(this.SITE_URLBARICON_ID + site.siteID);
-  },
+    remove: function(site) {
+      let urlBarIcons = document.getElementById("urlbar-icons");
+      let urlBarIcon = this.get(site);
+      if (urlBarIcon._removeFaviconWatch) { urlBarIcon._removeFaviconWatch(); }
+      urlBarIcons.removeChild(urlBarIcon)
+    },
+    
+    updateSiteName: function(site, siteName) {
+      let urlBarIcon = this.get(site);
+      urlBarIcon.updateSiteName(siteName);
+    },
+    
+    updateVisibility: function() {
+      let visible = Socialite.preferences.getBoolPref("showSiteUrlBarIcons");
+      let consolidated = Socialite.preferences.getBoolPref("consolidateSites");
+      this.generalIcon.updateVisibility(visible, consolidated);
+      Array.forEach(this.getAll(), function(urlBarIcon) {
+        urlBarIcon.updateVisibility(visible, consolidated);
+      });
+    }
+  };
   
-  getAll: function() {
-    return document.getElementsByClassName(this.SITE_URLBARICON_CLASS);
-  },
-  
-  remove: function(site) {
-    let urlBarIcons = document.getElementById("urlbar-icons");
-    let urlBarIcon = this.get(site);
-    if (urlBarIcon._removeFaviconWatch) { urlBarIcon._removeFaviconWatch(); }
-    urlBarIcons.removeChild(urlBarIcon)
-  },
-  
-  updateSiteName: function(site, siteName) {
-    let urlBarIcon = this.get(site);
-    urlBarIcon.updateSiteName(siteName);
-  },
-  
-  updateVisibility: function() {
-    let visible = Socialite.preferences.getBoolPref("showSiteUrlBarIcons");
-    let consolidated = Socialite.preferences.getBoolPref("consolidateSites");
-    this.generalIcon.updateVisibility(visible, consolidated);
-    Array.forEach(this.getAll(), function(urlBarIcon) {
-      urlBarIcon.updateVisibility(visible, consolidated);
-    });
-  }
-}
+  return SiteUrlBarIcon;
+})();

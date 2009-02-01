@@ -64,7 +64,7 @@ RedditAuth.prototype = {
     if (this.version.compare("dom", "1.0") >= 0) {
       snarfTarget = this.siteURL + "api/info/";
     } else {
-      snarfTarget = this.siteURL + "bookmarklets/";
+      snarfTarget = this.siteURL + "login/";
     }
     
     let act = http.GetAction(
