@@ -76,7 +76,7 @@ RedditLinkInfo.prototype.update = Action("RedditLinkInfo.update", function(omitt
 });
 
 RedditLinkInfo.prototype.vote = Action("RedditLinkInfo.vote", function(isLiked, action) {
-  if (isLiked != this.localState.isLiked) {
+  if ((isLiked != this.localState.isLiked) && (this.localState.score != null)) {
     // Determine the updated score
     if (isLiked == true) {
       if (this.localState.isLiked == false) {

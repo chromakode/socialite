@@ -2,6 +2,7 @@
 * Fix namespace pollution.
 * Fix Ctrl-arrow cursor movement in submit bar textbox.
 * Fix spurious bar triggering on subreddit listings and some profile page links.
+* Fix invalid score calculation when score unknown.
 * Fix minor bug when canceling adding a site.
 * Fix minor internal cleanup bug in the site dropdown.
 
