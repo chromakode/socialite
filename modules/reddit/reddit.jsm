@@ -299,7 +299,11 @@ RedditSite.prototype.createBarContentUI = function(document, linkInfo) {
     };
     
     let subredditURL = function() {
-      return site.siteURL+"r/"+barContent.linkInfo.localState.subreddit+"/";
+      if (barContent.linkInfo.localState.subreddit) {
+        return site.siteURL+"r/"+barContent.linkInfo.localState.subreddit+"/";
+      } else {
+        return site.siteURL;
+      }
     };
     
     this.labelScore.addEventListener("click", function(e) {
