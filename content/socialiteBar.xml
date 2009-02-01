@@ -246,7 +246,11 @@
           <xul:label anonid="labelSiteSelector" value="&loadedSiteSelector.label;"/>
           <xul:hbox anonid="loadedSiteSelector"/>
           <xul:separator width="0px" height="18px" orient="vertical" class="socialite-separator"/>
-          <xul:hbox anonid="siteSubmitUIContainer" flex="1" align="center">
+          <!--
+              Firefox's tabbrowser has a handler that catches Ctrl-arrow keys and cancels the default event, interfering with word-by-word keyboard navigation in textboxes.
+              We'll prevent the keypress event from bubbling outside the container to this problematic handler, so individual site submit UIs don't have to worry about this.
+          -->
+          <xul:hbox anonid="siteSubmitUIContainer" flex="1" align="center" onkeypress="event.stopPropagation();">
             <children/>
           </xul:hbox>
         </xul:hbox>
