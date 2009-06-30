@@ -159,8 +159,9 @@
           }
          
           // Title description
+          var redditUtils = Components.utils.import("resource://socialite/reddit/redditUtils.jsm", null);
           var descriptionTitle = document.getAnonymousElementByAttribute(this, "anonid", "descriptionTitle");
-          descriptionTitle.textContent = this.linkInfo.localState.title;
+          descriptionTitle.textContent = redditUtils.removeWebSafeEntities(this.linkInfo.localState.title);
           
           // Section label
           var labelSubreddit = document.getAnonymousElementByAttribute(this, "anonid", "labelSubreddit");

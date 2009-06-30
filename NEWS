@@ -1,6 +1,7 @@
 == Version 1.3.3 ==
-* Visual fixes in the preferences window for Mac users
 * Submission title text box now spell checked.
+* Fix visual issues in the preferences window for Mac users
+* Fix display of character entities in reddit submission titles
 
 == Version 1.3.2.1 ==
 * Workaround for null subreddit bug.
