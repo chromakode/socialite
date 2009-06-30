@@ -1,4 +1,4 @@
-var EXPORTED_SYMBOLS = ["subredditSort", "getThingParent", "getThingID"];
+var EXPORTED_SYMBOLS = ["subredditSort", "removeWebSafeEntities", "getThingParent", "getThingID"];
 
 let XPathResult = Components.interfaces.nsIDOMXPathResult;
 
@@ -24,6 +24,13 @@ function subredditSort(a, b) {
       return 0;
     }
   }
+}
+
+/**
+ * Undo HTML entity conversion in "python_websafe_json" from reddit's filters.py
+ */
+function removeWebSafeEntities(s) {
+  return s.replace("&amp;", "&", "g").replace("&lt;", "<", "g").replace("&gt;", ">", "g").replace("&quot;", "\"", "g");
 }
 
 /**

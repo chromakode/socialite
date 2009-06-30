@@ -72,6 +72,8 @@ var SocialiteSitePreferences = (function() {
       
       observerService.addObserver(this.siteObserver, "socialite-load-site", false);
       observerService.addObserver(this.siteObserver, "socialite-unload-site", false);
+
+      window.sizeToContent();
     },
     
     unload: function SSPrefs_unload() {
