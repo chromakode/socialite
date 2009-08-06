@@ -1,3 +1,6 @@
+== Version 1.3.3.1 ==
+* Compatibility bump to satisfy Firefox 3.5.1.
+
 == Version 1.3.3 ==
 * Support for Firefox 3.5.
 * Submission title text box now spell checked.
