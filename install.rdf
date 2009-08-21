@@ -8,7 +8,7 @@
                    em:maxVersion="3.5.*" />
   <RDF:Description RDF:about="urn:mozilla:install-manifest"
                    em:id="socialite@chromakode"
-                   em:version="1.3.3.7pre"
+                   em:version="1.3.3.7pre1"
                    em:type="2"
                    em:iconURL="chrome://socialite/content/socialite.png"
                    em:optionsURL="chrome://socialite/content/socialitePreferences.xul">

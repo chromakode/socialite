@@ -180,10 +180,16 @@ var SocialiteWindow = (function() {
         if (channel) {
           let originalURL = channel.originalURI.spec;
     
+          // Two cases to handle. Discovering a redirect...
+          //   1. From a watched page (originalURL is watched)
+          //   2. To a watched page   (URL is watched => isWatched set)
           if ((channel.loadFlags & Components.interfaces.nsIChannel.LOAD_REPLACE)
               && (Socialite.watchedURLs.isWatched(originalURL) || isWatched)) {
             logger.log("linkStartLoad", "Detected redirect: "+ originalURL +" -> "+ URL);
             Socialite.watchedURLs.addRedirect(originalURL, URL);
+            
+            // If we redirected from a watched page, we need to update isWatched to reflect that we now know the current page.
+            isWatched = true;
           }
         }
         
