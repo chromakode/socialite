@@ -413,6 +413,8 @@ var SocialiteWindow = (function() {
       // *** Context Logic ***
       //
       
+      logger.log("SocialiteWindow", "Context button (" + (site != null ? site.siteName : "general") + ") clicked on " + currentURL);
+      
       // *** Step 0: Check that we have sites loaded
       
       if (Socialite.sites.count == 0) {
