@@ -6,7 +6,7 @@
             style="width: 425px; min-height: 425px;" 
             onload="SocialiteSitePreferences.load();"
             onunload="SocialiteSitePreferences.unload();">
-  <prefpane id="socialitePreferencesGeneralPane" label="&general.title;" image="chrome://socialite/skin/general-preferences.png">
+  <prefpane id="socialitePreferencesGeneralPane" label="&general.title;" image="chrome://socialite/skin/general_preferences.png">
     <preferences>
       <preference id="prefShowSiteUrlBarIcons" name="extensions.socialite.showSiteUrlBarIcons" type="bool"/>
       <preference id="prefShowSiteMenuItems" name="extensions.socialite.showSiteMenuItems" type="bool"/>
@@ -48,7 +48,7 @@
     </groupbox>
   </prefpane>
   
-  <prefpane id="socialitePreferencesSitesPane" label="&sites.title;" image="chrome://socialite/skin/site-preferences.png" flex="1">
+  <prefpane id="socialitePreferencesSitesPane" label="&sites.title;" image="chrome://socialite/skin/site_preferences.png" flex="1">
   
     <groupbox flex="1">
       <caption label="&sitesGroup.caption;"/>

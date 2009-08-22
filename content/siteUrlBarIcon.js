@@ -12,10 +12,10 @@ SocialiteWindow.SiteUrlBarIcon = (function() {
     SITE_URLBARICON_CLASS: "socialite-site-urlbar-icon",
     URLBARICON_CLASS: "socialite-urlbar-icon",
     
-    GENERAL_ICON: "chrome://socialite/content/socialite-small.png",
+    GENERAL_ICON: "chrome://socialite/skin/socialite_small.png",
     GENERAL_URLBARICON_ID: "socialite-urlbar-icon",
     
-    WORKING_ICON: "chrome://socialite/content/reddit/working.gif",
+    WORKING_ICON: "chrome://socialite/skin/working.gif",
     
     onLoad: function() {
       this.generalIcon = this.createGeneral();

@@ -12,7 +12,7 @@ SocialiteWindow.SiteMenuItem = (function() {
     SITE_MENUITEM_CLASS: "socialite-site-menuitem",
     MENUITEM_CLASS: "socialite-menuitem",
     
-    GENERAL_ICON: "chrome://socialite/content/socialite-small.png",
+    GENERAL_ICON: "chrome://socialite/content/socialite_small.png",
     GENERAL_MENUITEM_ID: "socialite-menuitem",
     
     onLoad: function() {
