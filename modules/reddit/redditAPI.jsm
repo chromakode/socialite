@@ -117,7 +117,7 @@ RedditAPI.prototype._urlinfo = function(url, subreddit, action) {
   
   var params = {
     url:    url,
-    count:  1
+    limit:  1
   };
    
   http.GetAction(
