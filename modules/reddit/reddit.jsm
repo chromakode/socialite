@@ -92,10 +92,9 @@ RedditSite.prototype.linkClicked = function(event) {
   let doc = link.ownerDocument;
   let linkURL = link.href;
   
-  let dom_v0 = (this.API.version.compare("dom", "0.*") < 0);
   // Scrape the thing ID of the reddit link.
   let thingElement, linkFullname;
-  if (!dom_v0) {
+  if (this.API.version["dom"] != "0.0") {
     thingElement = getThingParent(link);
     linkFullname = getThingID(thingElement);
   } else {
@@ -117,12 +116,11 @@ RedditSite.prototype.linkClicked = function(event) {
 
     try {
       // Get some "preloaded" information from the page while we can.
-      logger.log("RedditSite", this.siteName, "Reading link info from DOM (id:"+linkFullname+")");
-      
       linkInfo.localState.title = link.textContent;
-      scrapeLinkInfo(thingElement, linkInfo, dom_v0);
+      this.scrapeLinkInfo(thingElement, linkInfo);
+      logger.log("RedditSite", this.siteName, "Read link info from DOM (id:"+linkFullname+"): " + linkInfo.localState.toString());
     } catch (e) {
-      logger.log("RedditSite", this.siteName, "Caught exception while reading link info from DOM: " + e.toString());
+      logger.log("RedditSite", this.siteName, "Caught exception while reading link info (id:"+linkFullname+") from DOM: " + e.toString());
     }
     
     // Add the information we collected to the watch list.
@@ -130,14 +128,17 @@ RedditSite.prototype.linkClicked = function(event) {
   }
 };
 
-function scrapeLinkInfo(thingElement, linkInfo, dom_v0) {
-  doc = thingElement.ownerDocument;
+RedditSite.prototype.scrapeLinkInfo = function(thingElement, linkInfo) {
+  let doc = thingElement.ownerDocument;
   
+  let isV0 = this.API.version["dom"] == "0.0";
+  let isV1 = this.API.version["dom"] == "1.0";
+
   //
   // Score and vote status
   //
   let linkLiked, linkDisliked, scoreSpan;
-  if (dom_v0) {
+  if (isV0) {
     let linkLike = doc.getElementById("up_"+linkInfo.fullname);
     linkLiked = /upmod/.test(linkLike.className);
     
@@ -146,10 +147,17 @@ function scrapeLinkInfo(thingElement, linkInfo, dom_v0) {
     
     scoreSpan = doc.getElementById("score_"+linkInfo.fullname);
   } else {
-    scoreSpan = getChildByClassName(thingElement, "score");
-    
-    linkLiked = (scoreSpan.className.indexOf("likes") != -1);
-    linkDisliked = (scoreSpan.className.indexOf("dislikes") != -1);
+    scoreSpans = thingElement.getElementsByClassName("score");
+    if (isV1) {
+      scoreSpan = scoreSpans[0];
+    } else {
+      // Find the visible score span.
+      scoreSpan = Array.filter(scoreSpans, function(elem) {
+        return doc.defaultView.getComputedStyle(elem, null).display != "none";
+      })[0];
+    }
+    linkLiked = /\blikes\b/.test(scoreSpan.className);
+    linkDisliked = /\bdislikes\b/.test(scoreSpan.className);
   }
   
   if (linkLiked) {
@@ -165,10 +173,10 @@ function scrapeLinkInfo(thingElement, linkInfo, dom_v0) {
   // Subreddit
   //
   let linkSubreddit;
-  if (dom_v0) {
+  if (isV0) {
     linkSubreddit = doc.getElementById("subreddit_"+linkInfo.fullname);
   } else {
-    linkSubreddit = getChildByClassName(thingElement, "subreddit");
+    linkSubreddit = thingElement.getElementsByClassName("subreddit")[0];
   }
   if (linkSubreddit != null) {
     // The subreddit can be missing from the listing if we're in a subreddit page
@@ -179,10 +187,10 @@ function scrapeLinkInfo(thingElement, linkInfo, dom_v0) {
   // Comment count
   //
   let linkComments;
-  if (dom_v0) {
+  if (isV0) {
     linkComments = doc.getElementById("comment_"+linkInfo.fullname);
   } else {
-    linkComments = getChildByClassName(thingElement, "comments");
+    linkComments = thingElement.getElementsByClassName("comments")[0];
   }
   
   let commentNum = parseInt(linkComments.textContent);
@@ -196,7 +204,7 @@ function scrapeLinkInfo(thingElement, linkInfo, dom_v0) {
   // Saved status
   //
   
-  if (dom_v0) {
+  if (isV0) {
     // XXX The second cases only exist to support older installations of reddit
     let linkSave = doc.getElementById("a_save_"+linkInfo.fullname) || doc.getElementById("save_"+linkInfo.fullname+"_a");
     let linkUnsave = doc.getElementById("a_unsave_"+linkInfo.fullname) || doc.getElementById("unsave_"+linkInfo.fullname+"_a");
@@ -221,7 +229,7 @@ function scrapeLinkInfo(thingElement, linkInfo, dom_v0) {
   // Hidden status
   //
   let linkHide, linkUnhide;
-  if (dom_v0) {
+  if (isV0) {
     // You might assume that if link was hidden, the user couldn't have clicked on it
     // -- but they could find it in their hidden links list.
     linkHide = doc.getElementById("a_hide_"+linkInfo.fullname) || doc.getElementById("hide_"+linkInfo.fullname+"_a");

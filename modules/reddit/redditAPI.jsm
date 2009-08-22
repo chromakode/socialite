@@ -14,7 +14,18 @@ var EXPORTED_SYMBOLS = ["RedditAPI", "RedditVersion"];
 
 QUANTIZE_TIME = 1000;
 
-REDDIT_LATEST_VERSION = { dom:"1.0", api:"0.1" };
+// Socialite recognizes the following unofficial versions for compatibility purposes:
+//
+// API versions:
+//   0.0 -- original API
+//   0.1 -- by_id API request added
+//
+// DOM versions:
+//   0.0 -- original DOM, before jQuery changes
+//   1.0 -- after jQuery changes
+//   1.1 -- consolidation of link/linkcompressed classes; higher-level likes/dislikes/unvoted classes
+REDDIT_LATEST_VERSION = { dom:"1.1", api:"0.1" };
+
 function RedditVersion(){};
 RedditVersion.prototype = REDDIT_LATEST_VERSION;
 RedditVersion.prototype.compare = function(field, value) {

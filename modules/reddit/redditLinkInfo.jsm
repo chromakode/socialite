@@ -201,13 +201,7 @@ RedditLinkInfo.prototype.setFromJSON = function(json) {
   this.state.isSaved      = linkData.saved;
   this.state.isHidden     = linkData.hidden;
   
-  logger.log("RedditLinkInfo", this.fullname, "Updated from JSON info: " +
-                     "liked: "    + this.state.isLiked + ", "      +
-                     "score: "    + this.state.score + ", "        +
-                     "subreddit: "+ this.state.subreddit + ", "    +
-                     "comments: " + this.state.commentCount + ", " +
-                     "saved: "    + this.state.isSaved + ", "      +
-                     "hidden: "   + this.state.isHidden            );
+  logger.log("RedditLinkInfo", this.fullname, "Updated from JSON info: " + this.state.toString());
 }
 
 RedditLinkInfo.prototype.updateLocalState = function(omittedFields, timestamp) {
