@@ -1,0 +1,77 @@
+<?xml version="1.0"?>
+<bindings
+  xmlns="http://www.mozilla.org/xbl"
+  xmlns:xbl="http://www.mozilla.org/xbl"
+  xmlns:xul="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul">
+  
+  <binding id="urlbar-icon">
+
+    <content>
+      <xul:stack>
+        <xul:image anonid="imgSite" xbl:inherits="src=icon,tooltiptext=name"/>
+      </xul:stack>
+    </content>
+
+    <implementation>
+      <field name="isWorking">false</field>
+    
+      <property name="name"
+                onget="return this.getAttribute('name');"
+                onset="this.setAttribute('name', val); return val;"/>
+    
+      <property name="icon" onget="return this.getAttribute('icon');">
+        <setter>
+          this.setAttribute('icon', val);
+          if (!this.isWorking) {
+            this.setAttribute('src', val);
+          }
+          return val;
+        </setter>
+      </property>
+      
+      <destructor>
+        this.destroyUrlBarIcon();
+      </destructor>
+
+      <method name="destroyUrlBarIcon">
+        <body/>
+      </method>
+
+      <method name="setWorking">
+        <parameter name="isWorking"/>
+        <body>
+          if (isWorking != this.isWorking) {
+            if (isWorking) {
+              this.setAttribute('src', "chrome://socialite/skin/working.gif");
+            } else {
+              this.setAttribute('src', this.icon);
+            }
+          }
+          this.isWorking = isWorking;
+        </body>
+      </method>
+
+    </implementation>
+
+  </binding>
+  
+  <binding id="site-urlbar-icon" extends="chrome://socialite/content/urlBarIcon.xml#urlbar-icon">
+    <implementation>
+      <field name="site"/>
+
+      <constructor>
+        var faviconWatch = Components.utils.import("resource://socialite/utils/faviconWatch.jsm", null);
+        this._removeFaviconWatch = faviconWatch.useFaviconAsAttribute(this, "icon", this.site.siteURL);
+        this.icon = faviconWatch.getFaviconURL(this.site.siteURL);
+      </constructor>
+
+      <method name="destroyUrlBarIcon">
+        <body>
+          if (this._removeFaviconWatch) { this._removeFaviconWatch(); }
+        </body>
+      </method>
+
+    </implementation>
+
+  </binding>
+</bindings>

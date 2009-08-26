@@ -110,9 +110,9 @@ SocialiteWindow.SiteMenuItem = (function() {
       fileMenuPopup.removeChild(menuItem);
     },
     
-    updateSiteName: function(site, siteName) {
+    updateSiteName: function(site, newSiteName) {
       let menuItem = this.get(site);
-      menuItem.updateSiteName(siteName);
+      menuItem.updateSiteName(newSiteName);
     },
     
     updateVisibility: function() {
