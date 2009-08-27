@@ -94,6 +94,33 @@ notification[value="socialite-submitbar-notification"] {
   opacity: 1;
 }
 
+.socialite-urlbar-icon image[anonid="imgSite"] {
+  position: absolute;
+  top: 0px;
+  left: 0px;
+  width: 16px;
+  height: 16px;
+}
+
+
+.socialite-urlbar-icon image[anonid="imgAlert"] {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  width: 6px;
+  height: 6px;
+  display: none;
+}
+
+.socialite-urlbar-icon[isAlert=true] image[anonid="imgAlert"] {
+	display: block;
+}
+
+
+hbox[anonid="loadedSiteSelector"] {
+  -moz-binding: url(chrome://socialite/content/socialiteBar.xml#socialite-loaded-site-selector);
+}
+
 .socialite-form-error {
   color: red;
 }
