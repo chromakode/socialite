@@ -38,7 +38,7 @@ function dropPathLevels(path, levels) {
 }
 
 function stripWWW(path) {
-  return path.replace("www.", "");
+  return path.replace(/^www\./, "");
 }
 
 function onLocationChange(oldURL, newURL) {
