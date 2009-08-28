@@ -22,8 +22,8 @@ SocialiteWindow.SiteUrlBarIcon = (function() {
     },
     
     onUnload: function() {
-      Array.forEach(this.getAll(), function(urlBarIcon) {
-        urlBarIcon.destroyUrlBarIcon();
+      Array.forEach(this.getAll(), function(siteUrlBarIcon) {
+        siteUrlBarIcon.destroyUrlBarIcon();
       });
     },
     
@@ -34,7 +34,7 @@ SocialiteWindow.SiteUrlBarIcon = (function() {
       
       urlBarIcon.site = site;
       urlBarIcon.id = this.SITE_URLBARICON_ID + site.siteID;
-      urlBarIcon.className = [this.SITE_URLBARICON_CLASS, this.URLBARICON_CLASS, "urlbar-icon"].join(" ");
+      urlBarIcon.className = [this.URLBARICON_CLASS, this.SITE_URLBARICON_CLASS, "urlbar-icon"].join(" ");
       
       urlBarIcon.addEventListener("click", function(event) {
         if (!urlBarIcon.isWorking) {
@@ -136,6 +136,12 @@ SocialiteWindow.SiteUrlBarIcon = (function() {
       this.generalIcon.updateVisibility(visible, consolidated);
       Array.forEach(this.getAll(), function(urlBarIcon) {
         urlBarIcon.updateVisibility(visible, consolidated);
+      });
+    },
+    
+    refreshUrlBarIcons: function() {
+      Array.forEach(this.getAll(), function(siteUrlBarIcon) {
+        siteUrlBarIcon.refresh();
       });
     }
   };

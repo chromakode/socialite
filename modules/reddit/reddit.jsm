@@ -32,6 +32,8 @@ RedditSite.prototype.onLoad = function() {
   version.dom = this.sitePreferences.getCharPref("version.dom");
   version.api = this.sitePreferences.getCharPref("version.api");
   
+  this.newMessages = [];
+  
   this.API.init(version);
 };
 
@@ -517,6 +519,20 @@ RedditSite.prototype.createPreferencesUI = function(document, propertiesWindow) 
   addBooleanPreferenceUI(displayGroup, "showProfile");
     
   return propertiesBox;  
+};
+
+RedditSite.prototype.refreshAlertState = function() {
+  let site = this;
+  this.API.messages(
+    function success(r, json) {
+      site.newMessages = json.data.children.filter(function(message) {
+        return message.data.new;
+      });
+      
+      site.alertState = site.newMessages.length > 0
+    },
+    this.actionFailureHandler
+  ).perform(false);
 };
 
 RedditSite.prototype.actionFailureHandler = function(r, action) {

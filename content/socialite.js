@@ -133,7 +133,7 @@ var SocialiteWindow = (function() {
       
       // Add progress listener to tabbrowser. This fires progress events for the current tab.
       SocialiteWindow.setupProgressListener(gBrowser);
-      },
+    },
     
     onUnload: function() {
       SocialiteWindow.SiteUrlBarIcon.onUnload();
@@ -543,15 +543,7 @@ var SocialiteWindow = (function() {
             SocialiteWindow.SiteUrlBarIcon.updateVisibility();
             SocialiteWindow.SiteMenuItem.updateVisibility();
             break;
-          
-          case "refreshIntervalEnabled":
-            SocialiteWindow.ActiveRefresh.updateEnabled();
-            break;
-            
-          case "refreshInterval":
-            SocialiteWindow.ActiveRefresh.updateInterval();
-            break;
-            
+
         }
       }
     

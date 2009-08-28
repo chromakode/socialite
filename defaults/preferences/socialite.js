@@ -6,7 +6,8 @@ pref("extensions.socialite.showSiteUrlBarIcons", true);
 pref("extensions.socialite.showSiteMenuItems", true);
 pref("extensions.socialite.consolidateSites", false);
 pref("extensions.socialite.persistMode", 2);
-pref("extensions.socialite.refreshIntervalEnabled", true);
+pref("extensions.socialite.refreshBarEnabled", true);
+pref("extensions.socialite.refreshSitesEnabled", true);
 pref("extensions.socialite.refreshInterval", 120);
 
 // Sites

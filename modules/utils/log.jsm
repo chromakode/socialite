@@ -36,7 +36,7 @@ function formatEntry(entry) {
 }
 
 function log() {
-  let entry
+  let entry;
   if (arguments.length == 2) {
     entry = {section: arguments[0], msg: arguments[1]};
   } else if (arguments.length == 3) {
@@ -44,7 +44,7 @@ function log() {
   }
 
   if (logSettings.enabled) {
-    logText = formatEntry(entry);
+    let logText = formatEntry(entry);
   
     if (logSettings.useConsole) {
       const consoleService = Components.classes["@mozilla.org/consoleservice;1"]

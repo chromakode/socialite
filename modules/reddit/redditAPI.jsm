@@ -64,12 +64,13 @@ function sameLinkID(func1, arg1, func2, arg2) {
 }
 
 function tryJSON(action, r) {
+  let json;
   try {
-    let json = nativeJSON.decode(r.responseText);
-    action.success(r, json);
+    json = nativeJSON.decode(r.responseText);
   } catch (e) {
     action.failure(r);
   }
+  action.success(r, json);
 }
 
 function RedditAPI(siteURL) {
@@ -91,6 +92,8 @@ function RedditAPI(siteURL) {
   this.hideQuantizer = new Quantizer("reddit.hide.quantizer", QUANTIZE_TIME, sameLinkID);
   this.hide = Action("reddit.hide", this.hideQuantizer.quantize(this._hide));
   this.unhide = Action("reddit.unhide", this.hideQuantizer.quantize(this._unhide));
+  
+  this.messages = Action("reddit.messages", this._messages);
 }
 
 RedditAPI.prototype.init = function(version, auth) {
@@ -253,4 +256,22 @@ RedditAPI.prototype._unhide = function(linkID, action) {
   var act = http.PostAction(APIURL(this.auth.siteURL, "unhide"), params);
   act.chainTo(action);
   act.perform();
+};
+
+RedditAPI.prototype._messages = function(mark, action) {
+  logger.log("reddit", "Making messages API request");
+  
+  var params = {
+    mark:    mark
+  };
+  
+  http.GetAction(
+    this.auth.siteURL + "message/inbox.json",
+    params,
+    
+    function success(r) {
+      tryJSON(action, r);
+    },
+    function failure(r) { action.failure(r); }
+  ).perform();
 };

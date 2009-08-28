@@ -15,7 +15,7 @@ var Socialite =
     
     Socialite.stringBundle = Components.classes["@mozilla.org/intl/stringbundle;1"]
                              .getService(Components.interfaces.nsIStringBundleService)
-                             .createBundle("chrome://socialite/locale/socialite.properties")
+                             .createBundle("chrome://socialite/locale/socialite.properties");
   },
   
   load: function() {

@@ -33,14 +33,6 @@
   margin: 0;
 }
 
-.socialite-urlbar-icon {
-	-moz-binding: url(chrome://socialite/content/urlBarIcon.xml#urlbar-icon);
-}
-
-.socialite-site-urlbar-icon {
-	-moz-binding: url(chrome://socialite/content/urlBarIcon.xml#site-urlbar-icon);
-}
-
 hbox[anonid="siteSelector"] {
   -moz-binding: url(chrome://socialite/content/socialiteBar.xml#socialite-site-selector);
 }
@@ -84,14 +76,17 @@ notification[value="socialite-submitbar-notification"] {
 }
 
 .socialite-urlbar-icon {
-  width: 16px;
-  height: 16px;
-  opacity: .8;
-  margin-right: 3px;
+  -moz-binding: url(chrome://socialite/content/urlBarIcon.xml#urlbar-icon);
 }
 
-.socialite-urlbar-icon:hover {
-  opacity: 1;
+.socialite-site-urlbar-icon {
+  -moz-binding: url(chrome://socialite/content/urlBarIcon.xml#site-urlbar-icon);
+}
+
+.socialite-urlbar-icon {
+  width: 18px;
+  height: 18px;
+  margin-right: 3px;
 }
 
 .socialite-urlbar-icon image[anonid="imgSite"] {
@@ -100,13 +95,17 @@ notification[value="socialite-submitbar-notification"] {
   left: 0px;
   width: 16px;
   height: 16px;
+  opacity: .8;
 }
 
+.socialite-urlbar-icon:hover image[anonid="imgSite"] {
+  opacity: 1;
+}
 
 .socialite-urlbar-icon image[anonid="imgAlert"] {
   position: absolute;
-  top: 12px;
-  left: 12px;
+  top: 11px;
+  left: 11px;
   width: 6px;
   height: 6px;
   display: none;
