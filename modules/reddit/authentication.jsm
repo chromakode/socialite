@@ -20,12 +20,12 @@ function RedditAuth(siteURL, version) {
   this.onStateChange = new Watchable();
 }
 RedditAuth.prototype = {
-  isLoggedIn: function() {
+  get isLoggedIn() {
     return ((this.username != false) && (this.modHash != ""));
   },
   
   updateAuthInfo: function(username, modHash) {
-    let wasLoggedIn = this.isLoggedIn();
+    let wasLoggedIn = this.isLoggedIn;
     
     if (modHash != this.modHash) {
       logger.log("reddit_auth", this.siteURL, "Modhash changed.");
@@ -39,7 +39,7 @@ RedditAuth.prototype = {
       this.onUsernameChange.send(username);
     }
     
-    let isLoggedIn = this.isLoggedIn();
+    let isLoggedIn = this.isLoggedIn;
     if (wasLoggedIn != isLoggedIn) {
       logger.log("reddit_auth", this.siteURL, "Login state changed: " + isLoggedIn);
       this.onStateChange.send(isLoggedIn);

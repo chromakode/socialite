@@ -115,7 +115,7 @@
         function updateLoggedIn(loggedIn) {
           self.setAttribute("isloggedin", loggedIn);
         }
-        updateLoggedIn(auth.isLoggedIn());
+        updateLoggedIn(auth.isLoggedIn);
         this._removeAuthStateWatch = auth.onStateChange.watch(updateLoggedIn);
         
         // Watch for changes in logged in username and update the button
