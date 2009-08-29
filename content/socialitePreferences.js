@@ -137,11 +137,27 @@ var SocialiteSitePreferences = (function() {
       }
     },
     
-    refreshIntervalEnabledFromPreference: function SSPrefs_refreshIntervalEnabledFromPreference() {
-      let pref = document.getElementById("prefRefreshIntervalEnabled");
+    refreshEnabledFromPreference: function SSPrefs_refreshEnabledFromPreference() {
+      let prefBar = document.getElementById("prefRefreshBarEnabled");
+      let prefSites = document.getElementById("prefRefreshSitesEnabled");
+      
+      let checkbox = document.getElementById("refreshCheckbox");
+      checkbox.checked = prefBar.value || prefSites.value;
+      
       let textbox = document.getElementById("refreshIntervalTextbox");
-      textbox.disabled = !pref.value;
-      return pref.value;
+      textbox.disabled = !checkbox.checked;
+    },
+    
+    refreshEnabledToPreference: function SSPrefs_refreshEnabledToPreference() {
+      let prefBar = document.getElementById("prefRefreshBarEnabled");
+      let prefSites = document.getElementById("prefRefreshSitesEnabled");
+      
+      let checkbox = document.getElementById("refreshCheckbox");
+      
+      // Note: setting both preferences causes refreshEnabledFromPreference to be called twice, but there are no adverse effects.
+      let value = checkbox.checked;
+      prefBar.value = value;
+      prefSites.value = value;
     },
     
     refreshIntervalFromPreference: function SSPrefs_refreshIntervalFromPreference() {
