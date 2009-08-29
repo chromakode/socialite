@@ -81,11 +81,20 @@ RedditSite.prototype.onSitePageLoad = function(doc, win) {
     
     let endTime = Date.now();
     logger.log("RedditSite", this.siteName, "Added click handlers to " + res.snapshotLength + " links on " + win.location.href + " in " + (endTime-startTime) + "ms");
-    
-    // Snarf the authentication hash using wrappedJSObject
-    // This should be safe, since Firefox 3 uses a XPCSafeJSObjectWrapper
-    // See http://developer.mozilla.org/en/docs/XPConnect_wrappers#XPCSafeJSObjectWrapper
-    this.API.auth.snarfAuthInfo(doc, win);
+  }
+  
+  // Snarf the authentication hash using wrappedJSObject
+  // This should be safe, since Firefox 3 uses a XPCSafeJSObjectWrapper
+  // See http://developer.mozilla.org/en/docs/XPConnect_wrappers#XPCSafeJSObjectWrapper
+  this.API.auth.snarfAuthInfo(doc, win);
+  
+  // Update alert state
+  let mailIcon = doc.getElementById("mail");
+  let hasMail = mailIcon.className == "havemail";
+  if (hasMail != this.alertState) {
+    logger.log("RedditSite", this.siteName, "Reddit orangered envelope differs from alert state. Refreshing alert state.");
+    this.alertState = hasMail;
+    this.refreshAlertState();
   }
 };
 
