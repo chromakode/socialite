@@ -540,8 +540,8 @@ RedditSite.prototype.refreshAlertState = function() {
         });
         
         site.alertState = site.newMessages.length > 0
-      },
-      this.actionFailureHandler
+      }/*,
+      this.actionFailureHandler*/
     ).perform(false);
   }
 };
