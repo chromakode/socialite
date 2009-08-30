@@ -425,6 +425,12 @@ RedditSite.prototype.createBarSubmitUI = function(document) {
   var barSubmit = document.createElement("hbox");
   barSubmit.setAttribute("flex", "1");
   
+  function hideSubreddits() {
+    if (barSubmit.parentNode != null) {
+      barSubmit.menulistSubreddit.hidden = true;
+    }
+  }
+  
   var site = this;
   barSubmit.afterBound = function() {
     // Get subreddit listing and initialize menu
@@ -432,33 +438,35 @@ RedditSite.prototype.createBarSubmitUI = function(document) {
       function success(r, json) {
         // Check that the bar hasn't been removed
         if (barSubmit.parentNode != null) {
-          // Sort the subreddits like on the submit page.
-          json.data.children.sort(subredditSort);
-          
-          if (json.data.children.length == 0) {
-            Socialite.siteFailureMessage(site, "createBarSubmitUI", "No subscribed subreddits found.");
-            barSubmit.menulistSubreddit.hidden = true;
-          } else {
-            for each (var subredditInfo in json.data.children) {
-              let subredditURL = subredditInfo.data.url;
-              let subredditURLName = /^\/r\/(.+)\/$/.exec(subredditURL)[1];
+          if (json) {
+            
+            // Sort the subreddits like on the submit page.
+            json.data.children.sort(subredditSort);
+            
+            if (json.data.children.length == 0) {
+              Socialite.siteFailureMessage(site, "createBarSubmitUI", stringBundle.GetStringFromName("failureMsg.noSubreddits"));
+              barSubmit.menulistSubreddit.hidden = true;
+            } else {
+              for each (var subredditInfo in json.data.children) {
+                let subredditURL = subredditInfo.data.url;
+                let subredditURLName = /^\/r\/(.+)\/$/.exec(subredditURL)[1];
+                
+                // Remove the '/' at the beginning
+                subredditURL = subredditURL.substring(1);
+                
+                barSubmit.menulistSubreddit.appendItem(subredditURLName, subredditURL);
+              }
               
-              // Remove the '/' at the beginning
-              subredditURL = subredditURL.substring(1);
-              
-              barSubmit.menulistSubreddit.appendItem(subredditURLName, subredditURL);
+              barSubmit.menulistSubreddit.selectedIndex = 0;
             }
+            
+          } else {
+            // No JSON data returned: the user is probably logged out.
+            hideSubreddits();
           }
-        
-        barSubmit.menulistSubreddit.selectedIndex = 0;
         }
       },
-      function failure() {
-        if (barSubmit.parentNode != null) {
-          // Silently handle error -- the user could be logged out
-          barSubmit.menulistSubreddit.hidden = true;
-        }
-      }
+      hideSubreddits // Silently hide subreddits listing if there was an error fetching the list.
     ).perform();
     
     this.buttonSubmit.addEventListener("click", function(e) {

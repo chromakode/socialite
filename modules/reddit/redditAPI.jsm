@@ -69,6 +69,7 @@ function tryJSON(action, r) {
     json = nativeJSON.decode(r.responseText);
   } catch (e) {
     action.failure(r);
+    return;
   }
   action.success(r, json);
 }
