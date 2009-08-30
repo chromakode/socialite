@@ -1,7 +1,7 @@
 == Version 1.3.3.7 ==
 * Fix "preload" reddit scraping to work with updated reddit DOM.
 * Ignore "www." domain prefix when determining bar persistence.
-* Fix bar display upon redirects. Thanks Pappenheimer!
+* Fix multiple issues with redirects and bar replacement. Thanks Pappenheimer!
 
 == Version 1.3.3.1 ==
 * Compatibility bump to satisfy Firefox 3.5.1.

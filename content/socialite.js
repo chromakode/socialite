@@ -196,18 +196,18 @@ var SocialiteWindow = (function() {
         // Handle an existing bar
         if (socialiteBar) {
           let isFromRedirect = Socialite.watchedURLs.isRedirect(socialiteBar.originalURL, URL);
-          let isPersistenceChange = persistence.onLocationChange(socialiteBar.URL, URL);
-          // Handle persistence changes, if any.
-          if (!isFromRedirect && !isPersistenceChange) {
-            socialiteBar.close();
-            socialiteBar = null;
-          } else {
+          let barPersists = persistence.onLocationChange(socialiteBar.URL, URL);
+          // Retain the bar if this was a redirect, or if the current URL isn't watched and the bar persists.
+          if (isFromRedirect || (!isWatched && barPersists)) {
             // If we got redirected, update the bar URL so persistence rules are followed correctly.
             if (isFromRedirect) {
               socialiteBar.URL = URL;
             }
             // If we're not closing the bar, refresh it.
             socialiteBar.refresh();
+          } else {
+            socialiteBar.close();
+            socialiteBar = null;
           }
         }
         
