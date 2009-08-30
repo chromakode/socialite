@@ -90,11 +90,13 @@ RedditSite.prototype.onSitePageLoad = function(doc, win) {
   
   // Update alert state
   let mailIcon = doc.getElementById("mail");
-  let hasMail = mailIcon.className == "havemail";
-  if (hasMail != this.alertState) {
-    logger.log("RedditSite", this.siteName, "Reddit orangered envelope differs from alert state. Refreshing alert state.");
-    this.alertState = hasMail;
-    this.refreshAlertState();
+  if (mailIcon) {
+    let hasMail = mailIcon.className == "havemail";
+    if (hasMail != this.alertState) {
+      logger.log("RedditSite", this.siteName, "Reddit orangered envelope differs from alert state. Refreshing alert state.");
+      this.alertState = hasMail;
+      this.refreshAlertState();
+    }
   }
 };
 
