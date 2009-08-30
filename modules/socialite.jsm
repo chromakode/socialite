@@ -89,7 +89,7 @@ try {
   alertsService = Components.classes["@mozilla.org/alerts-service;1"]
                   .getService(Components.interfaces.nsIAlertsService);
 } catch (e) {
-  logger.log("Socialite", "Unable to load alerts service. For the duration of this serssion, alerts will be logged, but not displayed.");
+  logger.log("Socialite", "Unable to load alerts service. For the duration of this session, alerts will be logged, but not displayed.");
 }
 
 let windowManager = Components.classes['@mozilla.org/appshell/window-mediator;1']
