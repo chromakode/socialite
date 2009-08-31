@@ -84,7 +84,6 @@ function DepaginateAction(baseurl, params, successCallback, failureCallback) {
     act.params = {};
   }
   
-  act.after = false;
   act.limit = 20;
   act.count = 0;
   act.items = [];
@@ -96,15 +95,15 @@ var _DepaginateAction = Action("depaginate", function(action) {
     return {"kind":"Listing", "data":{"children":action.items}};
   }
   
-  let fetchNext = function() {
-    if (action.after) {
-      action.params["after"] = action.after;
-    }
-    
+  let fetchNext = function(after) {
     if (action.count < action.limit) {
       action.count += 1;
-      logger.log("reddit", "Depaginate action running (page " + action.count + "; after=" + action.after + ")");
+      logger.log("reddit", "Depaginate action running (page " + action.count + "; after=" + after + ")");
 
+      if (after) {
+        action.params["after"] = after;
+      }
+      
       http.GetAction(
         action.baseurl,
         action.params,
@@ -115,14 +114,14 @@ var _DepaginateAction = Action("depaginate", function(action) {
             // Add the items in the JSON to our collection, and save the "after" attribute.
             json = nativeJSON.decode(r.responseText);
             action.items = action.items.concat(json.data.children);
-            action.after = json.data.after;
+            nextAfter = json.data.after;
           } catch (e) {
             action.failure(r);
             return;
           }
           
-          if (action.after) {
-            fetchNext();
+          if (nextAfter) {
+            fetchNext(nextAfter);
           } else {
             // Return the final request and a faux JSON response with the full listing.
             action.success(r, fauxJSON());
