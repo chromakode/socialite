@@ -74,6 +74,70 @@ function tryJSON(action, r) {
   action.success(r, json);
 }
 
+function DepaginateAction(baseurl, params, successCallback, failureCallback) {
+  let act = _DepaginateAction(successCallback, failureCallback);
+  
+  act.baseurl = baseurl;
+  if (params) {
+    act.params = params;
+  } else {
+    act.params = {};
+  }
+  
+  act.after = false;
+  act.limit = 20;
+  act.count = 0;
+  act.items = [];
+  return act
+}
+
+var _DepaginateAction = Action("depaginate", function(action) {
+  let fauxJSON = function() {
+    return {"kind":"Listing", "data":{"children":action.items}};
+  }
+  
+  let fetchNext = function() {
+    if (action.after) {
+      action.params["after"] = action.after;
+    }
+    
+    if (action.count < action.limit) {
+      action.count += 1;
+      logger.log("reddit", "Depaginate action running (page " + action.count + "; after=" + action.after + ")");
+
+      http.GetAction(
+        action.baseurl,
+        action.params,
+        
+        function success(r) {
+          let json;
+          try {
+            // Add the items in the JSON to our collection, and save the "after" attribute.
+            json = nativeJSON.decode(r.responseText);
+            action.items = action.items.concat(json.data.children);
+            action.after = json.data.after;
+          } catch (e) {
+            action.failure(r);
+            return;
+          }
+          
+          if (action.after) {
+            fetchNext();
+          } else {
+            // Return the final request and a faux JSON response with the full listing.
+            action.success(r, fauxJSON());
+          }
+        },
+        function failure(r) { action.failure(r); }
+      ).perform();
+    } else {
+      // We hit the request limit. Return a null request and what we got.
+      action.success(null, fauxJSON());
+    }
+  }
+  fetchNext();
+});
+
 function RedditAPI(siteURL) {
   this.siteURL = siteURL;
   
@@ -170,15 +234,9 @@ RedditAPI.prototype.randomrising = Action("reddit.randomrising", function(action
 RedditAPI.prototype.mysubreddits = Action("reddit.mysubreddits", function(action) {
   logger.log("reddit", "Making mysubreddits API request");
     
-  var act = http.GetAction(
-    this.auth.siteURL + "reddits/mine.json",
-    null, // No parameters
-    
-    function success(r) {
-      tryJSON(action, r);
-    },
-    function failure(r) { action.failure(r); }
-  ).perform();
+  var act = DepaginateAction(this.auth.siteURL + "reddits/mine.json");
+  act.chainTo(action);
+  act.perform();
 });
 
 RedditAPI.prototype._vote = function(linkID, isLiked, action) {
