@@ -33,6 +33,7 @@ RedditSite.prototype.onLoad = function() {
   version.api = this.sitePreferences.getCharPref("version.api");
   
   this.newMessages = [];
+  this.lastNewMessageCount = null;
   
   this.API.init(version);
 };
@@ -41,6 +42,7 @@ RedditSite.prototype.setDefaultPreferences = function(siteDefaultBranch) {
   siteDefaultBranch.setCharPref("version.dom", "");
   siteDefaultBranch.setCharPref("version.api", "");
   siteDefaultBranch.setBoolPref("compactDisplay", true);
+  siteDefaultBranch.setBoolPref("notificationsEnabled", false);
   siteDefaultBranch.setBoolPref("showScore", true);
   siteDefaultBranch.setBoolPref("showSubreddit", true);
   siteDefaultBranch.setBoolPref("showComments", true);
@@ -446,7 +448,7 @@ RedditSite.prototype.createBarSubmitUI = function(document) {
             json.data.children.sort(subredditSort);
             
             if (json.data.children.length == 0) {
-              Socialite.siteFailureMessage(site, "createBarSubmitUI", stringBundle.GetStringFromName("failureMsg.noSubreddits"));
+              Socialite.utils.siteFailureMessage(site, "createBarSubmitUI", stringBundle.GetStringFromName("failureMsg.noSubreddits"));
               barSubmit.menulistSubreddit.hidden = true;
             } else {
               for each (var subredditInfo in json.data.children) {
@@ -527,6 +529,7 @@ RedditSite.prototype.createPreferencesUI = function(document, propertiesWindow) 
   
   var generalGroup = addGroupbox(stringBundle.GetStringFromName("generalGroup.caption"));
   addBooleanPreferenceUI(generalGroup, "compactDisplay");
+  addBooleanPreferenceUI(generalGroup, "notificationsEnabled");
   
   var displayGroup = addGroupbox(stringBundle.GetStringFromName("displayGroup.caption"));
   addBooleanPreferenceUI(displayGroup, "showScore");
@@ -545,27 +548,63 @@ RedditSite.prototype.refreshAlertState = function() {
     let site = this;
     this.API.messages(
       function success(r, json) {
-        site.newMessages = json.data.children.filter(function(message) {
-          return message.data.new;
-        });
-        
-        site.alertState = site.newMessages.length > 0
+        if (json) {
+          site.newMessages = json.data.children.filter(function(message) {
+            return message.data.new;
+          });
+          
+          site.alertState = site.newMessages.length > 0;
+          site.showMessageNotification();
+        }
       }/*,
       this.actionFailureHandler*/
     ).perform(false);
   }
 };
 
+RedditSite.prototype.showMessageNotification = function() {
+  if (this.sitePreferences.getBoolPref("notificationsEnabled")) {
+    let count = this.newMessages.length;
+    if (count > 0 && this.lastNewMessageCount < count) {
+      let title;
+      if (count == 1) {
+        title = stringBundle.formatStringFromName("messageNotification.title-single", [ count, this.siteName ], 2);
+      } else {
+        title = stringBundle.formatStringFromName("messageNotification.title-plural", [ count, this.siteName ], 2);
+      }
+      
+      Socialite.utils.showNotification(
+        title,
+        stringBundle.GetStringFromName("messageNotification.message"),
+        "chrome://socialite/content/reddit/mail_large.png",
+        null,
+        RedditNotificationClickHandler,
+        this.siteURL + "/message/inbox/"
+      );
+    }
+    this.lastNewMessageCount = this.newMessages.length;
+  }
+};
+
 RedditSite.prototype.actionFailureHandler = function(r, action) {
   // 5xx error codes
+  let text;
   if (r.status >= 500 && r.status < 600) {
     text = stringBundle.GetStringFromName("failureMsg.tryAgain");
   } else {
     text = stringBundle.formatStringFromName("failureMsg.httpStatus", [ r.status ], 1);
   }
   
-  Socialite.siteFailureMessage(this, action.name, text);
+  Socialite.utils.siteFailureMessage(this, action.name, text);
 };
+
+RedditNotificationClickHandler = {
+  observe: function(subject, topic, data) {
+    if (topic == "alertclickcallback") {
+      Socialite.utils.openUILinkIn(data, "tab");
+    }
+  }
+}
 
 // Register this class for instantiation
 RedditSite.prototype.siteClassID = "RedditSite";
