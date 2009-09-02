@@ -61,7 +61,9 @@ RedditAuth.prototype = {
     logger.log("reddit_auth", this.siteURL, "Getting new authentication info");
     
     let snarfTarget;
-    if (this.version.compare("dom", "1.0") >= 0) {
+    if (this.version.compare("dom", "1.1") >= 0) {
+      snarfTarget = this.siteURL + "stats/";
+    } else if (this.version["dom"] == "1.0") {
       snarfTarget = this.siteURL + "api/info/";
     } else {
       snarfTarget = this.siteURL + "login/";
