@@ -2,6 +2,7 @@
 * New message ("orangered envelope") notifications for reddit.
 * Ignore "www." domain prefix when determining bar persistence.
 * Submission bar now fetches the full list of subscribed subreddits.
+* Url bar icons no longer respond to right-click.
 * Fix multiple issues with redirects and bar replacement. Thanks Pappenheimer!
 * Fix "preload" reddit scraping to work with updated reddit DOM.
 * Fix limiting parameter in info API calls.

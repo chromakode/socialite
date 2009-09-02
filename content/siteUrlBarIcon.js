@@ -36,14 +36,7 @@ SocialiteWindow.SiteUrlBarIcon = (function() {
       urlBarIcon.id = this.SITE_URLBARICON_ID + site.siteID;
       urlBarIcon.className = [this.URLBARICON_CLASS, this.SITE_URLBARICON_CLASS, "urlbar-icon"].join(" ");
       
-      urlBarIcon.addEventListener("click", function(event) {
-        if (!urlBarIcon.isWorking) {
-          urlBarIcon.setWorking(true);
-          SocialiteWindow.linkContextAction(site, event, false, function finished() {
-            urlBarIcon.setWorking(false);
-          });
-        }
-      }, false);
+      urlBarIcon.addEventListener("click", SiteUrlBarIcon.handleClick, false);
       
       // Hide the icon before we add and position it.
       urlBarIcon.setAttribute("hidden", true);
@@ -82,14 +75,7 @@ SocialiteWindow.SiteUrlBarIcon = (function() {
         Socialite.preferences.getBoolPref("consolidateSites")
       );
       
-      urlBarIcon.addEventListener("click", function(event) {
-        if (!urlBarIcon.isWorking) {
-          urlBarIcon.setWorking(true);
-          SocialiteWindow.linkContextAction(null, event, false, function finished() {
-            urlBarIcon.setWorking(false);
-          });
-        }
-      }, false);
+      urlBarIcon.addEventListener("click", SiteUrlBarIcon.handleClick, false);
       
       urlBarIconParent.insertBefore(urlBarIcon, feedButton);
       
@@ -143,6 +129,16 @@ SocialiteWindow.SiteUrlBarIcon = (function() {
       Array.forEach(this.getAll(), function(siteUrlBarIcon) {
         siteUrlBarIcon.refresh();
       });
+    },
+    
+    handleClick: function(event) {
+      urlBarIcon = event.target;
+      if (!urlBarIcon.isWorking && event.button != 2) {
+        urlBarIcon.setWorking(true);
+        SocialiteWindow.linkContextAction(urlBarIcon.site, event, false, function finished() {
+          urlBarIcon.setWorking(false);
+        });
+      }
     }
   };
   
