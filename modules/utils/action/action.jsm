@@ -9,9 +9,8 @@ function Action(name, func) {
   var ActionClass = function(){};
 
   // Give all instantiated actions the common parent class and set base properties
-  ActionClass.prototype = new ActionType();
-  ActionClass.prototype.name = name;
-  ActionClass.prototype.func = func;
+  ActionClass.prototype = {name:name, func:func};
+  ActionClass.prototype.__proto__ = ActionType.prototype;
   
   // Method to instantiate a new action, binding it to the object the method was called on
   var ActionConstructorMethod = function(successCallback, failureCallback) {

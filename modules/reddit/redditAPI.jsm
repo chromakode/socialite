@@ -2,6 +2,7 @@
 
 logger = Components.utils.import("resource://socialite/utils/log.jsm");
 Components.utils.import("resource://socialite/utils/action/action.jsm");
+Components.utils.import("resource://socialite/utils/action/cachedAction.jsm");
 http = Components.utils.import("resource://socialite/utils/action/httpRequest.jsm");
 Components.utils.import("resource://socialite/utils/hitch.jsm");
 Components.utils.import("resource://socialite/utils/quantizer.jsm");
@@ -156,6 +157,8 @@ function RedditAPI(siteURL) {
   this.hideQuantizer = new Quantizer("reddit.hide.quantizer", QUANTIZE_TIME, sameLinkID);
   this.hide = Action("reddit.hide", this.hideQuantizer.quantize(this._hide));
   this.unhide = Action("reddit.unhide", this.hideQuantizer.quantize(this._unhide));
+  
+  this.mysubreddits_cached = CachedAction(this.mysubreddits, 30*60);
   
   this.messages = Action("reddit.messages", this._messages);
 }

@@ -4,7 +4,7 @@ var EXPORTED_SYMBOLS = ["hitchThis", "hitchHandler", "hitchHandlerFlip"]
 function hitchThis(thisArg, func) {
   var self = thisArg;
   var hitched = function() {
-    func.apply(thisArg, arguments);
+    return func.apply(thisArg, arguments);
   }
   
   return hitched;

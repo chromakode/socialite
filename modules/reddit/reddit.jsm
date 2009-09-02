@@ -438,7 +438,7 @@ RedditSite.prototype.createBarSubmitUI = function(document) {
   var site = this;
   barSubmit.afterBound = function() {
     // Get subreddit listing and initialize menu
-    site.API.mysubreddits(
+    site.API.mysubreddits_cached(
       function success(r, json) {
         // Check that the bar hasn't been removed
         if (barSubmit.parentNode != null) {
