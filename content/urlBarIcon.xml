@@ -8,7 +8,7 @@
     <content>
       <xul:stack>
         <xul:image anonid="imgSite" xbl:inherits="src,tooltiptext=name"/>
-        <xul:image anonid="imgAlert" src="chrome://socialite/skin/alert_emblem.png"/>
+        <xul:image anonid="imgAlert" src="chrome://socialite/skin/alert_emblem.png" onclick="document.getBindingParent(this)._emblemClicked(event);"/>
       </xul:stack>
     </content>
 
@@ -54,7 +54,20 @@
           this.isWorking = isWorking;
         </body>
       </method>
-
+      
+      <method name="_emblemClicked">
+        <parameter name="originalEvent"/>
+        <body>
+          <![CDATA[
+            originalEvent.stopPropagation();
+          
+            var event = document.createEvent("MouseEvents");
+            event.initMouseEvent("SocialiteEmblemClick", true, true, window, 0, 0, 0, 0, 0,
+                                 false, false, false, false, originalEvent.button, null);
+            this.dispatchEvent(event);
+          ]]>
+        </body>
+      </method>
     </implementation>
   </binding>
   

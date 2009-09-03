@@ -33,6 +33,7 @@ RedditSite.prototype.onLoad = function() {
   version.api = this.sitePreferences.getCharPref("version.api");
   
   this.newMessages = [];
+  this.inboxURL = this.siteURL + "/message/inbox/";
   this.lastNewMessageCount = null;
   
   this.API.init(version);
@@ -581,7 +582,7 @@ RedditSite.prototype.showMessageNotification = function() {
         "chrome://socialite/content/reddit/mail_large.png",
         null,
         RedditNotificationClickHandler,
-        this.siteURL + "/message/inbox/"
+        this.inboxURL
       );
     }
     this.lastNewMessageCount = this.newMessages.length;

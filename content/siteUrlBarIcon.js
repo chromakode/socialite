@@ -37,6 +37,9 @@ SocialiteWindow.SiteUrlBarIcon = (function() {
       urlBarIcon.className = [this.URLBARICON_CLASS, this.SITE_URLBARICON_CLASS, "urlbar-icon"].join(" ");
       
       urlBarIcon.addEventListener("click", SiteUrlBarIcon.handleClick, false);
+      urlBarIcon.addEventListener("SocialiteEmblemClick", function(e) {
+        Socialite.utils.openUILink(site.inboxURL, e);
+      }, false);
       
       // Hide the icon before we add and position it.
       urlBarIcon.setAttribute("hidden", true);
