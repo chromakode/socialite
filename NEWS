@@ -1,11 +1,11 @@
-== Version 1.3.3.7 ==
+== Version 1.3.3.7 (Preview Release) ==
 * New message ("orangered envelope") notifications for reddit.
 * Submission bar now fetches the full list of subscribed subreddits.
 * Ignore "www." domain prefix when determining bar persistence.
 * Url bar icons no longer respond to right-click.
 * Improved and updated authentication handling.
 * Fix multiple issues with redirects and bar replacement. Thanks Pappenheimer!
-* Fix "preload" reddit scraping to work with updated reddit DOM.
+* Fix reddit scraping to work with updated reddit DOM.
 * Fix limiting parameter in info API calls.
 
 == Version 1.3.3.1 ==
