@@ -7,31 +7,61 @@ var EXPORTED_SYMBOLS = ["CachedAction"];
 
 function CachedAction(updateAction, expireSeconds) {
   let updateActionName = updateAction.actionClass.prototype.name;
-  let ActionConstructor = Action(updateActionName+"-cached", _cachedAction);
+  let cachedAction = Action(updateActionName+"[cached]", _cachedAction);
   
-  let actionPrototype = ActionConstructor.actionClass.prototype;
+  let actionPrototype = cachedAction.actionPrototype;
   actionPrototype.updateAction = updateAction;
-  actionPrototype.expireSeconds = expireSeconds;
+  actionPrototype.cachedValue = new CachedValue(cachedAction, expireSeconds);
+  cachedAction.cachedValue = actionPrototype.cachedValue;
   
-  return ActionConstructor;
+  return cachedAction;
 }
 
-function _cachedAction(action) {  
-  let actionClass = action.__proto__;
-  
-  let now = Date.now();
-  let elapsed = now - actionClass.lastUpdated; 
-  
-  if (actionClass._value && elapsed < actionClass.expireSeconds*1000) {
-    action.success.apply(action, actionClass._value);
+function _cachedAction(action) {
+  if (action.cachedValue.valid) {
+    action.success.apply(action, action.cachedValue.value);
   } else {
-    actionClass.updateAction.call(this,
+    action.updateAction.call(this,
       function success() {
-        actionClass._value = arguments;
-        actionClass.lastUpdated = Date.now();
-        action.success.apply(action, actionClass._value);
+        action.cachedValue.updated.apply(action.cachedValue, arguments);
+        action.success.apply(action, arguments);
       },
-      function failure(r) { action.failure(r); }
+      action.chainFailure()
     ).perform()
   }
 }
+
+function CachedValue(action, expireSeconds) {
+  this.action = action;
+  this.expireSeconds = expireSeconds
+  this._value = false;
+}
+CachedValue.prototype = {
+  get actionName() {
+    return this.action.actionPrototype.name;
+  },
+  
+  get value() {
+    return this._value;
+  },
+  
+  get expired() {
+    let elapsed = Date.now() - this.lastUpdated;
+    return elapsed >= this.expireSeconds*1000;
+  },
+  
+  get valid() {
+    return (this.value != false) && (!this.expired);
+  },
+    
+  updated: function() {
+    logger.log("cachedaction", this.actionName + " updated")
+    this._value = arguments;
+    this.lastUpdated = Date.now();
+  },
+
+  reset: function() {
+    logger.log("cachedaction", this.actionName + " reset")
+    this._value = false;
+  }
+};

@@ -1,6 +1,7 @@
 // Object-oriented action handler glue
 
 logger = Components.utils.import("resource://socialite/utils/log.jsm");
+Components.utils.import("resource://socialite/utils/hitch.jsm");
 
 var EXPORTED_SYMBOLS = ["Action", "ActionType"];
 
@@ -26,6 +27,7 @@ function Action(name, func) {
   
   // To modify the action class after the fact, we'll create a property on the constructor
   ActionConstructorMethod.actionClass = ActionClass;
+  ActionConstructorMethod.actionPrototype = ActionClass.prototype;
   
   return ActionConstructorMethod;
 }
@@ -81,18 +83,20 @@ ActionType.prototype.failure = function() {
 }
 
 ActionType.prototype.toFunction = function() {
-  var self = this;
-  
-  var doAction = function() {
-    return self.perform.apply(self, arguments);
-  }
-  
-  return doAction;
+  return hitchThis(this, this.perform);
+}
+
+ActionType.prototype.chainSuccess = function() {
+  return hitchThis(this, this.success);
+}
+
+ActionType.prototype.chainFailure = function() {
+  return hitchThis(this, this.failure);
 }
 
 ActionType.prototype.chainTo = function(action) {
-  this.successCallback = function() {action.success.apply(action, arguments)}
-  this.failureCallback = function() {action.failure.apply(action, arguments)}
+  this.successCallback = function() {action.success.apply(action, arguments)};
+  this.failureCallback = function() {action.failure.apply(action, arguments)};
   
   return;
 }

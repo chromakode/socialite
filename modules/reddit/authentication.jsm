@@ -1,63 +1,31 @@
 logger = Components.utils.import("resource://socialite/utils/log.jsm");
 Components.utils.import("resource://socialite/utils/action/action.jsm");
+Components.utils.import("resource://socialite/utils/action/cachedAction.jsm");
 http = Components.utils.import("resource://socialite/utils/action/httpRequest.jsm");
 Components.utils.import("resource://socialite/utils/hitch.jsm");
 Components.utils.import("resource://socialite/utils/watchable.jsm");
 
-
-var EXPORTED_SYMBOLS = ["getAuthInfo", "RedditAuth"];
+var EXPORTED_SYMBOLS = ["RedditAuth", "authParams"];
 
 // ---
 
-function RedditAuth(siteURL, version) {
+function RedditAuth(siteURL, version, expires) {
   this.siteURL = siteURL;
   this.version = version;
-  this.username = false;
-  this.modHash = "";
+  
+  this.authInfo = {username:false, modhash:""};
+  this.getAuthInfo = CachedAction(this._getAuthInfo, expires);
   
   this.onUsernameChange = new Watchable();
   this.onModHashChange = new Watchable();
   this.onStateChange = new Watchable();
 }
 RedditAuth.prototype = {
-  get isLoggedIn() {
-    return ((this.username != false) && (this.modHash != ""));
-  },
+  get isLoggedIn() { return this.authInfo.isLoggedIn; },
+  get username() { return this.authInfo.username; },
+  get modhash() { return this.authInfo.modhash; },
   
-  updateAuthInfo: function(username, modHash) {
-    let wasLoggedIn = this.isLoggedIn;
-    
-    if (modHash != this.modHash) {
-      logger.log("reddit_auth", this.siteURL, "Modhash changed.");
-      this.modHash = modHash;
-      this.onModHashChange.send(modHash);
-    }
-    
-    if (username != this.username) {
-      this.username = username;
-      logger.log("reddit_auth", this.siteURL, "Username changed: " + username);
-      this.onUsernameChange.send(username);
-    }
-    
-    let isLoggedIn = this.isLoggedIn;
-    if (wasLoggedIn != isLoggedIn) {
-      logger.log("reddit_auth", this.siteURL, "Login state changed: " + isLoggedIn);
-      this.onStateChange.send(isLoggedIn);
-    }
-  },
-
-  snarfAuthInfo: function(doc, win) {
-    this.updateAuthInfo(extractUsername(doc), extractModHash(doc))
-  },
-
-  authModHash: function(params) {
-    if (this.modHash) {
-      params["uh"] = this.modHash;
-    }
-    return params;
-  },
-  
-  refreshAuthInfo: Action("reddit_auth.refreshAuthInfo", function(action) {
+  _getAuthInfo: Action("reddit_auth.getAuthInfo", function(action) {
     logger.log("reddit_auth", this.siteURL, "Getting new authentication info");
     
     let snarfTarget;
@@ -74,18 +42,68 @@ RedditAuth.prototype = {
       null,
       
       hitchThis(this, function success(r) {
-        this.updateAuthInfo(extractUsername(r.responseXML), extractModHash(r.responseXML));
-        logger.log("reddit_auth", this.siteURL, "Stored authentication info");
-  
-        action.success();
+        let authInfo = extractAuthInfo(r.responseXML);
+        this._updateAuthInfo(authInfo);
+        action.success(authInfo);
       }),
       function failure(r) { action.failure(); }
     );
     
     act.request.overrideMimeType("text/xml");
     act.perform();
-  })
+  }),
+  
+  _updateAuthInfo: function(authInfo) {
+    let oldAuthInfo = this.authInfo;
+    this.authInfo = authInfo;
+    
+    if (authInfo.modhash != oldAuthInfo.modhash) {
+      logger.log("reddit_auth", this.siteURL, "Modhash changed.");
+      this.onModHashChange.send(authInfo.modhash);
+    }
+    
+    if (authInfo.username != oldAuthInfo.username) {
+      logger.log("reddit_auth", this.siteURL, "Username changed: " + authInfo.username);
+      this.onUsernameChange.send(authInfo.username);
+    }
+    
+    if (authInfo.isLoggedIn != oldAuthInfo.isLoggedIn) {
+      logger.log("reddit_auth", this.siteURL, "Login state changed: " + authInfo.isLoggedIn);
+      this.onStateChange.send(authInfo.isLoggedIn);
+    }
+  },
+
+  snarfAuthInfo: function(doc, win) {
+    let authInfo = extractAuthInfo(doc);
+    this._updateAuthInfo(authInfo);
+    this.getAuthInfo.cachedValue.updated(authInfo); // reset authentication info expiration
+  },
+  
+  actionParams: function(action, params, successCallback) {
+    this.getAuthInfo(
+      function success(authInfo) {
+        successCallback(authParams(params, authInfo));
+      },
+      action.chainFailure()
+    ).perform();
+  }
 };
+
+function authParams(params, authInfo) {
+  if (authInfo.modhash) {
+    params["uh"] = authInfo.modhash;
+  }
+  return params;
+}
+
+function extractAuthInfo(document) {
+  let authInfo = {
+    username: extractUsername(document),
+    modhash:  extractModHash(document)
+  };
+  authInfo.isLoggedIn = (authInfo.username != false) && (authInfo.modhash != "");
+  return authInfo;
+}
 
 function extractModHash(document) {
   try {

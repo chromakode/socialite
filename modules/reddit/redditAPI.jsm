@@ -14,6 +14,8 @@ var nativeJSON = Components.classes["@mozilla.org/dom/json;1"]
 var EXPORTED_SYMBOLS = ["RedditAPI", "RedditVersion"];
 
 QUANTIZE_TIME = 1000;
+AUTH_EXPIRE_AGE = 4*60*60;
+SUBREDDITS_EXPIRE_AGE = 30*60;
 
 // Socialite recognizes the following unofficial versions for compatibility purposes:
 //
@@ -128,7 +130,7 @@ var _DepaginateAction = Action("depaginate", function(action) {
             action.success(r, fauxJSON());
           }
         },
-        function failure(r) { action.failure(r); }
+        action.chainFailure()
       ).perform();
     } else {
       // We hit the request limit. Return a null request and what we got.
@@ -158,7 +160,7 @@ function RedditAPI(siteURL) {
   this.hide = Action("reddit.hide", this.hideQuantizer.quantize(this._hide));
   this.unhide = Action("reddit.unhide", this.hideQuantizer.quantize(this._unhide));
   
-  this.mysubreddits_cached = CachedAction(this.mysubreddits, 30*60);
+  this.mysubreddits_cached = CachedAction(this.mysubreddits, SUBREDDITS_EXPIRE_AGE);
   
   this.messages = Action("reddit.messages", this._messages);
 }
@@ -177,27 +179,21 @@ RedditAPI.prototype.init = function(version, auth) {
   if (auth) {
     this.auth = auth;
   } else {
-    this.auth = new RedditAuth(this.siteURL, this.version);
-    this.auth.refreshAuthInfo().perform();
+    this.auth = new RedditAuth(this.siteURL, this.version, AUTH_EXPIRE_AGE);
   }
 }
 
 RedditAPI.prototype._urlinfo = function(url, subreddit, action) {
   logger.log("reddit", "Making info API request");
-  
-  var params = {
-    url:    url,
-    limit:  1
-  };
    
   http.GetAction(
     APIURL(this.auth.siteURL, "info.json", subreddit),
-    params,
+    {url:url, limit:1},
     
     function success(r) {
       tryJSON(action, r);
     },
-    function failure(r) { action.failure(r); }
+    action.chainFailure()
   ).perform();
 };
 
@@ -211,25 +207,21 @@ RedditAPI.prototype._thinginfo = function(thingID, action) {
     function success(r) {
       tryJSON(action, r);
     },
-    function failure(r) { action.failure(r); }
+    action.chainFailure()
   ).perform();
 };
 
 RedditAPI.prototype.randomrising = Action("reddit.randomrising", function(action) {
   logger.log("reddit", "Making randomrising API request");
   
-  var params = {
-    limit: 1
-  };
-    
   var act = http.GetAction(
     this.auth.siteURL + "randomrising.json",
-    params,
+    {limit:1},
     
     function success(r) {
       tryJSON(action, r);
     },
-    function failure(r) { action.failure(r); }
+    action.chainFailure()
   ).perform();
 });
 
@@ -240,6 +232,20 @@ RedditAPI.prototype.mysubreddits = Action("reddit.mysubreddits", function(action
   act.chainTo(action);
   act.perform();
 });
+
+RedditAPI.prototype._messages = function(mark, action) {
+  logger.log("reddit", "Making messages API request");
+  
+  http.GetAction(
+    this.auth.siteURL + "message/inbox.json",
+    {mark:mark},
+    
+    function success(r) {
+      tryJSON(action, r);
+    },
+    action.chainFailure()
+  ).perform();
+};
 
 RedditAPI.prototype._vote = function(linkID, isLiked, action) {
   logger.log("reddit", "Making vote API call");
@@ -253,86 +259,39 @@ RedditAPI.prototype._vote = function(linkID, isLiked, action) {
     dir = 0;
   }
   
-  var params = {
-    id:    linkID,
-    dir:   dir
-  };
-  params = this.auth.authModHash(params);
-  
-  var act = http.PostAction(APIURL(this.auth.siteURL, "vote"), params);
-  act.chainTo(action);
-  act.perform();
+  let self = this;
+  this.auth.actionParams(action,
+    {id:linkID, dir:dir},
+    function success(authParams) {
+      var act = http.PostAction(APIURL(self.auth.siteURL, "vote"), authParams);
+      act.chainTo(action);
+      act.perform();
+    }
+  );
 };
 
 
-RedditAPI.prototype._save = function(linkID, action) {
-  logger.log("reddit", "Making save API call");
+RedditAPI.prototype._simpleLinkPost = function(command, linkID, action) {
+  logger.log("reddit", "Making " + command + " API call");
   
-  var params = {
-    id:    linkID
-  };
-  params = this.auth.authModHash(params);
-  
-  var act = http.PostAction(APIURL(this.auth.siteURL, "save"), params);
-  act.chainTo(action);
-  act.perform();
+  let self = this;
+  this.auth.actionParams(action,
+    {id:linkID},
+    function success(authParams) {
+      var act = http.PostAction(APIURL(self.auth.siteURL, command), authParams);
+      act.chainTo(action);
+      act.perform();
+    }
+  );
 };
 
-RedditAPI.prototype._unsave = function(linkID, action) {
-  logger.log("reddit", "Making unsave API call");
-  
-  var params = {
-    id:    linkID
+function simpleLinkPost(command) {
+  return function(linkID, action) {
+    this._simpleLinkPost(command, linkID, action);
   };
-  params = this.auth.authModHash(params);
-  
-  var act = http.PostAction(APIURL(this.auth.siteURL, "unsave"), params);
-  act.chainTo(action);
-  act.perform();
 };
 
-
-RedditAPI.prototype._hide = function(linkID, action) {
-  logger.log("reddit", "Making hide API call");
-  
-  var params = {
-    id:    linkID
-  };
-  params = this.auth.authModHash(params);
-  
-  var act = http.PostAction(APIURL(this.auth.siteURL, "hide"), params);
-  act.chainTo(action);
-  act.perform();
-};
-
-
-RedditAPI.prototype._unhide = function(linkID, action) {
-  logger.log("reddit", "Making unhide API call");
-  
-  var params = {
-    id:    linkID
-  };
-  params = this.auth.authModHash(params);
-  
-  var act = http.PostAction(APIURL(this.auth.siteURL, "unhide"), params);
-  act.chainTo(action);
-  act.perform();
-};
-
-RedditAPI.prototype._messages = function(mark, action) {
-  logger.log("reddit", "Making messages API request");
-  
-  var params = {
-    mark:    mark
-  };
-  
-  http.GetAction(
-    this.auth.siteURL + "message/inbox.json",
-    params,
-    
-    function success(r) {
-      tryJSON(action, r);
-    },
-    function failure(r) { action.failure(r); }
-  ).perform();
-};
+RedditAPI.prototype._save   = simpleLinkPost("save");
+RedditAPI.prototype._unsave = simpleLinkPost("unsave");
+RedditAPI.prototype._hide   = simpleLinkPost("hide");
+RedditAPI.prototype._unhide = simpleLinkPost("unhide");
