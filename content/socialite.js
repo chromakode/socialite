@@ -133,7 +133,7 @@ var SocialiteWindow = (function() {
       
       // Add progress listener to tabbrowser. This fires progress events for the current tab.
       SocialiteWindow.setupProgressListener(gBrowser);
-      },
+    },
     
     onUnload: function() {
       SocialiteWindow.SiteUrlBarIcon.onUnload();
@@ -180,28 +180,34 @@ var SocialiteWindow = (function() {
         if (channel) {
           let originalURL = channel.originalURI.spec;
     
+          // Two cases to handle. Discovering a redirect...
+          //   1. From a watched page (originalURL is watched)
+          //   2. To a watched page   (URL is watched => isWatched set)
           if ((channel.loadFlags & Components.interfaces.nsIChannel.LOAD_REPLACE)
               && (Socialite.watchedURLs.isWatched(originalURL) || isWatched)) {
             logger.log("linkStartLoad", "Detected redirect: "+ originalURL +" -> "+ URL);
             Socialite.watchedURLs.addRedirect(originalURL, URL);
+            
+            // If we redirected from a watched page, we need to update isWatched to reflect that we now know the current page.
+            isWatched = true;
           }
         }
         
         // Handle an existing bar
         if (socialiteBar) {
           let isFromRedirect = Socialite.watchedURLs.isRedirect(socialiteBar.originalURL, URL);
-          let isPersistenceChange = persistence.onLocationChange(socialiteBar.URL, URL);
-          // Handle persistence changes, if any.
-          if (!isFromRedirect && !isPersistenceChange) {
-            socialiteBar.close();
-            socialiteBar = null;
-          } else {
+          let barPersists = persistence.onLocationChange(socialiteBar.URL, URL);
+          // Retain the bar if this was a redirect, or if the current URL isn't watched and the bar persists.
+          if (isFromRedirect || (!isWatched && barPersists)) {
             // If we got redirected, update the bar URL so persistence rules are followed correctly.
             if (isFromRedirect) {
               socialiteBar.URL = URL;
             }
             // If we're not closing the bar, refresh it.
             socialiteBar.refresh();
+          } else {
+            socialiteBar.close();
+            socialiteBar = null;
           }
         }
         
@@ -407,6 +413,8 @@ var SocialiteWindow = (function() {
       // *** Context Logic ***
       //
       
+      logger.log("SocialiteWindow", "Context button (" + (site != null ? site.siteName : "general") + ") clicked on " + currentURL);
+      
       // *** Step 0: Check that we have sites loaded
       
       if (Socialite.sites.count == 0) {
@@ -535,15 +543,7 @@ var SocialiteWindow = (function() {
             SocialiteWindow.SiteUrlBarIcon.updateVisibility();
             SocialiteWindow.SiteMenuItem.updateVisibility();
             break;
-          
-          case "refreshIntervalEnabled":
-            SocialiteWindow.ActiveRefresh.updateEnabled();
-            break;
-            
-          case "refreshInterval":
-            SocialiteWindow.ActiveRefresh.updateInterval();
-            break;
-            
+
         }
       }
     

@@ -35,7 +35,7 @@
     <resources>
       <stylesheet src="chrome://global/skin/button.css"/>
       <stylesheet src="chrome://socialite/skin/socialite.css"/>
-      <stylesheet src="chrome://socialite/skin/socialite-platform.css"/>
+      <stylesheet src="chrome://socialite/skin/socialite_platform.css"/>
       <stylesheet src="chrome://socialite/skin/reddit.css"/>
     </resources>
     
@@ -112,18 +112,21 @@
         let auth = this.linkInfo.API.auth;
 
         // Watch the site's authentication status and change UI accordingly
-        function updateLoggedIn(loggedIn) {
-          self.setAttribute("isloggedin", loggedIn);
+        function updateAuthState(isLoggedIn) {
+          self.setAttribute("isloggedin", isLoggedIn);
         }
-        updateLoggedIn(auth.isLoggedIn());
-        this._removeAuthStateWatch = auth.onStateChange.watch(updateLoggedIn);
+        this._removeAuthStateWatch = auth.onStateChange.watch(updateAuthState);
         
         // Watch for changes in logged in username and update the button
         function updateUsername(username) {
           self.buttonProfile.setAttribute("tooltiptext", "&profile.tooltipPre; ("+username+")");
         }
-        updateUsername(auth.username);
         this._removeUsernameWatch = auth.onUsernameChange.watch(updateUsername);
+        
+        auth.getAuthInfo(function(authInfo) {
+          updateAuthState(authInfo.isLoggedIn);
+          updateUsername(authInfo.username);
+        }).perform();
         
         this.update();
         this.afterBound();

@@ -33,7 +33,6 @@
   margin: 0;
 }
 
-
 hbox[anonid="siteSelector"] {
   -moz-binding: url(chrome://socialite/content/socialiteBar.xml#socialite-site-selector);
 }
@@ -50,7 +49,6 @@ notification[value="socialite-contentbar-notification"] {
 notification[value="socialite-submitbar-notification"] {
   -moz-binding: url(chrome://socialite/content/socialiteBar.xml#socialite-submit-bar) !important;
 }
-
 
 .socialite-no-vertical-margin {
   margin-top: 0;
@@ -78,14 +76,48 @@ notification[value="socialite-submitbar-notification"] {
 }
 
 .socialite-urlbar-icon {
-  width: 16px;
-  height: 16px;
-  opacity: .8;
+  -moz-binding: url(chrome://socialite/content/urlBarIcon.xml#urlbar-icon);
+}
+
+.socialite-site-urlbar-icon {
+  -moz-binding: url(chrome://socialite/content/urlBarIcon.xml#site-urlbar-icon);
+}
+
+.socialite-urlbar-icon {
+  width: 18px;
+  height: 18px;
   margin-right: 3px;
 }
 
-.socialite-urlbar-icon:hover {
+.socialite-urlbar-icon image[anonid="imgSite"] {
+  position: absolute;
+  top: 0px;
+  left: 0px;
+  width: 16px;
+  height: 16px;
+  opacity: .8;
+}
+
+.socialite-urlbar-icon:hover image[anonid="imgSite"] {
   opacity: 1;
+}
+
+.socialite-urlbar-icon image[anonid="imgAlert"] {
+  position: absolute;
+  top: 11px;
+  left: 11px;
+  width: 6px;
+  height: 6px;
+  display: none;
+}
+
+.socialite-urlbar-icon[isAlert=true] image[anonid="imgAlert"] {
+	display: block;
+}
+
+
+hbox[anonid="loadedSiteSelector"] {
+  -moz-binding: url(chrome://socialite/content/socialiteBar.xml#socialite-loaded-site-selector);
 }
 
 .socialite-form-error {

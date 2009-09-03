@@ -2,6 +2,9 @@ Components.utils.import("resource://socialite/socialite.jsm");
 logger = Components.utils.import("resource://socialite/utils/log.jsm");
 faviconWatch = Components.utils.import("resource://socialite/utils/faviconWatch.jsm");
 Components.utils.import("resource://socialite/utils/strUtils.jsm");
+Components.utils.import("resource://socialite/utils/watchable.jsm");
+Components.utils.import("resource://socialite/utils/activeInterval.jsm");
+
 
 var IOService = Components.classes["@mozilla.org/network/io-service;1"]
                 .getService(Components.interfaces.nsIIOService);
@@ -23,42 +26,56 @@ function SocialiteSite(siteID, siteName, siteURL) {
   this.siteURI = IOService.newURI(siteURL, null, null);
   this.siteURL = this.siteURI.spec;
   this.loaded = false;
+  this._alertState = false;
 }
-
-SocialiteSite.prototype.siteClassID = "SocialiteSite";
-SocialiteSite.prototype.siteClassName = "Socialite Site";
-SocialiteSite.prototype.siteClassIconURI = "";
-
-SocialiteSite.prototype.getIconURI = function() {
-  // We'll assume that favicon.ico exists for now.
-  return this.siteURL+"/favicon.ico";
-}
-
-SocialiteSite.prototype.onLoad = function() {
-  this.sitePreferences = Components.classes["@mozilla.org/preferences-service;1"]
-                         .getService(Components.interfaces.nsIPrefService)
-                         .getBranch("extensions.socialite.sites."+this.siteID+"."+this.siteClassID+".");
-  this.sitePreferences.QueryInterface(Components.interfaces.nsIPrefBranch2);
+SocialiteSite.prototype = {
+  siteClassID:      "SocialiteSite",
+  siteClassName:    "Socialite Site",
+  siteClassIconURI: "",
   
-  faviconWatch.setFavicon(this.siteURL, this.getIconURI());  
+  getIconURI: function() {
+    // We'll assume that favicon.ico exists for now.
+    return this.siteURL+"/favicon.ico";
+  },
   
-  this.loaded = true;  
-};
-
-SocialiteSite.prototype.onUnload = function() {
-  this.loaded = false;
+  onLoad: function() {
+    this.sitePreferences = Components.classes["@mozilla.org/preferences-service;1"]
+                           .getService(Components.interfaces.nsIPrefService)
+                           .getBranch("extensions.socialite.sites."+this.siteID+"."+this.siteClassID+".");
+    this.sitePreferences.QueryInterface(Components.interfaces.nsIPrefBranch2);
+    
+    faviconWatch.setFavicon(this.siteURL, this.getIconURI());
+    
+    this.onAlertStateChange = new Watchable();
+    this.loaded = true;
+  },
+  
+  onUnload: function() {
+    this.loaded = false;
+  },
+  
+  get alertState() {
+    return this._alertState;
+  },
+  
+  set alertState(value) {
+    this._alertState = value;
+    if (this.onAlertStateChange) {
+      this.onAlertStateChange.send(value);
+    }
+  },
+  
+  onCreate: logger.makeStubFunction("SocialiteSite", "onCreate"),
+  onDelete: logger.makeStubFunction("SocialiteSite", "onDelete"),
+  setDefaultPreferences: logger.makeStubFunction("SocialiteSite", "setDefaultPreferences"),
+  onSitePageLoad: logger.makeStubFunction("SocialiteSite", "onSitePageLoad"),
+  getLinkInfo: logger.makeStubFunction("SocialiteSite", "getLinkInfo"),
+  createBarContentUI: logger.makeStubFunction("SocialiteSite", "createBarContentUI"),
+  createBarSubmitUI: logger.makeStubFunction("SocialiteSite", "createBarSubmitUI"),
+  createPreferencesUI: logger.makeStubFunction("SocialiteSite", "createPreferencesUI"),
+  refreshAlertState: logger.makeStubFunction("SocialiteSite", "refreshAlertState")
 }
 
-SocialiteSite.prototype.onCreate = logger.makeStubFunction("SocialiteSite", "onCreate");
-SocialiteSite.prototype.onDelete = logger.makeStubFunction("SocialiteSite", "onDelete");
-
-SocialiteSite.prototype.setDefaultPreferences = logger.makeStubFunction("SocialiteSite", "setDefaultPreferences");
-
-SocialiteSite.prototype.onSitePageLoad = logger.makeStubFunction("SocialiteSite", "onSitePageLoad");
-SocialiteSite.prototype.getLinkInfo = logger.makeStubFunction("SocialiteSite", "getLinkInfo");
-SocialiteSite.prototype.createBarContentUI = logger.makeStubFunction("SocialiteSite", "createBarContentUI");
-SocialiteSite.prototype.createBarSubmitUI = logger.makeStubFunction("SocialiteSite", "createBarSubmitUI");
-SocialiteSite.prototype.createPreferencesUI = logger.makeStubFunction("SocialiteSite", "createPreferencesUI");
 
 // ---
 
@@ -74,6 +91,25 @@ SiteCollection.prototype.__iterator__ = function() {
       yield [siteID, site];
     }
   }
+}
+
+SiteCollection.prototype.initRefreshInterval = function() {
+  let self = this;
+  this.siteRefreshInterval = new PreferenceActiveInterval(
+    function callback() {
+      logger.log("sites", "Refreshing site alert states");
+      
+      for (let [siteID, site] in self) {
+        site.refreshAlertState();
+      }
+    },
+    "extensions.socialite.refreshInterval",
+    "extensions.socialite.refreshSitesEnabled",
+    Socialite.globals.MINIMUM_REFRESH_INTERVAL,
+    Socialite.globals.IDLE_THRESHOLD
+  );
+  this.siteRefreshInterval.start();
+  this.siteRefreshInterval.tick();
 }
 
 SiteCollection.prototype.onContentLoad = function(doc, win) {
@@ -140,6 +176,8 @@ SiteCollection.prototype.loadConfiguredSites = function() {
     var newSite = new siteClass(siteID, siteName, siteURL);
     this.loadSite(newSite);    
   }, this);
+  
+  this.initRefreshInterval();
 }
 
 SiteCollection.prototype.saveConfiguredSites = function() {

@@ -321,7 +321,7 @@
   
   <binding id="socialite-site-ui">
     <resources>
-      <stylesheet src="chrome://socialite/skin/socialite-platform.css"/>
+      <stylesheet src="chrome://socialite/skin/socialite_platform.css"/>
     </resources>
 
     <implementation>
@@ -383,7 +383,7 @@
     
     <resources>
       <stylesheet src="chrome://socialite/skin/socialite.css"/>
-      <stylesheet src="chrome://socialite/skin/socialite-platform.css"/>
+      <stylesheet src="chrome://socialite/skin/socialite_platform.css"/>
       <stylesheet src="chrome://global/skin/notification.css"/>
     </resources>
     

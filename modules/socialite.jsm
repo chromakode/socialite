@@ -15,7 +15,7 @@ var Socialite =
     
     Socialite.stringBundle = Components.classes["@mozilla.org/intl/stringbundle;1"]
                              .getService(Components.interfaces.nsIStringBundleService)
-                             .createBundle("chrome://socialite/locale/socialite.properties")
+                             .createBundle("chrome://socialite/locale/socialite.properties");
   },
   
   load: function() {
@@ -23,30 +23,6 @@ var Socialite =
       Socialite.sites.loadConfiguredSites();
       Socialite.loaded = true;
     }
-  },
-
-  failureMessage: function(title, message) {
-    logger.log("Socialite", "Failure occurred, message: " + message);
-    
-    let titlePart;
-    if (title) {
-      titlePart = " ("+title+")";
-    } else {
-      titlePart = "";
-    }
-    
-    if (alertsService) {
-      alertsService.showAlertNotification(
-        "chrome://global/skin/icons/Error.png",
-        Socialite.stringBundle.GetStringFromName("failureMessage.title") + titlePart,
-        message,
-        null, null, null, "socialite-failure"
-      );
-    }
-  },
-  
-  siteFailureMessage: function(site, subject, message) {
-    Socialite.failureMessage(site.siteName, subject+": "+message);
   },
   
   utils: {
@@ -59,6 +35,43 @@ var Socialite =
     openUILinkIn: function(url, where) {
       window = windowManager.getMostRecentWindow("navigator:browser");
       window.openUILinkIn(url, where);
+    },
+    
+    showNotification: function(title, message, icon, name, listener, data) {
+      if (!icon) {
+        icon = "chrome://socialite/skin/socialite.png";
+      }
+      
+      if (!name) {
+        name = "socialite-message";
+      }
+      
+      let clickable = listener != null;
+      if (alertsService) {
+        alertsService.showAlertNotification(icon, title, message, clickable, data, listener, name);
+      }
+    },
+    
+    failureMessage: function(title, message) {
+      logger.log("Socialite", "Failure occurred, message: " + message);
+      
+      let titlePart;
+      if (title) {
+        titlePart = " ("+title+")";
+      } else {
+        titlePart = "";
+      }
+      
+      Socialite.utils.showNotification(
+        Socialite.stringBundle.GetStringFromName("failureMessage.title") + titlePart,
+        message,
+        "chrome://global/skin/icons/Error.png",
+        "socialite-failure"
+      );
+    },
+    
+    siteFailureMessage: function(site, subject, message) {
+      Socialite.failureMessage(site.siteName, subject+": "+message);
     }
     
   }
@@ -89,7 +102,7 @@ try {
   alertsService = Components.classes["@mozilla.org/alerts-service;1"]
                   .getService(Components.interfaces.nsIAlertsService);
 } catch (e) {
-  logger.log("Socialite", "Unable to load alerts service. For the duration of this serssion, alerts will be logged, but not displayed.");
+  logger.log("Socialite", "Unable to load alerts service. For the duration of this session, alerts will be logged, but not displayed.");
 }
 
 let windowManager = Components.classes['@mozilla.org/appshell/window-mediator;1']

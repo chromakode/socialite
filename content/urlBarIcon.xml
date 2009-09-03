@@ -1,0 +1,112 @@
+<?xml version="1.0"?>
+<bindings
+  xmlns="http://www.mozilla.org/xbl"
+  xmlns:xbl="http://www.mozilla.org/xbl"
+  xmlns:xul="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul">
+  
+  <binding id="urlbar-icon">
+    <content>
+      <xul:stack>
+        <xul:image anonid="imgSite" xbl:inherits="src,tooltiptext=name"/>
+        <xul:image anonid="imgAlert" src="chrome://socialite/skin/alert_emblem.png" onclick="document.getBindingParent(this)._emblemClicked(event);"/>
+      </xul:stack>
+    </content>
+
+    <implementation>
+      <field name="isWorking">false</field>
+      
+      <property name="isAlert"
+                onget="return this.getAttribute('isAlert');"
+                onset="this.setAttribute('isAlert', val); return val;"/>
+
+      <property name="name"
+                onget="return this.getAttribute('name');"
+                onset="this.setAttribute('name', val); return val;"/>
+    
+      <property name="icon" onget="return this.getAttribute('icon');">
+        <setter>
+          this.setAttribute('icon', val);
+          if (!this.isWorking) {
+            this.setAttribute('src', val);
+          }
+          return val;
+        </setter>
+      </property>
+      
+      <destructor>
+        this.destroyUrlBarIcon();
+      </destructor>
+
+      <method name="destroyUrlBarIcon">
+        <body/>
+      </method>
+
+      <method name="setWorking">
+        <parameter name="isWorking"/>
+        <body>
+          if (isWorking != this.isWorking) {
+            if (isWorking) {
+              this.setAttribute('src', "chrome://socialite/skin/working.gif");
+            } else {
+              this.setAttribute('src', this.icon);
+            }
+          }
+          this.isWorking = isWorking;
+        </body>
+      </method>
+      
+      <method name="_emblemClicked">
+        <parameter name="originalEvent"/>
+        <body>
+          <![CDATA[
+            originalEvent.stopPropagation();
+          
+            var event = document.createEvent("MouseEvents");
+            event.initMouseEvent("SocialiteEmblemClick", true, true, window, 0, 0, 0, 0, 0,
+                                 false, false, false, false, originalEvent.button, null);
+            this.dispatchEvent(event);
+          ]]>
+        </body>
+      </method>
+    </implementation>
+  </binding>
+  
+  <binding id="site-urlbar-icon" extends="chrome://socialite/content/urlBarIcon.xml#urlbar-icon">
+    <implementation>
+      <!--
+        Note: uncommenting the following line causes spurious errors to be thrown on the console.
+        The field site is set by in siteUrlBarIcon.js prior to binding attachment, and exists even though the errors claim it does not.
+        Perhaps the field is being initialized to null upon access?
+        
+        <field name="site"/>
+      -->
+
+      <constructor>
+        var faviconWatch = Components.utils.import("resource://socialite/utils/faviconWatch.jsm", null);
+        this._removeFaviconWatch = faviconWatch.useFaviconAsAttribute(this, "icon", this.site.siteURL);
+        this.icon = faviconWatch.getFaviconURL(this.site.siteURL);
+        
+        var self = this;
+        let updateAlertState = function() {
+          self.isAlert = self.site.alertState;
+        }
+        this._removeAlertStateWatch = this.site.onAlertStateChange.watch(updateAlertState);
+        updateAlertState();
+      </constructor>
+
+      <method name="destroyUrlBarIcon">
+        <body>
+          if (this._removeFaviconWatch)    { this._removeFaviconWatch(); }
+          if (this._removeAlertStateWatch) { this._removeAlertStateWatch(); }
+        </body>
+      </method>
+      
+      <method name="refresh">
+        <body>
+          this.site.refreshAlertState();
+        </body>
+      </method>
+
+    </implementation>
+  </binding>
+</bindings>

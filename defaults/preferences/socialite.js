@@ -6,7 +6,8 @@ pref("extensions.socialite.showSiteUrlBarIcons", true);
 pref("extensions.socialite.showSiteMenuItems", true);
 pref("extensions.socialite.consolidateSites", false);
 pref("extensions.socialite.persistMode", 2);
-pref("extensions.socialite.refreshIntervalEnabled", true);
+pref("extensions.socialite.refreshBarEnabled", true);
+pref("extensions.socialite.refreshSitesEnabled", true);
 pref("extensions.socialite.refreshInterval", 120);
 
 // Sites
@@ -26,3 +27,4 @@ pref("extensions.socialite.sites.reddit.RedditSite.showHide", false);
 pref("extensions.socialite.sites.reddit.RedditSite.showRandom", false);
 pref("extensions.socialite.sites.reddit.RedditSite.showProfile", false);
 pref("extensions.socialite.sites.reddit.RedditSite.watchRedditSiteLinks", true);
+pref("extensions.socialite.sites.reddit.RedditSite.notificationsEnabled", false);

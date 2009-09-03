@@ -4,6 +4,7 @@ The following images in the directory "content/reddit/" are (C) 2008 CondeNet, I
 	upmod.png
 	downgray.png
 	downmod.png
+	mail.png
 	
 The following images in the directory "content/reddit/" are (C) 2008 Mark James, licensed under the Creative Commons Attribution 2.5 License:
 	comments.png
@@ -11,10 +12,13 @@ The following images in the directory "content/reddit/" are (C) 2008 Mark James,
 	savedgray.png
 	8ball.png
 	login.png
-The following images are derivative works and thus (C) 2008 Chromakode, licensed under the Creative Commons Attribution 2.5 License:
+	
+The following images are derivative works of Silk by Mark James and thus (C) 2008 Chromakode, licensed under the Creative Commons Attribution 2.5 License:
 	hidden.png
 	hiddengray.png
 	profile.png (originally status_online.png)
+	alert_emblem.png (originally bullet_orange.png)
+	
 More silk icons by Mark James can be found at http://www.famfamfam.com/lab/icons/silk/.
 
 The image "content/reddit/working.gif" is from http://ajaxload.info/ and "totally free for use" as per the origin page footer.

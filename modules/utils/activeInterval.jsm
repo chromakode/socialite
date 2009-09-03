@@ -1,9 +1,14 @@
 logger = Components.utils.import("resource://socialite/utils/log.jsm");
 
-var EXPORTED_SYMBOLS = ["ActiveInterval"];
+var EXPORTED_SYMBOLS = ["ActiveInterval", "PreferenceActiveInterval"];
 
 let idleService = Components.classes["@mozilla.org/widget/idleservice;1"]
                                      .getService(Components.interfaces.nsIIdleService)
+
+preferences = Components.classes["@mozilla.org/preferences-service;1"]
+                                           .getService(Components.interfaces.nsIPrefService)
+                                           .getBranch("");
+preferences.QueryInterface(Components.interfaces.nsIPrefBranch2);
 
 function ActiveInterval(callback, interval, idleThreshold) {
   this.callback = callback;
@@ -41,7 +46,7 @@ function ActiveInterval(callback, interval, idleThreshold) {
   this.isRunning = false;
 }
 ActiveInterval.prototype = {
-  start: function(callback) {
+  start: function() {
     if (!this.isRunning) {
       idleService.addIdleObserver(this.idleObserver, this.idleThreshold);
       this._start_ticking();
@@ -93,3 +98,73 @@ ActiveInterval.prototype = {
     this.callback();
   },
 };
+
+function PreferenceActiveInterval(callback, intervalPreference, enabledPreference, minimumInterval, idleThreshold) {
+  this.intervalPreference = intervalPreference;
+  this.enabledPreference = enabledPreference;
+  this.minimumInterval = minimumInterval;
+  this.isStarted = false;
+  ActiveInterval.call(this, callback, this.prefInterval, idleThreshold);
+  
+  let self = this;
+  this.preferenceObserver = {
+    
+    observe: function(subject, topic, data) {
+      switch (data) {
+        
+        case self.enabledPreference:
+          self.updateEnabled();
+          break;
+          
+        case self.intervalPreference:
+          self.updateInterval();
+          break;
+          
+      }
+    }
+  
+  }
+  preferences.addObserver("", this.preferenceObserver, false);
+}
+PreferenceActiveInterval.prototype = {
+  start: function() {
+    this.isStarted = true;
+    ActiveInterval.prototype.start.call(this);
+  },
+
+  stop: function() {
+    this.isStarted = false;
+    ActiveInterval.prototype.stop.call(this);
+  },
+  
+  destroy: function() {
+    this.stop();
+    preferences.removeObserver("", this.preferenceObserver);
+  },
+    
+  get prefInterval() {
+    let interval = preferences.getIntPref(this.intervalPreference);
+    
+    // Ensure that it's not possible to refresh faster than the minimum limit (for courtesy to sites) 
+    interval = Math.max(interval, this.minimumInterval);
+
+    return interval;
+  },
+  
+  get isEnabled() {
+    return preferences.getBoolPref(this.enabledPreference);
+  },
+  
+  updateEnabled: function() {
+    if (this.isEnabled && this.isStarted) {
+      ActiveInterval.prototype.start.call(this);
+    } else {
+      ActiveInterval.prototype.stop.call(this);
+    }
+  },
+  
+  updateInterval: function() {
+    this.setInterval(this.prefInterval);
+  }
+}
+PreferenceActiveInterval.prototype.__proto__ = ActiveInterval.prototype;

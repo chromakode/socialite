@@ -37,6 +37,10 @@ function dropPathLevels(path, levels) {
   return path;
 }
 
+function stripWWW(path) {
+  return path.replace(/^www\./, "");
+}
+
 function onLocationChange(oldURL, newURL) {
   var persistMode = Socialite.preferences.getIntPref("persistMode");
   
@@ -49,17 +53,20 @@ function onLocationChange(oldURL, newURL) {
   // Parse 'em
   var oldURI = IOService.newURI(oldURL, null, null);                   
   var newURI = IOService.newURI(newURL, null, null)
+
+  oldHost = stripWWW(oldURI.host);
+  newHost = stripWWW(newURI.host);
                         
   if (persistMode == PERSIST_SITE) {
-    logger.log("Persistence", "Comparing hosts: " + oldURI.host + ", " + newURI.host);
-    return (oldURI.host == newURI.host);
+    logger.log("Persistence", "Comparing hosts: " + oldHost + ", " + newHost);
+    return (oldHost == newHost);
     
   } else if (persistMode == PERSIST_SECTION) {
     // We'll use a function instead of nsIURL.directory here because we don't care if the URL ends with a trailing slash or not -- we just want to leave out the last section.
   
     var oldDir = dropPathLevels(oldURI.path, 1);
     
-    logger.log("Persistence", "Comparing hosts and directories: " + oldURI.host + ":" + oldDir + ", " + newURI.host + ":" + newURI.path);
-    return (oldURI.host == newURI.host) && strStartsWith(newURI.path, oldDir);
+    logger.log("Persistence", "Comparing hosts and directories: " + oldHost + ":" + oldDir + ", " + newHost + ":" + newURI.path);
+    return (oldHost == newHost) && strStartsWith(newURI.path, oldDir);
   }
 }

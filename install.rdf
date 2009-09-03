@@ -8,13 +8,12 @@
                    em:maxVersion="3.5.*" />
   <RDF:Description RDF:about="urn:mozilla:install-manifest"
                    em:id="socialite@chromakode"
-                   em:version="1.3.3.1"
+                   em:version="1.3.3.7"
                    em:type="2"
                    em:iconURL="chrome://socialite/content/socialite.png"
                    em:optionsURL="chrome://socialite/content/socialitePreferences.xul"
                    em:updateURL="https://addons.reddit.com/socialite/update.rdf"
                    em:updateKey="MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQDAXFxIzR9ca2JR4FSa32Mq31Edl9zoTRafwSVNVMxkpk6ua07vyp1yva5bCOiBWzTQzGm21nNUbJGxT2vko4sKaeHaGeFr3BBCjMk9ZunoMWRgOEBmBuysL0E8M3I56rtEzTAv4RylgfuH/uJk86Q2GOoPs/ROE0+pug8vQnTxRQIDAQAB">
-
     <em:localized RDF:resource="rdf:#$lddXp3"/>
     <em:targetApplication RDF:resource="rdf:#$tddXp3"/>
   </RDF:Description>

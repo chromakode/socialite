@@ -40,6 +40,10 @@ TimestampedData.prototype.getTimestamp = function(name) {
   return this.timestamps[name];
 }
 
+TimestampedData.prototype.toString = function() {
+  return this.values.toSource();
+}
+
 /**
  * Copy fields from another TimestampedData instance. If a timestamp is
  * specified, fields will be copied only if the stored value hasn't been updated

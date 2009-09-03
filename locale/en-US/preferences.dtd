@@ -21,7 +21,7 @@
 <!ENTITY alwaysPersist.accesskey "i">
 
 <!ENTITY networkGroup.caption "Network">
-<!ENTITY refreshInterval.label "Refresh visible info bars every">
+<!ENTITY refreshInterval.label "Refresh visible information every">
 <!ENTITY refreshIntervalMinutes.label "minutes">
 
 

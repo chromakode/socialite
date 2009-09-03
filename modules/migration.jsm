@@ -36,6 +36,16 @@ var SocialiteMigration = {
         }
       }
       
+      if (versionCompare(lastVersion, "1.3.3.7") < 0) {
+        if (Socialite.preferences.prefHasUserValue("refreshIntervalEnabled")) {
+          logger.log("migration", "Migrating refreshIntervalEnabled preference (renamed to refreshBarEnabled)")
+          
+          let oldValue = Socialite.preferences.getBoolPref("refreshIntervalEnabled");
+          Socialite.preferences.setBoolPref("refreshBarEnabled", oldValue);
+          Socialite.preferences.clearUserPref("refreshIntervalEnabled");
+        }
+      }
+      
       // Update the record of the last version seen
       Socialite.preferences.setCharPref("lastVersion", currentVersion); 
     }

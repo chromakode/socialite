@@ -12,7 +12,7 @@ SocialiteWindow.SiteMenuItem = (function() {
     SITE_MENUITEM_CLASS: "socialite-site-menuitem",
     MENUITEM_CLASS: "socialite-menuitem",
     
-    GENERAL_ICON: "chrome://socialite/content/socialite-small.png",
+    GENERAL_ICON: "chrome://socialite/content/socialite_small.png",
     GENERAL_MENUITEM_ID: "socialite-menuitem",
     
     onLoad: function() {
@@ -110,9 +110,9 @@ SocialiteWindow.SiteMenuItem = (function() {
       fileMenuPopup.removeChild(menuItem);
     },
     
-    updateSiteName: function(site, siteName) {
+    updateSiteName: function(site, newSiteName) {
       let menuItem = this.get(site);
-      menuItem.updateSiteName(siteName);
+      menuItem.updateSiteName(newSiteName);
     },
     
     updateVisibility: function() {

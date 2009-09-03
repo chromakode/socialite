@@ -32,6 +32,10 @@ RedditSite.prototype.onLoad = function() {
   version.dom = this.sitePreferences.getCharPref("version.dom");
   version.api = this.sitePreferences.getCharPref("version.api");
   
+  this.newMessages = [];
+  this.inboxURL = this.siteURL + "/message/inbox/";
+  this.lastNewMessageCount = null;
+  
   this.API.init(version);
 };
 
@@ -39,6 +43,7 @@ RedditSite.prototype.setDefaultPreferences = function(siteDefaultBranch) {
   siteDefaultBranch.setCharPref("version.dom", "");
   siteDefaultBranch.setCharPref("version.api", "");
   siteDefaultBranch.setBoolPref("compactDisplay", true);
+  siteDefaultBranch.setBoolPref("notificationsEnabled", false);
   siteDefaultBranch.setBoolPref("showScore", true);
   siteDefaultBranch.setBoolPref("showSubreddit", true);
   siteDefaultBranch.setBoolPref("showComments", true);
@@ -79,11 +84,22 @@ RedditSite.prototype.onSitePageLoad = function(doc, win) {
     
     let endTime = Date.now();
     logger.log("RedditSite", this.siteName, "Added click handlers to " + res.snapshotLength + " links on " + win.location.href + " in " + (endTime-startTime) + "ms");
-    
-    // Snarf the authentication hash using wrappedJSObject
-    // This should be safe, since Firefox 3 uses a XPCSafeJSObjectWrapper
-    // See http://developer.mozilla.org/en/docs/XPConnect_wrappers#XPCSafeJSObjectWrapper
-    this.API.auth.snarfAuthInfo(doc, win);
+  }
+  
+  // Snarf the authentication hash using wrappedJSObject
+  // This should be safe, since Firefox 3 uses a XPCSafeJSObjectWrapper
+  // See http://developer.mozilla.org/en/docs/XPConnect_wrappers#XPCSafeJSObjectWrapper
+  this.API.auth.snarfAuthInfo(doc, win);
+  
+  // Update alert state
+  let mailIcon = doc.getElementById("mail");
+  if (mailIcon) {
+    let hasMail = mailIcon.className == "havemail";
+    if (hasMail != this.alertState) {
+      logger.log("RedditSite", this.siteName, "Reddit orangered envelope differs from alert state. Refreshing alert state.");
+      this.alertState = hasMail;
+      this.refreshAlertState();
+    }
   }
 };
 
@@ -92,10 +108,9 @@ RedditSite.prototype.linkClicked = function(event) {
   let doc = link.ownerDocument;
   let linkURL = link.href;
   
-  let dom_v0 = (this.API.version.compare("dom", "0.*") < 0);
   // Scrape the thing ID of the reddit link.
   let thingElement, linkFullname;
-  if (!dom_v0) {
+  if (this.API.version["dom"] != "0.0") {
     thingElement = getThingParent(link);
     linkFullname = getThingID(thingElement);
   } else {
@@ -117,12 +132,11 @@ RedditSite.prototype.linkClicked = function(event) {
 
     try {
       // Get some "preloaded" information from the page while we can.
-      logger.log("RedditSite", this.siteName, "Reading link info from DOM (id:"+linkFullname+")");
-      
       linkInfo.localState.title = link.textContent;
-      scrapeLinkInfo(thingElement, linkInfo, dom_v0);
+      this.scrapeLinkInfo(thingElement, linkInfo);
+      logger.log("RedditSite", this.siteName, "Read link info from DOM (id:"+linkFullname+"): " + linkInfo.localState.toString());
     } catch (e) {
-      logger.log("RedditSite", this.siteName, "Caught exception while reading link info from DOM: " + e.toString());
+      logger.log("RedditSite", this.siteName, "Caught exception while reading link info (id:"+linkFullname+") from DOM: " + e.toString());
     }
     
     // Add the information we collected to the watch list.
@@ -130,14 +144,17 @@ RedditSite.prototype.linkClicked = function(event) {
   }
 };
 
-function scrapeLinkInfo(thingElement, linkInfo, dom_v0) {
-  doc = thingElement.ownerDocument;
+RedditSite.prototype.scrapeLinkInfo = function(thingElement, linkInfo) {
+  let doc = thingElement.ownerDocument;
   
+  let isV0 = this.API.version["dom"] == "0.0";
+  let isV1 = this.API.version["dom"] == "1.0";
+
   //
   // Score and vote status
   //
   let linkLiked, linkDisliked, scoreSpan;
-  if (dom_v0) {
+  if (isV0) {
     let linkLike = doc.getElementById("up_"+linkInfo.fullname);
     linkLiked = /upmod/.test(linkLike.className);
     
@@ -146,10 +163,17 @@ function scrapeLinkInfo(thingElement, linkInfo, dom_v0) {
     
     scoreSpan = doc.getElementById("score_"+linkInfo.fullname);
   } else {
-    scoreSpan = getChildByClassName(thingElement, "score");
-    
-    linkLiked = (scoreSpan.className.indexOf("likes") != -1);
-    linkDisliked = (scoreSpan.className.indexOf("dislikes") != -1);
+    scoreSpans = thingElement.getElementsByClassName("score");
+    if (isV1) {
+      scoreSpan = scoreSpans[0];
+    } else {
+      // Find the visible score span.
+      scoreSpan = Array.filter(scoreSpans, function(elem) {
+        return doc.defaultView.getComputedStyle(elem, null).display != "none";
+      })[0];
+    }
+    linkLiked = /\blikes\b/.test(scoreSpan.className);
+    linkDisliked = /\bdislikes\b/.test(scoreSpan.className);
   }
   
   if (linkLiked) {
@@ -165,10 +189,10 @@ function scrapeLinkInfo(thingElement, linkInfo, dom_v0) {
   // Subreddit
   //
   let linkSubreddit;
-  if (dom_v0) {
+  if (isV0) {
     linkSubreddit = doc.getElementById("subreddit_"+linkInfo.fullname);
   } else {
-    linkSubreddit = getChildByClassName(thingElement, "subreddit");
+    linkSubreddit = thingElement.getElementsByClassName("subreddit")[0];
   }
   if (linkSubreddit != null) {
     // The subreddit can be missing from the listing if we're in a subreddit page
@@ -179,10 +203,10 @@ function scrapeLinkInfo(thingElement, linkInfo, dom_v0) {
   // Comment count
   //
   let linkComments;
-  if (dom_v0) {
+  if (isV0) {
     linkComments = doc.getElementById("comment_"+linkInfo.fullname);
   } else {
-    linkComments = getChildByClassName(thingElement, "comments");
+    linkComments = thingElement.getElementsByClassName("comments")[0];
   }
   
   let commentNum = parseInt(linkComments.textContent);
@@ -196,7 +220,7 @@ function scrapeLinkInfo(thingElement, linkInfo, dom_v0) {
   // Saved status
   //
   
-  if (dom_v0) {
+  if (isV0) {
     // XXX The second cases only exist to support older installations of reddit
     let linkSave = doc.getElementById("a_save_"+linkInfo.fullname) || doc.getElementById("save_"+linkInfo.fullname+"_a");
     let linkUnsave = doc.getElementById("a_unsave_"+linkInfo.fullname) || doc.getElementById("unsave_"+linkInfo.fullname+"_a");
@@ -221,7 +245,7 @@ function scrapeLinkInfo(thingElement, linkInfo, dom_v0) {
   // Hidden status
   //
   let linkHide, linkUnhide;
-  if (dom_v0) {
+  if (isV0) {
     // You might assume that if link was hidden, the user couldn't have clicked on it
     // -- but they could find it in their hidden links list.
     linkHide = doc.getElementById("a_hide_"+linkInfo.fullname) || doc.getElementById("hide_"+linkInfo.fullname+"_a");
@@ -390,7 +414,9 @@ RedditSite.prototype.createBarContentUI = function(document, linkInfo) {
     }, false);
     
     this.buttonProfile.addEventListener("click", function(e) {
-      Socialite.utils.openUILink(subredditURL()+"user/"+barContent.linkInfo.API.auth.username+"/", e);
+      barContent.linkInfo.API.auth.getAuthInfo(function(authInfo) {
+        Socialite.utils.openUILink(subredditURL()+"user/"+authInfo.username+"/", e);
+      }).perform();
     }, false);
     
     this.buttonLogin.addEventListener("click", function(e) {
@@ -406,40 +432,48 @@ RedditSite.prototype.createBarSubmitUI = function(document) {
   var barSubmit = document.createElement("hbox");
   barSubmit.setAttribute("flex", "1");
   
+  function hideSubreddits() {
+    if (barSubmit.parentNode != null) {
+      barSubmit.menulistSubreddit.hidden = true;
+    }
+  }
+  
   var site = this;
   barSubmit.afterBound = function() {
     // Get subreddit listing and initialize menu
-    site.API.mysubreddits(
+    site.API.mysubreddits_cached(
       function success(r, json) {
         // Check that the bar hasn't been removed
         if (barSubmit.parentNode != null) {
-          // Sort the subreddits like on the submit page.
-          json.data.children.sort(subredditSort);
-          
-          if (json.data.children.length == 0) {
-            Socialite.siteFailureMessage(site, "createBarSubmitUI", "No subscribed subreddits found.");
-            barSubmit.menulistSubreddit.hidden = true;
-          } else {
-            for each (var subredditInfo in json.data.children) {
-              let subredditURL = subredditInfo.data.url;
-              let subredditURLName = /^\/r\/(.+)\/$/.exec(subredditURL)[1];
+          if (json) {
+            
+            // Sort the subreddits like on the submit page.
+            json.data.children.sort(subredditSort);
+            
+            if (json.data.children.length == 0) {
+              Socialite.utils.siteFailureMessage(site, "createBarSubmitUI", stringBundle.GetStringFromName("failureMsg.noSubreddits"));
+              barSubmit.menulistSubreddit.hidden = true;
+            } else {
+              for each (var subredditInfo in json.data.children) {
+                let subredditURL = subredditInfo.data.url;
+                let subredditURLName = /^\/r\/(.+)\/$/.exec(subredditURL)[1];
+                
+                // Remove the '/' at the beginning
+                subredditURL = subredditURL.substring(1);
+                
+                barSubmit.menulistSubreddit.appendItem(subredditURLName, subredditURL);
+              }
               
-              // Remove the '/' at the beginning
-              subredditURL = subredditURL.substring(1);
-              
-              barSubmit.menulistSubreddit.appendItem(subredditURLName, subredditURL);
+              barSubmit.menulistSubreddit.selectedIndex = 0;
             }
+            
+          } else {
+            // No JSON data returned: the user is probably logged out.
+            hideSubreddits();
           }
-        
-        barSubmit.menulistSubreddit.selectedIndex = 0;
         }
       },
-      function failure() {
-        if (barSubmit.parentNode != null) {
-          // Silently handle error -- the user could be logged out
-          barSubmit.menulistSubreddit.hidden = true;
-        }
-      }
+      hideSubreddits // Silently hide subreddits listing if there was an error fetching the list.
     ).perform();
     
     this.buttonSubmit.addEventListener("click", function(e) {
@@ -498,6 +532,7 @@ RedditSite.prototype.createPreferencesUI = function(document, propertiesWindow) 
   
   var generalGroup = addGroupbox(stringBundle.GetStringFromName("generalGroup.caption"));
   addBooleanPreferenceUI(generalGroup, "compactDisplay");
+  addBooleanPreferenceUI(generalGroup, "notificationsEnabled");
   
   var displayGroup = addGroupbox(stringBundle.GetStringFromName("displayGroup.caption"));
   addBooleanPreferenceUI(displayGroup, "showScore");
@@ -511,16 +546,68 @@ RedditSite.prototype.createPreferencesUI = function(document, propertiesWindow) 
   return propertiesBox;  
 };
 
+RedditSite.prototype.refreshAlertState = function() {
+  if (this.API.auth.isLoggedIn) {
+    let site = this;
+    this.API.messages(
+      function success(r, json) {
+        if (json) {
+          site.newMessages = json.data.children.filter(function(message) {
+            return message.data.new;
+          });
+          
+          site.alertState = site.newMessages.length > 0;
+          site.showMessageNotification();
+        }
+      }/*,
+      this.actionFailureHandler*/
+    ).perform(false);
+  }
+};
+
+RedditSite.prototype.showMessageNotification = function() {
+  if (this.sitePreferences.getBoolPref("notificationsEnabled")) {
+    let count = this.newMessages.length;
+    if (count > 0 && this.lastNewMessageCount < count) {
+      let title;
+      if (count == 1) {
+        title = stringBundle.formatStringFromName("messageNotification.title-single", [ count, this.siteName ], 2);
+      } else {
+        title = stringBundle.formatStringFromName("messageNotification.title-plural", [ count, this.siteName ], 2);
+      }
+      
+      Socialite.utils.showNotification(
+        title,
+        stringBundle.GetStringFromName("messageNotification.message"),
+        "chrome://socialite/content/reddit/mail_large.png",
+        null,
+        RedditNotificationClickHandler,
+        this.inboxURL
+      );
+    }
+    this.lastNewMessageCount = this.newMessages.length;
+  }
+};
+
 RedditSite.prototype.actionFailureHandler = function(r, action) {
   // 5xx error codes
+  let text;
   if (r.status >= 500 && r.status < 600) {
     text = stringBundle.GetStringFromName("failureMsg.tryAgain");
   } else {
     text = stringBundle.formatStringFromName("failureMsg.httpStatus", [ r.status ], 1);
   }
   
-  Socialite.siteFailureMessage(this, action.name, text);
+  Socialite.utils.siteFailureMessage(this, action.name, text);
 };
+
+RedditNotificationClickHandler = {
+  observe: function(subject, topic, data) {
+    if (topic == "alertclickcallback") {
+      Socialite.utils.openUILinkIn(data, "tab");
+    }
+  }
+}
 
 // Register this class for instantiation
 RedditSite.prototype.siteClassID = "RedditSite";

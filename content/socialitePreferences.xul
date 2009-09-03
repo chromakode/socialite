@@ -6,13 +6,14 @@
             style="width: 425px; min-height: 425px;" 
             onload="SocialiteSitePreferences.load();"
             onunload="SocialiteSitePreferences.unload();">
-  <prefpane id="socialitePreferencesGeneralPane" label="&general.title;" image="chrome://socialite/skin/general-preferences.png">
+  <prefpane id="socialitePreferencesGeneralPane" label="&general.title;" image="chrome://socialite/skin/general_preferences.png" onpaneload="SocialiteSitePreferences.refreshEnabledFromPreference();">
     <preferences>
       <preference id="prefShowSiteUrlBarIcons" name="extensions.socialite.showSiteUrlBarIcons" type="bool"/>
       <preference id="prefShowSiteMenuItems" name="extensions.socialite.showSiteMenuItems" type="bool"/>
       <preference id="prefConsolidateSites" name="extensions.socialite.consolidateSites" type="bool"/>
       <preference id="prefPersistMode" name="extensions.socialite.persistMode" type="int"/>
-      <preference id="prefRefreshIntervalEnabled" name="extensions.socialite.refreshIntervalEnabled" type="bool"/>
+      <preference id="prefRefreshBarEnabled" name="extensions.socialite.refreshBarEnabled" type="bool" onchange="SocialiteSitePreferences.refreshEnabledFromPreference();"/>
+      <preference id="prefRefreshSitesEnabled" name="extensions.socialite.refreshSitesEnabled" type="bool" onchange="SocialiteSitePreferences.refreshEnabledFromPreference();"/>
       <preference id="prefRefreshInterval" name="extensions.socialite.refreshInterval" type="int"/>
     </preferences>
     
@@ -37,8 +38,7 @@
       <caption label="&networkGroup.caption;"/>
       <hbox align="center">
         <checkbox id="refreshCheckbox" label="&refreshInterval.label;"
-                  preference="prefRefreshIntervalEnabled"
-                  onsyncfrompreference="return SocialiteSitePreferences.refreshIntervalEnabledFromPreference();"/>
+                  oncommand="SocialiteSitePreferences.refreshEnabledToPreference();"/>
         <textbox id="refreshIntervalTextbox" type="number" size="2"
                   preference="prefRefreshInterval"
                   onsyncfrompreference="return SocialiteSitePreferences.refreshIntervalFromPreference();"
@@ -48,7 +48,7 @@
     </groupbox>
   </prefpane>
   
-  <prefpane id="socialitePreferencesSitesPane" label="&sites.title;" image="chrome://socialite/skin/site-preferences.png" flex="1">
+  <prefpane id="socialitePreferencesSitesPane" label="&sites.title;" image="chrome://socialite/skin/site_preferences.png" flex="1">
   
     <groupbox flex="1">
       <caption label="&sitesGroup.caption;"/>
