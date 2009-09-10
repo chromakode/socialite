@@ -39,6 +39,11 @@ RedditSite.prototype.onLoad = function() {
   this.API.init(version);
 };
 
+RedditSite.prototype.onUnload = function() {
+  SocialiteSite.prototype.onUnload.apply(this, arguments);
+  this.API.destroy();
+};
+
 RedditSite.prototype.setDefaultPreferences = function(siteDefaultBranch) {
   siteDefaultBranch.setCharPref("version.dom", "");
   siteDefaultBranch.setCharPref("version.api", "");
