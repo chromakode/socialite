@@ -33,8 +33,8 @@ RedditSite.prototype.onLoad = function() {
   version.dom = this.sitePreferences.getCharPref("version.dom");
   version.api = this.sitePreferences.getCharPref("version.api");
   
-  this.newMessages = [];
   this.inboxURL = this.siteURL + "/message/inbox/";
+  this.newMessages = [];
   this.lastNewMessageCount = null;
   
   this.API.init(version);
@@ -48,6 +48,7 @@ RedditSite.prototype.onLoad = function() {
     hitchThis(this, function(username) {
       // Reset subreddit cache when the username changes.
       this.cached.mysubreddits.cachedValue.reset();
+      this.refreshAlertState();
     })
   );
 };
@@ -589,6 +590,10 @@ RedditSite.prototype.refreshAlertState = function() {
       }/*,
       this.actionFailureHandler*/
     ).perform(false);
+  } else {
+    this.alertState = false;
+    this.newMessages = [];
+    this.lastMessageCount = null;
   }
 };
 
