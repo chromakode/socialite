@@ -56,11 +56,7 @@ SocialiteWindow.SiteMenuItem = (function() {
         if (menuItems.length == 0) {
           fileMenuPopup.insertBefore(menuItem, sendMenuItem.nextSibling);
         } else {
-          domUtils.insertSorted(menuItem, menuItems, function(item1, item2) {
-            let label1 = item1.getAttribute("label"); 
-            let label2 = item2.getAttribute("label"); 
-            return label1.localeCompare(label2);
-          });
+          domUtils.insertSorted(menuItem, menuItems, domUtils.compareBy(function(e) e.getAttribute("label")));
         }
       }
       menuItem.updateSiteName(site.siteName);

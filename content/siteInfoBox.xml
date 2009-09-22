@@ -1,0 +1,144 @@
+<?xml version="1.0"?>
+<!DOCTYPE reddit SYSTEM "chrome://socialite/locale/socialite.dtd">
+<bindings
+  xmlns="http://www.mozilla.org/xbl"
+  xmlns:xbl="http://www.mozilla.org/xbl"
+  xmlns:xul="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul">
+  
+  <binding id="site-info-box" extends="chrome://global/content/bindings/general.xml#basecontrol">
+    <content>
+      <xul:groupbox>
+        <xul:caption align="center" xbl:inherits="image,label=name" flex="1"/>
+        <children/>
+      </xul:groupbox>
+    </content>
+    
+    <resources>
+      <stylesheet src="chrome://socialite/skin/socialite.css"/>
+      <stylesheet src="chrome://socialite/skin/socialite_platform.css"/>
+    </resources>
+
+    <implementation>
+      <!--
+        Commented out as per urlBarIcon.xml 
+        <field name="site"/>
+      -->
+      <property name="siteInfo" onget="return this.childNodes[0];"/>
+      
+      <property name="name"
+                onget="return this.getAttribute('name');"
+                onset="this.setAttribute('name', val); return val;"/>
+   
+      <constructor>
+        if (!this._constructed) {
+          this.updateSiteName();
+        
+          var faviconWatch = Components.utils.import("resource://socialite/utils/faviconWatch.jsm", null);
+          this._removeFaviconWatch = faviconWatch.useFaviconAsAttribute(this, "image", this.site.siteURL);
+          this._constructed = true;
+        }
+      </constructor>
+      
+      <destructor>
+        this.destroySiteInfoBox();
+      </destructor>
+      
+      <method name="destroySiteInfoBox">
+        <body>
+          if (this._removeFaviconWatch) { this._removeFaviconWatch(); }
+        </body>
+      </method>
+      
+      <method name="updateSiteName">
+        <body>
+          this.name = this.site.siteName;
+        </body>
+      </method>
+      
+      <method name="refresh">
+        <body>
+          this.siteInfo.refresh();
+        </body>
+      </method>      
+    </implementation>
+  </binding>
+  
+  <binding id="site-info-tooltip" extends="chrome://global/content/bindings/popup.xml#tooltip">
+    <content noautohide="true">
+      <xul:vbox>
+        <children/>
+      </xul:vbox>
+    </content>
+    
+    <implementation>      
+      <constructor>
+        if (!this._constructed) {
+          this.afterBound();
+          this._constructed = true;
+        }
+      </constructor>
+      
+      <destructor>
+        this.destroySiteInfoTooltip();
+      </destructor>
+      
+      <method name="destroySiteInfoTooltip">
+        <body>
+          Array.forEach(this.childNodes, function(siteInfoBox) {
+            siteInfoBox.destroySiteInfoBox();
+          });
+        </body>
+      </method>
+      
+      <method name="addSite">
+        <parameter name="site"/>
+        <body>
+          var siteInfoBox = document.createElement("box");
+          siteInfoBox.className = "socialite-site-info-box";
+          siteInfoBox.site = site;
+          siteInfoBox.setAttribute("name", site.siteName);
+          siteInfoBox.appendChild(site.createInfoUI(document));
+          this.appendChild(siteInfoBox);
+        </body>
+      </method>
+     
+      <method name="removeSite">
+        <parameter name="site"/>
+        <body>
+           <![CDATA[
+            for (var i=0; i<this.childNodes.length; i++) {
+              if (this.childNodes[i].site.siteID == site.siteID) {
+                this.childNodes[i].destroySiteInfoBox();
+                this.removeChild(this.childNodes[i]);
+              }
+            }
+          ]]>
+        </body>
+      </method>
+            
+      <method name="updateSiteNames">
+        <body>
+          Array.forEach(this.childNodes, function(siteInfoBox) {
+            siteInfoBox.updateSiteName();
+          });
+        </body>
+      </method>
+      
+      <method name="refresh">
+        <body>
+          Array.forEach(this.childNodes, function(siteInfoBox) {
+            siteInfoBox.refresh();
+          });
+        </body>
+      </method>      
+    </implementation>
+    
+    <handlers>
+      <handler event="popupshown">
+        // We must refresh site names on this event, because the XBL doesn't seem to bind until the popup is showing.
+        this.updateSiteNames();
+        this.refresh();
+      </handler>
+    </handlers>
+  </binding>
+</bindings>

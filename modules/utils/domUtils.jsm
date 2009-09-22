@@ -39,6 +39,26 @@ function insertListboxSorted(insertElement, listbox, compareFunc) {
   }
 }
 
+function compareBy(keyFunction) {
+  return function(item1, item2) {
+    let key1 = keyFunction(item1);
+    let key2 = keyFunction(item2);
+    return key1.localeCompare(key2);
+  };
+}
+
+function sortChildren(parentElement, compareFunc) {
+  sorted = Array.sort(Array.slice(parentElement.childNodes), compareFunc)
+  
+  let parentElement = curElement.parentNode;
+  if (i == nodeList.length) {
+    // Insert after the last node
+    parentElement.insertBefore(insertElement, curElement.nextSibling);
+  } else {
+    parentElement.insertBefore(insertElement, curElement);
+  }
+}
+
 /**
  * Return the first child node of an element with the specified class.
  * 

@@ -2,6 +2,7 @@ Components.utils.import("resource://socialite/socialite.jsm");
 logger = Components.utils.import("resource://socialite/utils/log.jsm");
 Components.utils.import("resource://socialite/site.jsm");
 Components.utils.import("resource://socialite/utils/action/action.jsm");
+Components.utils.import("resource://socialite/utils/action/cachedAction.jsm");
 Components.utils.import("resource://socialite/utils/hitch.jsm");
 Components.utils.import("resource://socialite/utils/domUtils.jsm");
 Components.utils.import("resource://socialite/reddit/authentication.jsm");
@@ -16,7 +17,7 @@ let XPathResult = Components.interfaces.nsIDOMXPathResult;
 let stringBundle = Components.classes["@mozilla.org/intl/stringbundle;1"]
                                       .getService(Components.interfaces.nsIStringBundleService)
                                       .createBundle("chrome://socialite/locale/reddit.properties")
-
+                                      
 function RedditSite(siteID, siteName, siteURL) {
   SocialiteSite.apply(this, arguments);
 }
@@ -37,10 +38,23 @@ RedditSite.prototype.onLoad = function() {
   this.lastNewMessageCount = null;
   
   this.API.init(version);
+  
+  this.cached = {
+    mysubreddits: CachedAction(this.API.mysubreddits.bind(this.API), 30*60),
+    myuserinfo:   CachedAction(this.API.myuserinfo.bind(this.API),    1*60)
+  };
+  
+  this.cached._removeUsernameWatch = this.API.auth.onUsernameChange.watch(
+    hitchThis(this, function(username) {
+      // Reset subreddit cache when the username changes.
+      this.cached.mysubreddits.cachedValue.reset();
+    })
+  );
 };
 
 RedditSite.prototype.onUnload = function() {
   SocialiteSite.prototype.onUnload.apply(this, arguments);
+  this.cached._removeUsernameWatch();
   this.API.destroy();
 };
 
@@ -446,7 +460,7 @@ RedditSite.prototype.createBarSubmitUI = function(document) {
   var site = this;
   barSubmit.afterBound = function() {
     // Get subreddit listing and initialize menu
-    site.API.mysubreddits_cached(
+    site.cached.mysubreddits(
       function success(r, json) {
         // Check that the bar hasn't been removed
         if (barSubmit.parentNode != null) {
@@ -504,6 +518,14 @@ RedditSite.prototype.createBarSubmitUI = function(document) {
   
   barSubmit.style.MozBinding = "url(chrome://socialite/content/reddit/redditBar.xml#reddit-submit-ui)"; 
   return barSubmit;
+};
+
+RedditSite.prototype.createInfoUI = function(document) {
+  var redditSiteInfo = document.createElement("hbox");
+  redditSiteInfo.site = this;
+  redditSiteInfo.className = "reddit-site-info";
+  redditSiteInfo.style.MozBinding = "url(chrome://socialite/content/reddit/redditSiteInfo.xml#reddit-site-info)"; 
+  return redditSiteInfo;
 };
 
 RedditSite.prototype.createPreferencesUI = function(document, propertiesWindow) {

@@ -1,0 +1,84 @@
+<?xml version="1.0"?>
+<!DOCTYPE reddit SYSTEM "chrome://socialite/locale/reddit.dtd">
+<bindings
+  xmlns="http://www.mozilla.org/xbl"
+  xmlns:xbl="http://www.mozilla.org/xbl"
+  xmlns:xul="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul">
+  
+  <binding id="reddit-site-info">
+    <content>
+      <xul:vbox class="socialite-login-state" xbl:inherits="isloggedin">
+        <xul:grid class="socialite-logged-in">
+          <xul:columns>
+            <xul:column/>
+            <xul:column/>
+            <xul:column/>
+          </xul:columns>
+          <xul:rows>
+            <xul:row>
+              <xul:label anonid="labelUsername" class="socialite-site-info-username">&siteInfo.loadingtext;</xul:label>
+              <xul:spacer flex="1"/>
+              <xul:hbox align="center" pack="end">
+                <xul:image anonid="imageMailIcon" src="chrome://socialite/content/reddit/mailgray.png" class="mail-icon"/>
+                <xul:label anonid="labelMailCount" class="reddit-mail-count">?</xul:label>
+              </xul:hbox>
+            </xul:row>
+            <xul:row>
+              <xul:label>&linkKarma.label;</xul:label>
+              <xul:spacer flex="1"/>
+              <xul:label anonid="labelLinkKarma" class="socialite-site-info-data reddit-link-karma">...</xul:label>
+            </xul:row>
+            <xul:row>
+              <xul:label>&commentKarma.label;</xul:label>
+              <xul:spacer flex="1"/>
+              <xul:label anonid="labelCommentKarma" class="socialite-site-info-data reddit-comment-karma">...</xul:label>
+            </xul:row>
+          </xul:rows>
+        </xul:grid>
+        <xul:vbox class="socialite-not-logged-in">
+          <xul:label class="socialite-site-info-username">&siteInfo.loggedout.title;</xul:label>
+        	<xul:label>&siteInfo.loggedout.label;</xul:label>
+        </xul:vbox>
+      </xul:vbox>
+    </content>
+
+    <resources>
+      <stylesheet src="chrome://socialite/skin/socialite.css"/>
+      <stylesheet src="chrome://socialite/skin/socialite_platform.css"/>
+      <stylesheet src="chrome://socialite/skin/reddit.css"/>
+    </resources>
+
+    <implementation>
+      <method name="refresh">
+        <body>
+          var self = this;
+          function setLabel(anonid, value) {
+            var label = document.getAnonymousElementByAttribute(self, "anonid", anonid);
+            label.value = value;
+          }
+          
+          this.site.API.auth.getAuthInfo(function(authInfo) {
+            self.setAttribute("isloggedin", authInfo.isLoggedIn);
+            setLabel("labelUsername", authInfo.username);
+          }).perform();
+          
+          var messageCount = this.site.newMessages.length;
+          setLabel("labelMailCount", messageCount);
+          var imageMailIcon = document.getAnonymousElementByAttribute(this, "anonid", "imageMailIcon");
+          if (messageCount > 0) {
+            imageMailIcon.src = "chrome://socialite/content/reddit/mail.png";
+          } else {
+            imageMailIcon.src = "chrome://socialite/content/reddit/mailgray.png";
+          }
+          
+          this.site.cached.myuserinfo(
+            function success(r, json) {
+              setLabel("labelLinkKarma",    json.data.link_karma);
+              setLabel("labelCommentKarma", json.data.comment_karma);
+            }
+          ).perform();
+        </body>
+      </method>
+    </implementation>
+  </binding>
+</bindings>

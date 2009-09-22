@@ -5,6 +5,17 @@ Components.utils.import("resource://socialite/utils/hitch.jsm");
 
 var EXPORTED_SYMBOLS = ["Action", "ActionType"];
 
+let ActionConstructorMethodProto = {
+  // Actions will use whatever "this" is set to when they are called. Use this method to create a reference to an action with a static value of "this".
+  bind: function(thisObj) {
+    bound = hitchThis(thisObj, this);
+    bound.actionClass = this.actionClass;
+    bound.actionPrototype = this.actionPrototype;
+    return bound;
+  }
+}
+ActionConstructorMethodProto.__proto__ = Function.prototype;
+
 function Action(name, func) {
   // Create a new object "class" for this action
   var ActionClass = function(){};
@@ -25,6 +36,7 @@ function Action(name, func) {
     return action;
   }
   
+  ActionConstructorMethod.__proto__ = ActionConstructorMethodProto;
   // To modify the action class after the fact, we'll create a property on the constructor
   ActionConstructorMethod.actionClass = ActionClass;
   ActionConstructorMethod.actionPrototype = ActionClass.prototype;
@@ -33,70 +45,71 @@ function Action(name, func) {
 }
 
 function ActionType() {}
-
-ActionType.prototype.perform = function() {
-  logger.log("action", "Performing " + this.name + " action");
-
-  this.startTime = Date.now();
+ActionType.prototype = {
+  perform: function() {
+    logger.log("action", "Performing " + this.name + " action");
   
-  var argArray = Array.prototype.splice.call(arguments, 0) || [];
-
-  // Copy and store the array
-  this.lastArgs = argArray.concat();
+    this.startTime = Date.now();
+    
+    var argArray = Array.prototype.splice.call(arguments, 0) || [];
   
-  // Add this action object to the end of the arguments list and call.
-  var newargs = this.addToArgs(argArray);
-  return this.func.apply(this.thisObj, newargs);
-}
-
-ActionType.prototype.addToArgs = function(args) {
-  // Arguments contain the arguments passed to this function, with this action object at the end.
-  var newargs = Array.prototype.splice.call(args, 0) || [];
-  if ((newargs.length == 0) || (newargs[newargs.length-1] != this)) {
-    newargs.push(this);
-  }
-  return newargs;
-}
-
-ActionType.prototype.doCallback = function(callback, args) {
-  // Arguments contain the arguments passed to this function, with this action object at the end.
-  var newargs = this.addToArgs(args);
+    // Copy and store the array
+    this.lastArgs = argArray.concat();
+    
+    // Add this action object to the end of the arguments list and call.
+    var newargs = this.addToArgs(argArray);
+    return this.func.apply(this.thisObj, newargs);
+  },
   
-  if (callback) {
-    // A little sugar to allow actions to be passed in without calling toFunction()
-    if (callback instanceof ActionType) {
-      return callback.perform.apply(callback, newargs);
-    } else {
-      return callback.apply(null, newargs);
+  addToArgs: function(args) {
+    // Arguments contain the arguments passed to this function, with this action object at the end.
+    var newargs = Array.prototype.splice.call(args, 0) || [];
+    if ((newargs.length == 0) || (newargs[newargs.length-1] != this)) {
+      newargs.push(this);
     }
-  }
-}
-
-ActionType.prototype.success = function() {
-  logger.log("action", this.name + " succeeded");
-  return this.doCallback(this.successCallback, arguments);
-}
-
-ActionType.prototype.failure = function() {
-  logger.log("action", this.name + " failed");
-  return this.doCallback(this.failureCallback, arguments);
-}
-
-ActionType.prototype.toFunction = function() {
-  return hitchThis(this, this.perform);
-}
-
-ActionType.prototype.chainSuccess = function() {
-  return hitchThis(this, this.success);
-}
-
-ActionType.prototype.chainFailure = function() {
-  return hitchThis(this, this.failure);
-}
-
-ActionType.prototype.chainTo = function(action) {
-  this.successCallback = function() {action.success.apply(action, arguments)};
-  this.failureCallback = function() {action.failure.apply(action, arguments)};
+    return newargs;
+  },
   
-  return;
+  doCallback: function(callback, args) {
+    // Arguments contain the arguments passed to this function, with this action object at the end.
+    var newargs = this.addToArgs(args);
+    
+    if (callback) {
+      // A little sugar to allow actions to be passed in without calling toFunction()
+      if (callback instanceof ActionType) {
+        return callback.perform.apply(callback, newargs);
+      } else {
+        return callback.apply(null, newargs);
+      }
+    }
+  },
+  
+  success: function() {
+    logger.log("action", this.name + " succeeded");
+    return this.doCallback(this.successCallback, arguments);
+  },
+  
+  failure: function() {
+    logger.log("action", this.name + " failed");
+    return this.doCallback(this.failureCallback, arguments);
+  },
+  
+  toFunction: function() {
+    return hitchThis(this, this.perform);
+  },
+  
+  chainSuccess: function() {
+    return hitchThis(this, this.success);
+  },
+  
+  chainFailure: function() {
+    return hitchThis(this, this.failure);
+  },
+  
+  chainTo: function(action) {
+    this.successCallback = function() {action.success.apply(action, arguments)};
+    this.failureCallback = function() {action.failure.apply(action, arguments)};
+    
+    return;
+  }
 }

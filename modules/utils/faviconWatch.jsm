@@ -40,14 +40,22 @@ function addFaviconWatch(siteURL, changedCallback) {
   return watchables[siteURISpec].watch(changedCallback);
 }
 
-function useFaviconAsAttribute(element, attributeName, siteURL) {
-  function update(faviconURL) {
-    element.setAttribute(attributeName, faviconURL);
-  }
-  
-  let removeFunction = addFaviconWatch(siteURL, update);
-  update(getFaviconURL(siteURL));
+function useFaviconWatch(siteURL, changedCallback) {
+  let removeFunction = addFaviconWatch(siteURL, changedCallback);
+  changedCallback(getFaviconURL(siteURL));
   return removeFunction;
+}
+
+function useFaviconAsAttribute(element, attributeName, siteURL) {
+  return useFaviconWatch(siteURL, function update(faviconURL) {
+    element.setAttribute(attributeName, faviconURL);
+  });
+}
+
+function useFaviconAsProperty(element, propertyName, siteURL) {
+  return useFaviconWatch(siteURL, function update(faviconURL) {
+    element[propertyName] = faviconURL;
+  });
 }
 
 historyObserver = {

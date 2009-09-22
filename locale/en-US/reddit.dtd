@@ -27,3 +27,9 @@
 <!ENTITY textboxTitle.tooltip "Post Title">
 <!ENTITY submit.label "Submit...">
 <!ENTITY submit.accesskey "s">
+
+<!ENTITY siteInfo.loadingtext "Loading...">
+<!ENTITY linkKarma.label "link karma">
+<!ENTITY commentKarma.label "comment karma">
+<!ENTITY siteInfo.loggedout.title "Logged out">
+<!ENTITY siteInfo.loggedout.label "Log in to view your stats.">

@@ -6,7 +6,6 @@
   xmlns:xul="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul">
   
   <binding id="scoretooltip" extends="chrome://global/content/bindings/popup.xml#tooltip">
-
     <content>
       <xul:grid>
         <xul:columns>
@@ -66,6 +65,5 @@
         this.dislikeCount = linkInfo.localState.dislikeCount;
       </handler>
     </handlers>
-
   </binding>
 </bindings>

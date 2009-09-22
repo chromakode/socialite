@@ -424,8 +424,8 @@
                 }
                 
                 if (self.selectedSite.siteID == siteID) {
-                  let siteName = document.getAnonymousElementByAttribute(self, "anonid", "labelSite");
-                  siteName.value = newSiteName;
+                  let labelSiteName = document.getAnonymousElementByAttribute(self, "anonid", "labelSite");
+                  labelSiteName.value = newSiteName;
                 }
               }
             }
@@ -481,11 +481,7 @@
             menuItem.updateSiteName = function(newName) {
               var domUtils = Components.utils.import("resource://socialite/utils/domUtils.jsm", null);
               menuItem.setAttribute("label", newName);
-              domUtils.addSorted(menuItem, self.menuSites, function(item1, item2) {
-                let label1 = item1.getAttribute("label"); 
-                let label2 = item2.getAttribute("label"); 
-                return label1.localeCompare(label2);
-              });
+              domUtils.addSorted(menuItem, self.menuSites, domUtils.compareBy(function(e) e.getAttribute("label")));
             }
             menuItem.updateSiteIcon = function() {
               var faviconWatch = Components.utils.import("resource://socialite/utils/faviconWatch.jsm", null);
@@ -582,7 +578,6 @@
         let observerService = Components.classes["@mozilla.org/observer-service;1"]
                               .getService(Components.interfaces.nsIObserverService);
 
-        // Site name change observer
         let self = this;
         this.loadedSiteObserver = {
           observe: function(subject, topic, data) {

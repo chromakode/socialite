@@ -31,11 +31,7 @@ var SocialiteSitePreferences = (function() {
           
           if (siteCell.getAttribute("label") != site.siteName) {
             siteCell.setAttribute("label", site.siteName);
-            domUtils.insertListboxSorted(newItem, SSPrefs.siteListbox, function(item1, item2) {
-              let label1 = item1.firstChild.getAttribute("label"); 
-              let label2 = item2.firstChild.getAttribute("label"); 
-              return label1.localeCompare(label2);
-            });
+            domUtils.insertListboxSorted(newItem, SSPrefs.siteListbox, domUtils.compareBy(function(e) e.firstChild.getAttribute("label")));
           }
           
           if (newItem.removeFaviconWatch) { newItem.removeFaviconWatch(); }

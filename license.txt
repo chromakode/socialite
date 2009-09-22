@@ -5,6 +5,7 @@ The following images in the directory "content/reddit/" are (C) 2008 CondeNet, I
 	downgray.png
 	downmod.png
 	mail.png
+	mailgray.png
 	
 The following images in the directory "content/reddit/" are (C) 2008 Mark James, licensed under the Creative Commons Attribution 2.5 License:
 	comments.png

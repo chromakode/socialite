@@ -2,7 +2,6 @@
 
 logger = Components.utils.import("resource://socialite/utils/log.jsm");
 Components.utils.import("resource://socialite/utils/action/action.jsm");
-Components.utils.import("resource://socialite/utils/action/cachedAction.jsm");
 http = Components.utils.import("resource://socialite/utils/action/httpRequest.jsm");
 Components.utils.import("resource://socialite/utils/hitch.jsm");
 Components.utils.import("resource://socialite/utils/quantizer.jsm");
@@ -15,7 +14,6 @@ var EXPORTED_SYMBOLS = ["RedditAPI", "RedditVersion"];
 
 QUANTIZE_TIME = 1000;
 AUTH_EXPIRE_AGE = 4*60*60;
-SUBREDDITS_EXPIRE_AGE = 30*60;
 
 // Socialite recognizes the following unofficial versions for compatibility purposes:
 //
@@ -59,11 +57,8 @@ function sameURL(func1, arg1, func2, arg2) {
   return (url1 == url2) && (subreddit1 == subreddit2);
 }
 
-function sameLinkID(func1, arg1, func2, arg2) {
-  var linkID1 = arg1[0];
-  var linkID2 = arg2[0];
-  
-  return (linkID1 == linkID2);
+function sameFirstArg(func1, arg1, func2, arg2) {
+  return (arg1[0] == arg2[0]);
 }
 
 function tryJSON(action, r) {
@@ -146,23 +141,19 @@ function RedditAPI(siteURL) {
   this.urlinfoQuantizer = new Quantizer("reddit.urlInfo.quantizer", QUANTIZE_TIME, sameURL);
   this.urlinfo = Action("reddit.urlinfo", this.urlinfoQuantizer.quantize(this._urlinfo));
   
-  this.thinginfoQuantizer = new Quantizer("reddit.thinginfo.quantizer", QUANTIZE_TIME, sameLinkID);
+  this.thinginfoQuantizer = new Quantizer("reddit.thinginfo.quantizer", QUANTIZE_TIME, sameFirstArg);
   this.thinginfo = Action("reddit.thinginfo", this.thinginfoQuantizer.quantize(this._thinginfo));
-  
-  this.voteQuantizer = new Quantizer("reddit.vote.quantizer", QUANTIZE_TIME, sameLinkID);
+    
+  this.voteQuantizer = new Quantizer("reddit.vote.quantizer", QUANTIZE_TIME, sameFirstArg);
   this.vote = Action("reddit.vote", this.voteQuantizer.quantize(this._vote));
   
-  this.saveQuantizer = new Quantizer("reddit.save.quantizer", QUANTIZE_TIME, sameLinkID);
+  this.saveQuantizer = new Quantizer("reddit.save.quantizer", QUANTIZE_TIME, sameFirstArg);
   this.save = Action("reddit.save", this.saveQuantizer.quantize(this._save));
   this.unsave = Action("reddit.unsave", this.saveQuantizer.quantize(this._unsave));
   
-  this.hideQuantizer = new Quantizer("reddit.hide.quantizer", QUANTIZE_TIME, sameLinkID);
+  this.hideQuantizer = new Quantizer("reddit.hide.quantizer", QUANTIZE_TIME, sameFirstArg);
   this.hide = Action("reddit.hide", this.hideQuantizer.quantize(this._hide));
   this.unhide = Action("reddit.unhide", this.hideQuantizer.quantize(this._unhide));
-  
-  this.mysubreddits_cached = CachedAction(this.mysubreddits, SUBREDDITS_EXPIRE_AGE);
-  
-  this.messages = Action("reddit.messages", this._messages);
 }
 
 RedditAPI.prototype.init = function(version, auth) {
@@ -181,55 +172,98 @@ RedditAPI.prototype.init = function(version, auth) {
   } else {
     this.auth = new RedditAuth(this.siteURL, this.version, AUTH_EXPIRE_AGE);
   }
-  
-  // Reset subreddit cache when the username changes.
-  let self = this;
-  this._removeUsernameWatch = this.auth.onUsernameChange.watch(function(username) {
-    self.mysubreddits_cached.cachedValue.reset();
-  });
 }
 
 RedditAPI.prototype.destroy = function() {
-  this._removeUsernameWatch();
+  // Nothing to clean up, yet.
 }
 
-RedditAPI.prototype._urlinfo = function(url, subreddit, action) {
-  logger.log("reddit", "Making info API request");
-   
-  http.GetAction(
-    APIURL(this.auth.siteURL, "info.json", subreddit),
-    {url:url, limit:1},
-    
+// Generalized API actions
+
+RedditAPI.prototype._getJSON = function(url, params, action) {
+  http.GetAction(url, params,
     function success(r) {
       tryJSON(action, r);
     },
     action.chainFailure()
   ).perform();
+};
+
+RedditAPI.prototype._postLinkCommand = function(command, linkID, params, action) {
+  logger.log("reddit", "Making " + command + " API call");
+  
+  if (params == null) {
+    params = {};
+  }
+  params["id"] = linkID;
+  
+  let self = this;
+  this.auth.actionParams(action, params,
+    function success(authParams) {
+      var act = http.PostAction(APIURL(self.auth.siteURL, command), authParams);
+      act.chainTo(action);
+      act.perform();
+    }
+  );
+};
+
+function postLinkCommand(command) {
+  return function(linkID, action) {
+    this._postLinkCommand(command, linkID, {}, action);
+  };
+};
+
+// Reddit API actions
+
+RedditAPI.prototype._urlinfo = function(url, subreddit, action) {
+  logger.log("reddit", "Making info API request");
+  this._getJSON(
+    APIURL(this.auth.siteURL, "info.json", subreddit),
+    {url:url, limit:1}, action
+  );
 };
 
 RedditAPI.prototype._thinginfo = function(thingID, action) {
   logger.log("reddit", "Making by_id API request");
-   
-  http.GetAction(
+  this._getJSON(
     this.auth.siteURL + "by_id/" + thingID + ".json",
-    null,
-    
-    function success(r) {
-      tryJSON(action, r);
-    },
-    action.chainFailure()
-  ).perform();
+    null, action
+  );
 };
 
 RedditAPI.prototype.randomrising = Action("reddit.randomrising", function(action) {
   logger.log("reddit", "Making randomrising API request");
-  
-  var act = http.GetAction(
+  this._getJSON(
     this.auth.siteURL + "randomrising.json",
-    {limit:1},
-    
-    function success(r) {
-      tryJSON(action, r);
+    {limit:1}, action
+  );
+});
+
+RedditAPI.prototype.messages = Action("reddit.messages", function(mark, action) {
+  logger.log("reddit", "Making messages API request");
+  this._getJSON(
+    this.auth.siteURL + "message/inbox.json",
+    {mark:mark}, action
+  );
+});
+
+RedditAPI.prototype.userinfo = Action("reddit.userinfo", function(username, action) {
+  logger.log("reddit", "Making userinfo API request");
+  this._getJSON(
+    this.auth.siteURL + "user/" + username + "/about.json",
+    null, action
+  );
+});
+
+RedditAPI.prototype.myuserinfo = Action("reddit.myuserinfo", function(action) {
+  logger.log("reddit", "Making myuserinfo API request");
+  
+  let self = this;
+  this.auth.getAuthInfo(
+    function(authInfo) {
+      var act = self.userinfo();
+      act.chainTo(action);
+      act.perform(authInfo.username);
     },
     action.chainFailure()
   ).perform();
@@ -243,65 +277,17 @@ RedditAPI.prototype.mysubreddits = Action("reddit.mysubreddits", function(action
   act.perform();
 });
 
-RedditAPI.prototype._messages = function(mark, action) {
-  logger.log("reddit", "Making messages API request");
-  
-  http.GetAction(
-    this.auth.siteURL + "message/inbox.json",
-    {mark:mark},
-    
-    function success(r) {
-      tryJSON(action, r);
-    },
-    action.chainFailure()
-  ).perform();
-};
-
 RedditAPI.prototype._vote = function(linkID, isLiked, action) {
-  logger.log("reddit", "Making vote API call");
-  
   var dir;
-  if (isLiked == true) {
-    dir = 1;
-  } else if (isLiked == false) {
-    dir = -1;
-  } else {
+  if (isLiked == null) {
     dir = 0;
+  } else {
+    dir = isLiked ? 1 : -1;
   }
-  
-  let self = this;
-  this.auth.actionParams(action,
-    {id:linkID, dir:dir},
-    function success(authParams) {
-      var act = http.PostAction(APIURL(self.auth.siteURL, "vote"), authParams);
-      act.chainTo(action);
-      act.perform();
-    }
-  );
+  this._postLinkCommand("vote", linkID, {dir:dir}, action);
 };
 
-
-RedditAPI.prototype._simpleLinkPost = function(command, linkID, action) {
-  logger.log("reddit", "Making " + command + " API call");
-  
-  let self = this;
-  this.auth.actionParams(action,
-    {id:linkID},
-    function success(authParams) {
-      var act = http.PostAction(APIURL(self.auth.siteURL, command), authParams);
-      act.chainTo(action);
-      act.perform();
-    }
-  );
-};
-
-function simpleLinkPost(command) {
-  return function(linkID, action) {
-    this._simpleLinkPost(command, linkID, action);
-  };
-};
-
-RedditAPI.prototype._save   = simpleLinkPost("save");
-RedditAPI.prototype._unsave = simpleLinkPost("unsave");
-RedditAPI.prototype._hide   = simpleLinkPost("hide");
-RedditAPI.prototype._unhide = simpleLinkPost("unhide");
+RedditAPI.prototype._save   = postLinkCommand("save");
+RedditAPI.prototype._unsave = postLinkCommand("unsave");
+RedditAPI.prototype._hide   = postLinkCommand("hide");
+RedditAPI.prototype._unhide = postLinkCommand("unhide");

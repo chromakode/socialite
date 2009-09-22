@@ -41,6 +41,12 @@ SocialiteWindow.SiteUrlBarIcon = (function() {
         Socialite.utils.openUILink(site.inboxURL, e);
       }, false);
       
+      let infoTooltip = document.createElement("tooltip");
+      infoTooltip.className = "socialite-site-info-tooltip";
+      infoTooltip.afterBound = function() {
+        infoTooltip.addSite(site);
+      }
+      urlBarIcon.appendChild(infoTooltip);
       // Hide the icon before we add and position it.
       urlBarIcon.setAttribute("hidden", true);
       
@@ -104,18 +110,14 @@ SocialiteWindow.SiteUrlBarIcon = (function() {
       let urlBarIcon = this.get(site);
       let feedButton = document.getElementById("feed-button");
       let urlBarIconParent = document.getElementById("urlbar-icons");
-
+      
       urlBarIcon.name = newSiteName;
 
       let urlBarIcons = SiteUrlBarIcon.getAll();
       if (urlBarIcons.length == 0) {
         urlBarIconParent.insertBefore(urlBarIcon, feedButton);
       } else {
-        domUtils.insertSorted(urlBarIcon, urlBarIcons, function compare(urlBarIcon1, urlBarIcon2) {
-          let name1 = urlBarIcon1.name;
-          let name2 = urlBarIcon2.name;
-          return name1.localeCompare(name2);
-        });
+        domUtils.insertSorted(urlBarIcon, urlBarIcons, domUtils.compareBy(function(e) e.name));
       }
     },
     

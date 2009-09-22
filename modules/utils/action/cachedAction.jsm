@@ -7,7 +7,7 @@ var EXPORTED_SYMBOLS = ["CachedAction"];
 
 function CachedAction(updateAction, expireSeconds) {
   let updateActionName = updateAction.actionClass.prototype.name;
-  let cachedAction = Action(updateActionName+"[cached]", _cachedAction);
+  let cachedAction = Action(updateActionName+".cache", _cachedAction);
   
   let actionPrototype = cachedAction.actionPrototype;
   actionPrototype.updateAction = updateAction;
@@ -18,7 +18,7 @@ function CachedAction(updateAction, expireSeconds) {
 }
 
 function _cachedAction(action) {
-  if (action.cachedValue.valid) {
+  if (action.cachedValue.isValid) {
     action.success.apply(action, action.cachedValue.value);
   } else {
     action.updateAction.call(this,
@@ -45,13 +45,17 @@ CachedValue.prototype = {
     return this._value;
   },
   
-  get expired() {
-    let elapsed = Date.now() - this.lastUpdated;
-    return elapsed >= this.expireSeconds*1000;
+  get hasValue() {
+    return this.value != false;
   },
   
-  get valid() {
-    return (this.value != false) && (!this.expired);
+  get isExpired() {
+    let elapsed = Date.now() - this.lastUpdated;
+    return this.expireSeconds != false && elapsed >= this.expireSeconds*1000;
+  },
+  
+  get isValid() {
+    return this.hasValue && !this.isExpired;
   },
     
   updated: function() {

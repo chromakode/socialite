@@ -5,11 +5,12 @@
   xmlns:xul="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul">
   
   <binding id="urlbar-icon">
-    <content>
+    <content tooltip="_child">
       <xul:stack>
-        <xul:image anonid="imgSite" xbl:inherits="src,tooltiptext=name"/>
+        <xul:image anonid="imgSite" xbl:inherits="src"/>
         <xul:image anonid="imgAlert" src="chrome://socialite/skin/alert_emblem.png" onclick="document.getBindingParent(this)._emblemClicked(event);"/>
       </xul:stack>
+      <children includes="tooltip"/>
     </content>
 
     <implementation>
@@ -82,16 +83,18 @@
       -->
 
       <constructor>
-        var faviconWatch = Components.utils.import("resource://socialite/utils/faviconWatch.jsm", null);
-        this._removeFaviconWatch = faviconWatch.useFaviconAsAttribute(this, "icon", this.site.siteURL);
-        this.icon = faviconWatch.getFaviconURL(this.site.siteURL);
-        
-        var self = this;
-        let updateAlertState = function() {
-          self.isAlert = self.site.alertState;
+        if (!this._constructed) {
+          var faviconWatch = Components.utils.import("resource://socialite/utils/faviconWatch.jsm", null);
+          this._removeFaviconWatch = faviconWatch.useFaviconAsProperty(this, "icon", this.site.siteURL);
+          
+          var self = this;
+          let updateAlertState = function() {
+            self.isAlert = self.site.alertState;
+          }
+          this._removeAlertStateWatch = this.site.onAlertStateChange.watch(updateAlertState);
+          updateAlertState();
+          this._constructed = true;
         }
-        this._removeAlertStateWatch = this.site.onAlertStateChange.watch(updateAlertState);
-        updateAlertState();
       </constructor>
 
       <method name="destroyUrlBarIcon">

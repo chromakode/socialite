@@ -1,3 +1,5 @@
+/* Socialite bar styles */
+
 .socialite-title {
   margin-bottom: 2px !important;
 }
@@ -55,7 +57,13 @@ notification[value="socialite-submitbar-notification"] {
   margin-bottom: 0;
 }
 
-.socialite-notification-button[image] > .button-box > .button-icon,
+.socialite-form-error {
+  color: red;
+}
+
+/* Socialite bar buttons */
+
+.socialite-notification-button[image] > .button-box > .button-icon, e
 .socialite-notification-button > .button-box > .button-icon[src] {
   margin-right: 3px;
 }
@@ -74,6 +82,20 @@ notification[value="socialite-submitbar-notification"] {
 .socialite-button-iconic > .button-box >  .button-text {
   display: none;
 }
+
+.socialite-not-logged-in {
+  display: none;
+}
+
+.socialite-login-state[isloggedin="false"] .socialite-logged-in {
+  display: none;
+}
+
+.socialite-login-state[isloggedin="false"] .socialite-not-logged-in {
+  display: -moz-box;
+}
+
+/* URL Bar Icons */
 
 .socialite-urlbar-icon {
   -moz-binding: url(chrome://socialite/content/urlBarIcon.xml#urlbar-icon);
@@ -115,11 +137,46 @@ notification[value="socialite-submitbar-notification"] {
 	display: block;
 }
 
+/* Info bar tooltips */
 
-hbox[anonid="loadedSiteSelector"] {
-  -moz-binding: url(chrome://socialite/content/socialiteBar.xml#socialite-loaded-site-selector);
+.socialite-site-info-box {
+  -moz-binding: url(chrome://socialite/content/siteInfoBox.xml#site-info-box);
 }
 
-.socialite-form-error {
-  color: red;
+.socialite-site-info-tooltip {
+  -moz-binding: url(chrome://socialite/content/siteInfoBox.xml#site-info-tooltip);
+}
+
+.socialite-site-info-box groupbox {
+  margin: 0;
+  border: none;
+  -moz-appearance: none;
+}
+
+.socialite-site-info-box .groupbox-body {
+  padding: 0;
+  -moz-appearance: none;
+  font-size: 85%;
+}
+
+.socialite-site-info-box .caption-text {
+  -moz-margin-start: 4px !important;
+}
+
+.socialite-site-info-box caption {
+  padding: 0px 5px;
+  border: 1px solid rgba(0,0,0,0.5);
+  background: rgba(0,0,0,0.1);
+  -moz-border-radius: 3px;
+  font-weight: bold;
+}
+
+.socialite-site-info-username {
+  font-size:110%;
+}
+
+.socialite-site-info-data {
+  color: #555;
+  font-weight: bold;
+  text-align: right;
 }
