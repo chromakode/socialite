@@ -23,12 +23,12 @@
                 <xul:label anonid="labelMailCount" class="reddit-mail-count">?</xul:label>
               </xul:hbox>
             </xul:row>
-            <xul:row>
+            <xul:row class="reddit-karma-info">
               <xul:label>&linkKarma.label;</xul:label>
               <xul:spacer flex="1"/>
               <xul:label anonid="labelLinkKarma" class="socialite-site-info-data reddit-link-karma">...</xul:label>
             </xul:row>
-            <xul:row>
+            <xul:row class="reddit-karma-info">
               <xul:label>&commentKarma.label;</xul:label>
               <xul:spacer flex="1"/>
               <xul:label anonid="labelCommentKarma" class="socialite-site-info-data reddit-comment-karma">...</xul:label>
@@ -59,24 +59,30 @@
           
           this.site.API.auth.getAuthInfo(function(authInfo) {
             self.setAttribute("isloggedin", authInfo.isLoggedIn);
-            setLabel("labelUsername", authInfo.username);
-          }).perform();
-          
-          var messageCount = this.site.newMessages.length;
-          setLabel("labelMailCount", messageCount);
-          var imageMailIcon = document.getAnonymousElementByAttribute(this, "anonid", "imageMailIcon");
-          if (messageCount > 0) {
-            imageMailIcon.src = "chrome://socialite/content/reddit/mail.png";
-          } else {
-            imageMailIcon.src = "chrome://socialite/content/reddit/mailgray.png";
-          }
-          
-          this.site.cached.myuserinfo(
-            function success(r, json) {
-              setLabel("labelLinkKarma",    json.data.link_karma);
-              setLabel("labelCommentKarma", json.data.comment_karma);
+            if (authInfo.isLoggedIn) {
+              setLabel("labelUsername", authInfo.username);
+              
+              var messageCount = self.site.newMessages.length;
+              setLabel("labelMailCount", messageCount);
+              var imageMailIcon = document.getAnonymousElementByAttribute(self, "anonid", "imageMailIcon");
+              if (messageCount > 0) {
+                imageMailIcon.src = "chrome://socialite/content/reddit/mail.png";
+              } else {
+                imageMailIcon.src = "chrome://socialite/content/reddit/mailgray.png";
+              }
+              
+              self.site.cached.myuserinfo(
+                function success(r, json) {
+                  setLabel("labelLinkKarma",    json.data.link_karma);
+                  setLabel("labelCommentKarma", json.data.comment_karma);
+                  self.setAttribute("showkarma", true);
+                },
+                function failure() {
+                  self.setAttribute("showkarma", false);
+                }
+              ).perform();
             }
-          ).perform();
+          }).perform();
         </body>
       </method>
     </implementation>

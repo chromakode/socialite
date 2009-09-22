@@ -101,7 +101,7 @@ function extractAuthInfo(document) {
     username: extractUsername(document),
     modhash:  extractModHash(document)
   };
-  authInfo.isLoggedIn = (authInfo.username != false) && (authInfo.modhash != "");
+  authInfo.isLoggedIn = (authInfo.username != false) && (authInfo.username != null) && (authInfo.modhash != "");
   return authInfo;
 }
 
