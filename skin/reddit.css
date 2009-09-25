@@ -26,7 +26,16 @@
 }
 
 .reddit-site-info .socialite-site-info-username {
-	margin-right: 1em !important;
+	margin-right: 7px !important;
+}
+
+.reddit-site-info .reddit-mail-box {
+	margin: 0px 6px;
+}
+
+.reddit-site-info .reddit-mail-count {
+	-moz-margin-start: 6px;
+	-moz-margin-end: 0px !important;
 }
 
 .reddit-site-info[showkarma="false"] .reddit-karma-info {

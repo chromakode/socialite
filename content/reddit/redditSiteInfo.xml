@@ -12,25 +12,21 @@
           <xul:columns>
             <xul:column/>
             <xul:column/>
-            <xul:column/>
           </xul:columns>
           <xul:rows>
             <xul:row>
               <xul:label anonid="labelUsername" class="socialite-site-info-username">&siteInfo.loadingtext;</xul:label>
-              <xul:spacer flex="1"/>
-              <xul:hbox align="center" pack="end">
-                <xul:image anonid="imageMailIcon" src="chrome://socialite/content/reddit/mailgray.png" class="mail-icon"/>
-                <xul:label anonid="labelMailCount" class="reddit-mail-count">?</xul:label>
+              <xul:hbox class="reddit-mail-box" align="center" pack="center">
+                <xul:image anonid="imageMailIcon" src="chrome://socialite/content/reddit/mailgray.png" class="reddit-mail-icon"/>
+                <xul:label anonid="labelMailCount" class="reddit-mail-count" hidden="true">?</xul:label>
               </xul:hbox>
             </xul:row>
             <xul:row class="reddit-karma-info">
               <xul:label>&linkKarma.label;</xul:label>
-              <xul:spacer flex="1"/>
               <xul:label anonid="labelLinkKarma" class="socialite-site-info-data reddit-link-karma">...</xul:label>
             </xul:row>
             <xul:row class="reddit-karma-info">
               <xul:label>&commentKarma.label;</xul:label>
-              <xul:spacer flex="1"/>
               <xul:label anonid="labelCommentKarma" class="socialite-site-info-data reddit-comment-karma">...</xul:label>
             </xul:row>
           </xul:rows>
@@ -55,6 +51,7 @@
           function setLabel(anonid, value) {
             var label = document.getAnonymousElementByAttribute(self, "anonid", anonid);
             label.value = value;
+            return label;
           }
           
           this.site.API.auth.getAuthInfo(function(authInfo) {
@@ -63,12 +60,14 @@
               setLabel("labelUsername", authInfo.username);
               
               var messageCount = self.site.newMessages.length;
-              setLabel("labelMailCount", messageCount);
+              var labelMailCount = setLabel("labelMailCount", messageCount);
               var imageMailIcon = document.getAnonymousElementByAttribute(self, "anonid", "imageMailIcon");
               if (messageCount > 0) {
                 imageMailIcon.src = "chrome://socialite/content/reddit/mail.png";
+                labelMailCount.hidden = false;
               } else {
                 imageMailIcon.src = "chrome://socialite/content/reddit/mailgray.png";
+                labelMailCount.hidden = true;
               }
               
               self.site.cached.myuserinfo(
