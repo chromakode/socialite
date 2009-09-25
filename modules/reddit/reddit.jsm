@@ -46,8 +46,9 @@ RedditSite.prototype.onLoad = function() {
   
   this.cached._removeUsernameWatch = this.API.auth.onUsernameChange.watch(
     hitchThis(this, function(username) {
-      // Reset subreddit cache when the username changes.
+      // Reset subreddit and user info caches when the username changes.
       this.cached.mysubreddits.cachedValue.reset();
+      this.cached.myuserinfo.cachedValue.reset();
       this.refreshAlertState();
     })
   );
@@ -575,25 +576,43 @@ RedditSite.prototype.createPreferencesUI = function(document, propertiesWindow) 
 };
 
 RedditSite.prototype.refreshAlertState = function() {
-  if (this.API.auth.isLoggedIn) {
+  logger.log("RedditSite", this.siteName, "Refreshing messages and user info.");
+  
+  // We have a listener changed that will call this function upon username change.
+  // It is possible that getAuthInfo could detect a username change, so we must prevent this function from getting called a second time.
+  if (!this._refreshingAlertState) {
     let site = this;
-    this.API.messages(
-      function success(r, json) {
-        if (json) {
-          site.newMessages = json.data.children.filter(function(message) {
-            return message.data.new;
-          });
-          
-          site.alertState = site.newMessages.length > 0;
-          site.showMessageNotification();
-        }
-      }/*,
-      this.actionFailureHandler*/
-    ).perform(false);
-  } else {
-    this.alertState = false;
-    this.newMessages = [];
-    this.lastMessageCount = null;
+    let refresh = this.API.auth.getAuthInfo(function(authInfo) {
+      if (authInfo.isLoggedIn) {
+        // Check for new messages
+        site.API.messages(
+          function success(r, json) {
+            if (json) {
+              site.newMessages = json.data.children.filter(function(message) {
+                return message.data.new;
+              });
+              
+              site.alertState = site.newMessages.length > 0;
+              site.showMessageNotification();
+            }
+          }/*,
+          this.actionFailureHandler*/
+        ).perform(false);
+        
+        // Update cached user karma info
+        site.cached.myuserinfo().perform();
+      } else {
+        this.alertState = false;
+        this.newMessages = [];
+        this.lastMessageCount = null;
+      }
+    });
+    
+    this._refreshingAlertState = true;
+    refresh.finallyCallback = function() {
+      site._refreshingAlertState = false;
+    };
+    refresh.perform();
   }
 };
 

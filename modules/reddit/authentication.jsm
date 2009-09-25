@@ -43,8 +43,8 @@ RedditAuth.prototype = {
       
       hitchThis(this, function success(r) {
         let authInfo = extractAuthInfo(r.responseXML);
-        this._updateAuthInfo(authInfo);
         action.success(authInfo);
+        this._updateAuthInfo(authInfo);
       }),
       function failure(r) { action.failure(); }
     );
@@ -75,8 +75,8 @@ RedditAuth.prototype = {
 
   snarfAuthInfo: function(doc, win) {
     let authInfo = extractAuthInfo(doc);
-    this._updateAuthInfo(authInfo);
     this.getAuthInfo.cachedValue.updated(authInfo); // reset authentication info expiration
+    this._updateAuthInfo(authInfo);
   },
   
   actionParams: function(action, params, successCallback) {

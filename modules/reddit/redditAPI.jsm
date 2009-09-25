@@ -261,9 +261,13 @@ RedditAPI.prototype.myuserinfo = Action("reddit.myuserinfo", function(action) {
   let self = this;
   this.auth.getAuthInfo(
     function(authInfo) {
-      var act = self.userinfo();
-      act.chainTo(action);
-      act.perform(authInfo.username);
+      if (authInfo.username) {
+        let act = self.userinfo();
+        act.chainTo(action);
+        act.perform(authInfo.username);
+      } else {
+        action.failure();
+      }
     },
     action.chainFailure()
   ).perform();

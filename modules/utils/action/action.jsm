@@ -25,12 +25,13 @@ function Action(name, func) {
   ActionClass.prototype.__proto__ = ActionType.prototype;
   
   // Method to instantiate a new action, binding it to the object the method was called on
-  var ActionConstructorMethod = function(successCallback, failureCallback) {
+  var ActionConstructorMethod = function(successCallback, failureCallback, finallyCallback) {
     var action = new ActionClass();
     
     action.thisObj = this;
     action.successCallback = successCallback;
     action.failureCallback = failureCallback;
+    action.finallyCallback = finallyCallback;
     action.startTime = null;
     
     return action;
@@ -86,12 +87,16 @@ ActionType.prototype = {
   
   success: function() {
     logger.log("action", this.name + " succeeded");
-    return this.doCallback(this.successCallback, arguments);
+    let result = this.doCallback(this.successCallback, arguments);
+    this.doCallback(this.finallyCallback);
+    return result;
   },
   
   failure: function() {
     logger.log("action", this.name + " failed");
-    return this.doCallback(this.failureCallback, arguments);
+    let result = this.doCallback(this.failureCallback, arguments);
+    this.doCallback(this.finallyCallback);
+    return result;
   },
   
   toFunction: function() {
