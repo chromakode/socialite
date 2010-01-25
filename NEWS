@@ -1,4 +1,4 @@
-== Version 1.4pre1 ==
+== Version 1.3.3.8 ==
 - Includes backported bugfixes from 1.4-dev:
 * Submit bar submits on tab+enter.
 * Reset subreddit cache upon username change.
