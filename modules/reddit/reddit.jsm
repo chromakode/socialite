@@ -39,6 +39,11 @@ RedditSite.prototype.onLoad = function() {
   this.API.init(version);
 };
 
+RedditSite.prototype.onUnload = function() {
+  SocialiteSite.prototype.onUnload.apply(this, arguments);
+  this.API.destroy();
+};
+
 RedditSite.prototype.setDefaultPreferences = function(siteDefaultBranch) {
   siteDefaultBranch.setCharPref("version.dom", "");
   siteDefaultBranch.setCharPref("version.api", "");
@@ -476,7 +481,7 @@ RedditSite.prototype.createBarSubmitUI = function(document) {
       hideSubreddits // Silently hide subreddits listing if there was an error fetching the list.
     ).perform();
     
-    this.buttonSubmit.addEventListener("click", function(e) {
+    this.buttonSubmit.addEventListener("command", function(e) {
       var subredditURL;
       if (barSubmit.menulistSubreddit.selectedItem && !barSubmit.hidden) {
         subredditURL = barSubmit.menulistSubreddit.selectedItem.value;

@@ -181,6 +181,16 @@ RedditAPI.prototype.init = function(version, auth) {
   } else {
     this.auth = new RedditAuth(this.siteURL, this.version, AUTH_EXPIRE_AGE);
   }
+  
+  // Reset subreddit cache when the username changes.
+  let self = this;
+  this._removeUsernameWatch = this.auth.onUsernameChange.watch(function(username) {
+    self.mysubreddits_cached.cachedValue.reset();
+  });
+}
+
+RedditAPI.prototype.destroy = function() {
+  this._removeUsernameWatch();
 }
 
 RedditAPI.prototype._urlinfo = function(url, subreddit, action) {
