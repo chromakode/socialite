@@ -64,7 +64,7 @@ ActionType.prototype = {
   
   addToArgs: function(args) {
     // Arguments contain the arguments passed to this function, with this action object at the end.
-    var newargs = Array.prototype.splice.call(args, 0) || [];
+    var newargs = args ? Array.prototype.splice.call(args, 0) : [];
     if ((newargs.length == 0) || (newargs[newargs.length-1] != this)) {
       newargs.push(this);
     }
