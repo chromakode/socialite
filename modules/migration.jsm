@@ -7,16 +7,18 @@ let versionCompare = Components.classes["@mozilla.org/xpcom/version-comparator;1
                                         .getService(Components.interfaces.nsIVersionComparator)
                                         .compare;
 
-let extensionManager = Components.classes["@mozilla.org/extensions/manager;1"]
-                                           .getService(Components.interfaces.nsIExtensionManager);
+let extensionManager, AddonManager;
+try {
+  extensionManager = Components.classes["@mozilla.org/extensions/manager;1"]
+                                        .getService(Components.interfaces.nsIExtensionManager);
+} catch(e) {
+  Components.utils.import("resource://gre/modules/AddonManager.jsm");
+}
 
 let EXTENSION_ID = "socialite@chromakode";
 
-var SocialiteMigration = {
-  perform: function() {  
-    let currentVersion = extensionManager.getItemForID(EXTENSION_ID).version;
-    
-    let lastVersion;
+function migrate(currentVersion){
+   let lastVersion;
     if (Socialite.preferences.prefHasUserValue("lastVersion")) {
       lastVersion = Socialite.preferences.getCharPref("lastVersion");
     } else {
@@ -48,6 +50,17 @@ var SocialiteMigration = {
       
       // Update the record of the last version seen
       Socialite.preferences.setCharPref("lastVersion", currentVersion); 
+    }
+}
+
+var SocialiteMigration = {
+  perform: function() {
+    if (AddonManager) {
+      AddonManager.getAddonByID(EXTENSION_ID, function(addon) {
+        migrate(addon.version)
+      });
+    } else {
+      migrate(extensionManager.getItemForID(EXTENSION_ID).version);
     }
   }
 };
