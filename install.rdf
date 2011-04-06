@@ -20,5 +20,6 @@
                    em:name="Socialite"
                    em:homepageURL="http://www.reddit.com/socialite/"
                    em:description="Vote on and submit stories to reddit social news sites."
-                   em:creator="Chromakode" />
+                   em:creator="Chromakode"
+                   em:contributor="slyf" />
 </RDF:RDF>
