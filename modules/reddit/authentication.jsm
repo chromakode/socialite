@@ -97,34 +97,41 @@ function authParams(params, authInfo) {
 }
 
 function extractAuthInfo(document) {
+  let redditScript = findRedditScript(document)
   let authInfo = {
-    username: extractUsername(document),
-    modhash:  extractModHash(document)
+    username: extractUsername(redditScript),
+    modhash:  extractModHash(redditScript)
   };
   authInfo.isLoggedIn = (authInfo.username != false) && (authInfo.username != null) && (authInfo.modhash != "");
   return authInfo;
 }
 
-function extractModHash(document) {
+function findRedditScript(document) {
+  var scripts = document.getElementsByTagName("script");
+  const redditScript = /^var reddit/;
+  for (var i=0, script; script = scripts[i]; i++) {
+    if (script.textContent.match(redditScript)) {
+      return script;
+    }
+  }
+}
+
+function extractModHash(redditScript) {
   try {
-    let globalsCode = document.getElementsByTagName("script")[0].textContent;
     const getModHash = /modhash\s*(?:\:|=)\s*'(\w*)'/;
-    
-    return globalsCode.match(getModHash)[1];
+    return redditScript.textContent.match(getModHash)[1];
   } catch (e)  {
     logger.log("reddit_auth", this.siteURL, "Unable to parse page for user hash: " + e.toString());
     return null;
   }
 }
 
-function extractUsername(document) {
+function extractUsername(redditScript) {
   // Get the username
   try {
-    let globalsCode = document.getElementsByTagName("script")[0].textContent;
     const getUsername = /logged\s*(?:\:|=)\s*('(\w+)'|false)/;
-    
     let username;
-    let [match, outer, inner] = globalsCode.match(getUsername);
+    let [match, outer, inner] = redditScript.textContent.match(getUsername);
     if (outer == "false") {
       // Not logged in
       username = false;
