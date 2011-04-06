@@ -66,6 +66,7 @@ notification[value="socialite-submitbar-notification"] {
 .socialite-notification-button[image] > .button-box > .button-icon, e
 .socialite-notification-button > .button-box > .button-icon[src] {
   margin-right: 3px;
+  display: -moz-box;
 }
 
 .socialite-button-compact {
